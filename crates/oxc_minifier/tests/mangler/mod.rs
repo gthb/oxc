@@ -468,12 +468,12 @@ fn jsx_slot_sharing_between_jsx_and_regular() {
         "function outer() { { function Comp() { return null; } let x = <Comp />; } { let y = 1; console.log(y); } }",
         options,
     );
-    // Both Comp and y should be mangled
-    assert!(!mangled.contains("Comp"), "Comp should be mangled: {mangled}");
-    assert!(!mangled.contains(" y ") && !mangled.contains(" y;"), "y should be mangled: {mangled}");
-    // The JSX tag must still start with upper-case
+    // Both Comp and y land in the same slot (sibling scopes) and that slot is JSX,
+    // so both get the upper-case name "S". x is in a separate slot → "e".
     let tags = assert_jsx_tags_upper_case(&mangled);
-    assert!(!tags.is_empty(), "Expected JSX tags in: {mangled}");
+    assert_eq!(tags, ["S"], "Expected exactly one JSX tag 'S': {mangled}");
+    assert!(mangled.contains("function S("), "Comp should be mangled to S: {mangled}");
+    assert!(mangled.contains("let S = 1"), "y should share slot with Comp and become S: {mangled}");
 }
 
 #[test]
