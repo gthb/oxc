@@ -206,7 +206,13 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
                 self.ast.expression_big_int_literal(span, value, None, BigintBase::Decimal)
             }
             ConstantValue::String(s) => {
-                self.ast.expression_string_literal(span, self.ast.str_from_cow(&s), None)
+                let lone_surrogates = s.contains('\u{FFFD}');
+                self.ast.expression_string_literal_with_lone_surrogates(
+                    span,
+                    self.ast.str_from_cow(&s),
+                    None,
+                    lone_surrogates,
+                )
             }
             ConstantValue::Boolean(b) => self.ast.expression_boolean_literal(span, b),
             ConstantValue::Undefined => self.ast.void_0(span),

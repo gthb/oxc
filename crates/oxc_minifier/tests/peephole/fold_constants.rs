@@ -1188,6 +1188,22 @@ fn test_inline_values_in_template_literal() {
     fold_same("foo`foo${1}bar`");
 }
 
+#[test]
+fn test_lone_surrogate_propagation() {
+    // The exact bug from https://github.com/oxc-project/oxc/issues/15524
+    test("console.log(':' + `[\\uDC00-\\uDFFF]`)", "console.log(':[\\udc00-\\udfff]')");
+    // Template literal to string substitution
+    fold("`[\\uDC00-\\uDFFF]`", "'[\\udc00-\\udfff]'");
+    // String + template
+    fold("':' + `[\\uDC00]`", "':[\\udc00]'");
+    // Template + string
+    fold("`[\\uDC00]` + ':'", "'[\\udc00]:'");
+    // Template + template with lone surrogates (raw values preserve original casing)
+    test("x = `a${b}[\\uDC00]` + `[\\uDFFF]${c}d`", "x=`a${b}[\\uDC00][\\uDFFF]${c}d`");
+    // Inline values in template with lone surrogates
+    fold("`foo${1}[\\uDC00]`", "'foo1[\\udc00]'");
+}
+
 mod bigint {
     use super::{
         MAX_SAFE_FLOAT, MAX_SAFE_INT, NEG_MAX_SAFE_FLOAT, NEG_MAX_SAFE_INT, fold, fold_same,

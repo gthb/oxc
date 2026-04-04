@@ -12,6 +12,11 @@ use crate::TraverseCtx;
 
 use super::PeepholeOptimizations;
 
+/// See [`StringLiteral::lone_surrogates`] for the encoding scheme.
+fn has_lone_surrogates(s: &str) -> bool {
+    s.contains('\u{FFFD}')
+}
+
 /// Constant Folding
 ///
 /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/PeepholeFoldConstants.java>
@@ -379,7 +384,14 @@ impl<'a> PeepholeOptimizations {
                     .merge_within(e.right.span(), e.span)
                     .unwrap_or(SPAN);
                 let value = ctx.ast.str_from_strs_array([&left_str, &right_str]);
-                let right = ctx.ast.expression_string_literal(span, value, None);
+                let lone_surrogates =
+                    has_lone_surrogates(&left_str) || has_lone_surrogates(&right_str);
+                let right = ctx.ast.expression_string_literal_with_lone_surrogates(
+                    span,
+                    value,
+                    None,
+                    lone_surrogates,
+                );
                 let left = left_binary_expr.left.take_in(ctx.ast);
                 return Some(ctx.ast.expression_binary(e.span, left, e.operator, right));
             }
@@ -423,6 +435,8 @@ impl<'a> PeepholeOptimizations {
                     None
                 };
                 left_last_quasi.value.cooked = new_cooked;
+                left_last_quasi.lone_surrogates =
+                    left_last_quasi.lone_surrogates || right_first_quasi.lone_surrogates;
                 if !right.quasis.is_empty() {
                     left_last_quasi.tail = false;
                 }
@@ -444,6 +458,9 @@ impl<'a> PeepholeOptimizations {
                     .cooked
                     .map(|cooked| ctx.ast.str(&(cooked.as_str().to_string() + &right_str)));
                 last_quasi.value.cooked = new_cooked;
+                if has_lone_surrogates(&right_str) {
+                    last_quasi.lone_surrogates = true;
+                }
                 return Some(left_expr.take_in(ctx.ast));
             }
         } else if let Expression::TemplateLiteral(right) = right_expr {
@@ -454,6 +471,7 @@ impl<'a> PeepholeOptimizations {
                     .quasis
                     .first_mut()
                     .expect("template literal must have at least one quasi");
+                let lone_surrogates = has_lone_surrogates(&left_str);
                 let new_raw = Self::escape_string_for_template_literal(&left_str).into_owned()
                     + first_quasi.value.raw.as_str();
                 first_quasi.value.raw = ctx.ast.str(&new_raw);
@@ -462,6 +480,9 @@ impl<'a> PeepholeOptimizations {
                     .cooked
                     .map(|cooked| ctx.ast.str(&(left_str.into_owned() + cooked.as_str())));
                 first_quasi.value.cooked = new_cooked;
+                if lone_surrogates {
+                    first_quasi.lone_surrogates = true;
+                }
                 return Some(right_expr.take_in(ctx.ast));
             }
         }
@@ -759,6 +780,9 @@ impl<'a> PeepholeOptimizations {
                 None
             };
             quasi.value.cooked = new_cooked;
+            if next_quasi.as_ref().is_some_and(|q| q.lone_surrogates) || has_lone_surrogates(&str) {
+                quasi.lone_surrogates = true;
+            }
             if next_quasi.is_some_and(|q| q.tail) {
                 quasi.tail = true;
             }
