@@ -310,13 +310,13 @@ fn jsx_component_mangling() {
         "Member expression JSX should preserve member access: {mangled}"
     );
 
-    // Component with closing tag — opening tag must be upper-case (closing tag follows automatically)
+    // Component with closing tag: opening tag must be upper-case (closing tag follows automatically)
     let mangled =
         mangle_jsx("function Comp() { return null; } let x = <Comp>child</Comp>;", options);
     let tags = assert_jsx_tags_upper_case(&mangled);
     assert!(!tags.is_empty(), "Expected at least one JSX tag in: {mangled}");
 
-    // Nested scope with default top_level (not Some(true)) — symbols inside functions
+    // Nested scope with default top_level (not Some(true)): symbols inside functions
     // are always mangled regardless of top_level setting
     let mangled = mangle_jsx(
         "function wrapper() { function Comp() { return null; } let x = <Comp />; }",
@@ -327,7 +327,7 @@ fn jsx_component_mangling() {
 
     // Names from the two pools must not collide: create enough regular symbols that
     // the regular pool would produce 'S' (the first upper-case name), and verify
-    // the JSX pool still works correctly
+    // that the JSX pool then skips that name.
     let mangled = mangle_jsx(
         "
         function Comp() { return null; }
@@ -343,7 +343,7 @@ fn jsx_component_mangling() {
     );
     let tags = assert_jsx_tags_upper_case(&mangled);
     // With 23 regular symbols (v0-v21 + x), the regular pool claims base54 indices 0-22,
-    // and index 22 is 'S' — the first upper-case base54 name. Verify 'S' is indeed used
+    // and index 22 is 'S', the first upper-case base54 name. Verify 'S' is indeed used
     // as a regular variable, confirming the collision path was exercised.
     assert!(
         mangled.contains("let S") || mangled.contains(", S"),
@@ -379,20 +379,19 @@ fn jsx_component_mangling_debug_mode() {
 }
 
 #[test]
-fn non_jsx_source_unaffected() {
-    // Non-JSX source types (.js, .mjs) should produce identical output regardless of
-    // upper-case-named symbols — the JSX scan is skipped entirely for non-JSX sources.
+fn non_jsx_source_gets_full_base54_names() {
+    // Non-JSX source types (.js, .mjs, .ts) should produce identical output regardless of
+    // upper-case-named symbols in source.
     let options = MangleOptions { top_level: Some(true), ..MangleOptions::default() };
     let mangled = mangle("function Comp() { return null; } let regularVar = 1;", options);
-    // With non-JSX source, "Comp" is just a regular symbol — should get a lower-case name
     assert!(
         mangled.starts_with("function e("),
-        "Non-JSX source should mangle to lower-case-first names: {mangled}"
+        "Non-JSX source should mangle with names from full base54 set: {mangled}"
     );
 }
 
 #[test]
-fn jsx_keep_names_interaction() {
+fn jsx_component_mangling_respects_keep_names() {
     // A component whose function name is preserved by keep_names should not enter the JSX pool
     // (it's filtered before slot assignment and keeps its original name).
     let options = MangleOptions {
@@ -494,8 +493,8 @@ fn jsx_component_declared_but_never_used_as_tag() {
 
 #[test]
 fn jsx_intrinsic_html_tags_unchanged() {
-    // Intrinsic HTML tags like <div>, <br />, <h1> are not identifiers bound to symbols —
-    // they must pass through the mangler unchanged and remain lower-case.
+    // Intrinsic HTML tags like <div>, <br />, <h1> are not identifiers bound to symbols.
+    // They must pass through the mangler unchanged and remain lower-case.
     let options = MangleOptions { top_level: Some(true), ..MangleOptions::default() };
 
     let mangled = mangle_jsx(
