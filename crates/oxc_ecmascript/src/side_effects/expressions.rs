@@ -9,9 +9,10 @@ use crate::{
 
 use super::known_globals::{
     is_error_constructor, is_known_global_constructor, is_known_global_identifier,
-    is_known_global_property, is_known_global_property_deep, is_pure_callable_constructor,
-    is_pure_collection_constructor, is_pure_global_function, is_pure_global_method_call,
-    is_typed_array_constructor, is_unconditionally_pure_constructor, is_valid_regexp,
+    is_known_global_property, is_known_global_property_deep, is_proxy_sensitive_object_method,
+    is_pure_callable_constructor, is_pure_collection_constructor, is_pure_global_function,
+    is_pure_global_method_call, is_typed_array_constructor, is_unconditionally_pure_constructor,
+    is_valid_regexp,
 };
 use super::{MayHaveSideEffects, PropertyReadSideEffects, context::MayHaveSideEffectsContext};
 
@@ -602,6 +603,35 @@ impl<'a> MayHaveSideEffects<'a> for CallExpression<'a> {
 
         if is_pure_global_method_call(object.name.as_str(), name) {
             return self.arguments.iter().any(|e| e.may_have_side_effects(ctx));
+        }
+
+        if object.name.as_str() == "Object" {
+            if is_proxy_sensitive_object_method(name) {
+                if self.arguments.iter().any(|e| e.may_have_side_effects(ctx)) {
+                    return true;
+                }
+                // These Object methods introspect their first argument in ways
+                // that can trigger Proxy handler traps. If the first argument's
+                // type is undetermined, it could be a Proxy.
+                return self
+                    .arguments
+                    .first()
+                    .and_then(Argument::as_expression)
+                    .is_some_and(|e| e.value_type(ctx).is_undetermined());
+            }
+            if name == "create" {
+                if self.arguments.iter().any(|e| e.may_have_side_effects(ctx)) {
+                    return true;
+                }
+                // Object.create(proto) is pure, but Object.create(proto, props)
+                // calls ObjectDefineProperties which reads [[OwnPropertyKeys]]
+                // and [[Get]] on props. Both of those are Proxy-trappable.
+                return self
+                    .arguments
+                    .get(1)
+                    .and_then(Argument::as_expression)
+                    .is_some_and(|e| e.value_type(ctx).is_undetermined());
+            }
         }
 
         true

@@ -1188,6 +1188,52 @@ fn test_call_expressions() {
     test("Object.isSealed()", false);
     test("Object.keys()", false);
 
+    // Object.is uses SameValue comparison, no object introspection
+    test("Object.is(x, y)", false);
+
+    // Object.create(proto) is pure: proto is stored directly, no traps.
+    // Object.create(proto, props) introspects props via [[OwnPropertyKeys]]
+    // and [[Get]], which are Proxy-trappable.
+    test("Object.create(x)", false);
+    test("Object.create(x, {})", false);
+    test("Object.create({}, {})", false);
+    test("Object.create(null, {})", false);
+    test("Object.create({}, x)", true); // x could be a Proxy
+
+    // Object methods that introspect first arg: pure with non-Proxy-able arguments
+    test("Object.keys({})", false);
+    test("Object.keys([])", false);
+    test("Object.keys(42)", false);
+    test("Object.keys('str')", false);
+    test("Object.keys(null)", false);
+    test("Object.keys(true)", false);
+    test("Object.getOwnPropertyDescriptor({}, 'x')", false);
+    test("Object.getOwnPropertyDescriptors({})", false);
+    test("Object.getOwnPropertyNames({})", false);
+    test("Object.getOwnPropertySymbols({})", false);
+    test("Object.getPrototypeOf({})", false);
+    test("Object.hasOwn({}, 'x')", false);
+    test("Object.isExtensible({})", false);
+    test("Object.isFrozen({})", false);
+    test("Object.isSealed({})", false);
+
+    // Object methods that introspect first arg: may have side effects when
+    // first arg could be a Proxy (value type is undetermined)
+    test("Object.keys(x)", true);
+    test("Object.getOwnPropertyDescriptor(x, 'foo')", true);
+    test("Object.getOwnPropertyDescriptors(x)", true);
+    test("Object.getOwnPropertyNames(x)", true);
+    test("Object.getOwnPropertySymbols(x)", true);
+    test("Object.getPrototypeOf(x)", true);
+    test("Object.hasOwn(x, 'foo')", true);
+    test("Object.isExtensible(x)", true);
+    test("Object.isFrozen(x)", true);
+    test("Object.isSealed(x)", true);
+
+    // Computed property access with string literal works the same way
+    test("Object[\"keys\"](x)", true);
+    test("Object[\"keys\"]({})", false);
+
     test("String.fromCharCode()", false);
     test("String.fromCodePoint()", false);
     test("String.raw()", false);

@@ -400,14 +400,23 @@ pub(super) fn is_pure_global_method_call(object: &str, method: &str) -> bool {
         "Date" => matches!(method, "now" | "parse" | "UTC"),
         "Math" => is_pure_math_method(method),
         "Number" => matches!(method, "isFinite" | "isInteger" | "isNaN" | "isSafeInteger" | "parseFloat" | "parseInt"),
-        "Object" => matches!(method, "create" | "getOwnPropertyDescriptor" | "getOwnPropertyDescriptors" | "getOwnPropertyNames"
-                | "getOwnPropertySymbols" | "getPrototypeOf" | "hasOwn" | "is" | "isExtensible" | "isFrozen" | "isSealed" | "keys"),
+        "Object" => method == "is",
         "String" => matches!(method, "fromCharCode" | "fromCodePoint" | "raw"),
         "Symbol" => matches!(method, "for" | "keyFor"),
         "URL" => method == "canParse",
         _ if is_typed_array_constructor(object) => method == "of",
         _ => false,
     }
+}
+
+/// Object methods that introspect their first argument via internal methods
+/// that Proxy can trap (e.g. `[[GetOwnProperty]]`, `[[OwnPropertyKeys]]`).
+/// Pure only when the first argument is known not to be a Proxy.
+#[rustfmt::skip]
+pub(super) fn is_proxy_sensitive_object_method(method: &str) -> bool {
+    matches!(method, "getOwnPropertyDescriptor" | "getOwnPropertyDescriptors"
+        | "getOwnPropertyNames" | "getOwnPropertySymbols" | "getPrototypeOf"
+        | "hasOwn" | "isExtensible" | "isFrozen" | "isSealed" | "keys")
 }
 
 /// Whether the property read on a known global is side-effect-free.
