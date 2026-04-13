@@ -2,7 +2,7 @@ use std::path::{Path, PathBuf};
 
 use editorconfig_parser::{
     EditorConfig, EditorConfigProperties, EditorConfigProperty, EndOfLine, IndentStyle,
-    MaxLineLength,
+    MaxLineLength, QuoteType,
 };
 use fast_glob::glob_match;
 use serde_json::Value;
@@ -44,18 +44,32 @@ fn is_vite_plus_config(path: &Path) -> bool {
     path.file_name().and_then(|f| f.to_str()).is_some_and(|name| name == VITE_PLUS_CONFIG_NAME)
 }
 
+/// Whether Vite+ mode is active (i.e., `VP_VERSION` env var is set).
+#[cfg(feature = "napi")]
+fn is_vite_plus_mode() -> bool {
+    std::env::var_os("VP_VERSION").is_some()
+}
+
 /// Returns an iterator of all supported config file names, in priority order.
+///
+/// When `VP_VERSION` env var is set, only `vite.config.ts` is recognized.
+/// When it is not set, `vite.config.ts` is excluded from the candidates.
 pub fn all_config_file_names() -> impl Iterator<Item = String> {
     #[cfg(feature = "napi")]
     {
+        if is_vite_plus_mode() {
+            return vec![VITE_PLUS_CONFIG_NAME.to_string()].into_iter();
+        }
         JSON_CONFIG_FILES
             .iter()
             .copied()
-            .chain([OXFMT_JS_CONFIG_NAME, VITE_PLUS_CONFIG_NAME])
+            .chain([OXFMT_JS_CONFIG_NAME])
             .map(ToString::to_string)
+            .collect::<Vec<_>>()
+            .into_iter()
     }
     #[cfg(not(feature = "napi"))]
-    JSON_CONFIG_FILES.iter().map(|f| (*f).to_string())
+    JSON_CONFIG_FILES.iter().map(|f| (*f).to_string()).collect::<Vec<_>>().into_iter()
 }
 
 pub fn resolve_editorconfig_path(cwd: &Path) -> Option<PathBuf> {
@@ -613,6 +627,7 @@ fn load_editorconfig(
 /// - indent_size
 /// - tab_width
 /// - insert_final_newline
+/// - quote_type
 fn has_editorconfig_overrides(editorconfig: &EditorConfig, path: &Path) -> bool {
     let sections = editorconfig.sections();
 
@@ -635,6 +650,7 @@ fn has_editorconfig_overrides(editorconfig: &EditorConfig, path: &Path) -> bool 
                 || resolved.indent_size != root.indent_size
                 || resolved.tab_width != root.tab_width
                 || resolved.insert_final_newline != root.insert_final_newline
+                || resolved.quote_type != root.quote_type
         }
         // No `[*]` section means any resolved property is an override
         None => {
@@ -644,6 +660,7 @@ fn has_editorconfig_overrides(editorconfig: &EditorConfig, path: &Path) -> bool 
                 || resolved.indent_size != EditorConfigProperty::Unset
                 || resolved.tab_width != EditorConfigProperty::Unset
                 || resolved.insert_final_newline != EditorConfigProperty::Unset
+                || resolved.quote_type != EditorConfigProperty::Unset
         }
     }
 }
@@ -696,5 +713,17 @@ fn apply_editorconfig(config: &mut FormatConfig, props: &EditorConfigProperties)
         && let EditorConfigProperty::Value(v) = props.insert_final_newline
     {
         config.insert_final_newline = Some(v);
+    }
+
+    if config.single_quote.is_none() {
+        match props.quote_type {
+            EditorConfigProperty::Value(QuoteType::Single) => {
+                config.single_quote = Some(true);
+            }
+            EditorConfigProperty::Value(QuoteType::Double) => {
+                config.single_quote = Some(false);
+            }
+            _ => {}
+        }
     }
 }

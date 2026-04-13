@@ -4,7 +4,8 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{Span, Str};
+use oxc_span::Span;
+use oxc_str::Str;
 
 use crate::{context::LintContext, fixer::RuleFixer, rule::Rule, utils::get_node_name};
 
@@ -71,7 +72,8 @@ declare_oxc_lint!(
     PreferMockPromiseShorthand,
     jest,
     style,
-    conditional_fix
+    conditional_fix,
+    version = "0.2.16",
 );
 
 impl Rule for PreferMockPromiseShorthand {

@@ -6,7 +6,8 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNode;
-use oxc_span::{CompactStr, Span};
+use oxc_span::Span;
+use oxc_str::CompactStr;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
@@ -173,7 +174,8 @@ declare_oxc_lint!(
     RequireHook,
     jest,
     style,
-    config = RequireHookConfig
+    config = RequireHookConfig,
+    version = "0.3.2",
 );
 
 impl Rule for RequireHook {

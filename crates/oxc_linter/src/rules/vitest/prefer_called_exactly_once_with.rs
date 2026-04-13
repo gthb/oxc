@@ -6,7 +6,8 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, GetSpan, Span};
+use oxc_span::{GetSpan, Span};
+use oxc_str::CompactStr;
 use std::collections::BTreeMap;
 
 use crate::{
@@ -187,6 +188,7 @@ declare_oxc_lint!(
     vitest,
     style,
     dangerous_fix,
+    version = "1.58.0",
 );
 
 impl Rule for PreferCalledExactlyOnceWith {

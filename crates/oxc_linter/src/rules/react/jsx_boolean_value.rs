@@ -4,7 +4,8 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, Span};
+use oxc_span::Span;
+use oxc_str::CompactStr;
 use rustc_hash::FxHashSet;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -108,6 +109,7 @@ declare_oxc_lint!(
     style,
     fix,
     config = JsxBooleanValueConfig,
+    version = "0.7.0",
 );
 
 impl Rule for JsxBooleanValue {

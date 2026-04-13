@@ -6,7 +6,8 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNode;
-use oxc_span::{CompactStr, GetSpan, Span};
+use oxc_span::{GetSpan, Span};
+use oxc_str::CompactStr;
 use rustc_hash::FxHashSet;
 
 use crate::{
@@ -88,7 +89,8 @@ declare_oxc_lint!(
     PreferImportingVitestGlobals,
     vitest,
     style,
-    fix
+    fix,
+    version = "1.59.0",
 );
 
 impl Rule for PreferImportingVitestGlobals {

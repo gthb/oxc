@@ -7,7 +7,8 @@ use oxc_ast::{
 };
 use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, Span, Str};
+use oxc_span::Span;
+use oxc_str::{CompactStr, Str};
 use rustc_hash::FxHashSet;
 use schemars::JsonSchema;
 use serde_json::Value;
@@ -176,7 +177,8 @@ declare_oxc_lint!(
     NoAsyncEndpointHandlers,
     oxc,
     suspicious,
-    config = NoAsyncEndpointHandlersConfig
+    config = NoAsyncEndpointHandlersConfig,
+    version = "0.9.2",
 );
 
 impl Rule for NoAsyncEndpointHandlers {

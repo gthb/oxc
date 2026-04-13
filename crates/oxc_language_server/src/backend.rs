@@ -15,7 +15,7 @@ use tower_lsp_server::{
         DocumentDiagnosticReportKind, DocumentDiagnosticReportResult, DocumentFormattingParams,
         ExecuteCommandParams, FullDocumentDiagnosticReport, InitializeParams, InitializeResult,
         InitializedParams, MessageType, RelatedFullDocumentDiagnosticReport, ServerInfo,
-        TextDocumentContentChangeEvent, TextEdit, Uri,
+        TextDocumentContentChangeEvent, TextEdit, Uri, WorkspaceEdit,
     },
 };
 use tracing::{debug, error, info, warn};
@@ -629,6 +629,13 @@ impl LanguageServer for Backend {
 
         let document = self.file_system.read().await.get_document(&uri);
 
+        // Remove the internal cache for the document.
+        // When the editor requests `textDocument/codeAction`, it may use its diagnostic cache to generate actions.
+        // This could cause code actions to be generated with stale diagnostics if the cache is not cleared here.
+        // This should never happen, because this server expects `textDocument/diagnostic` is requested beforehand.
+        // Sadly, some editors/extensions have bugs, so we need to make sure the cache is cleared on change.
+        worker.remove_uri_cache(&uri).await;
+
         if self.capabilities.get().is_some_and(|cap| cap.diagnostic_mode == DiagnosticMode::Push) {
             match worker.run_diagnostic_on_change(&document).await {
                 Err(err) => {
@@ -790,22 +797,29 @@ impl LanguageServer for Backend {
         &self,
         params: ExecuteCommandParams,
     ) -> Result<Option<serde_json::Value>> {
-        for worker in self.worker_manager.read_workers().await.iter() {
-            match worker.execute_command(&params.command, params.arguments.clone()).await {
-                Ok(changes) => {
-                    let Some(edit) = changes else {
-                        continue;
-                    };
-
-                    if !self.capabilities.get().unwrap().workspace_apply_edit {
-                        return Err(Error::invalid_params(
-                            "client does not support workspace apply edit",
-                        ));
-                    }
-
-                    self.client.apply_edit(edit).await?;
+        // at the moment we only support `fixAll` command, which returns text-edits.
+        // move this check when we support other type of commands
+        if !self.capabilities.get().unwrap().workspace_apply_edit {
+            return Err(Error::invalid_params("client does not support workspace apply edit"));
+        }
+        // Collect all edits under a brief read lock, then release it
+        // before performing client RPCs to avoid blocking writers.
+        let edits: Vec<WorkspaceEdit> = {
+            let workers = self.worker_manager.read_workers().await;
+            let mut edits = Vec::new();
+            for worker in workers.iter() {
+                match worker.execute_command(&params.command, params.arguments.clone()).await {
+                    Ok(Some(edit)) => edits.push(edit),
+                    Ok(None) => {}
+                    Err(err) => return Err(Error::new(err)),
                 }
-                Err(err) => return Err(Error::new(err)),
+            }
+            edits
+        };
+
+        if !edits.is_empty() {
+            for edit in edits {
+                self.client.apply_edit(edit).await?;
             }
         }
 

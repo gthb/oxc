@@ -1,7 +1,8 @@
 use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, GetSpan, Span};
+use oxc_span::{GetSpan, Span};
+use oxc_str::CompactStr;
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, UnaryOperator};
 use schemars::JsonSchema;
 use serde::Deserialize;
@@ -176,6 +177,7 @@ declare_oxc_lint!(
     style,
     fix,
     config = NoImplicitCoercionConfig,
+    version = "1.33.0",
 );
 
 impl Rule for NoImplicitCoercion {
