@@ -418,9 +418,10 @@ pub(super) fn proxy_sensitive_arg_index(object: &str, method: &str) -> Option<us
     match (object, method) {
         // These Object methods introspect their first argument via internal
         // methods that Proxy can trap (e.g. [[GetOwnProperty]], [[OwnPropertyKeys]]).
-        ("Object", "getOwnPropertyDescriptor" | "getOwnPropertyDescriptors"
+        ("Object", "entries" | "getOwnPropertyDescriptor" | "getOwnPropertyDescriptors"
             | "getOwnPropertyNames" | "getOwnPropertySymbols" | "getPrototypeOf"
-            | "hasOwn" | "isExtensible" | "isFrozen" | "isSealed" | "keys") => Some(0),
+            | "hasOwn" | "isExtensible" | "isFrozen" | "isSealed"
+            | "keys" | "values") => Some(0),
         // Object.create(proto) is pure, but Object.create(proto, props)
         // calls ObjectDefineProperties which reads [[OwnPropertyKeys]]
         // and [[Get]] on props — both Proxy-trappable.

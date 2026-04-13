@@ -1216,6 +1216,8 @@ fn test_call_expressions() {
     test("Object.isExtensible({})", false);
     test("Object.isFrozen({})", false);
     test("Object.isSealed({})", false);
+    test("Object.values({})", false);
+    test("Object.entries({})", false);
 
     // Object methods that introspect first arg: may have side effects when
     // first arg could be a Proxy (value type is undetermined)
@@ -1229,6 +1231,8 @@ fn test_call_expressions() {
     test("Object.isExtensible(x)", true);
     test("Object.isFrozen(x)", true);
     test("Object.isSealed(x)", true);
+    test("Object.values(x)", true);
+    test("Object.entries(x)", true);
 
     // Computed property access with string literal works the same way
     test("Object[\"keys\"](x)", true);
