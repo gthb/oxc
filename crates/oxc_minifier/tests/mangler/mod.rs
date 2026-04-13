@@ -498,7 +498,7 @@ fn jsx_intrinsic_html_tags_unchanged() {
     let options = MangleOptions { top_level: Some(true), ..MangleOptions::default() };
 
     let mangled = mangle_jsx(
-        r#"function Comp() { return <div><h1>hello</h1><br /><span>world</span></div>; } let x = <Comp />;"#,
+        r"function Comp() { return <div><h1>hello</h1><br /><span>world</span></div>; } let x = <Comp />;",
         options,
     );
     // HTML tags must survive verbatim
