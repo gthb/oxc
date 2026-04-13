@@ -117,6 +117,16 @@ bitflags! {
         /// a type parameter that might shadow it, since type parameters cannot
         /// have member access.
         const Namespace = 1 << 4;
+        /// The identifier is used as a JSX element tag name.
+        ///
+        /// In `<Comp />`, the reference to `Comp` has this flag set. This is
+        /// important for the mangler, which must produce upper-case-first names
+        /// for JSX component tags (a lower-case tag like `<e />` would be treated
+        /// as an HTML intrinsic element).
+        ///
+        /// Member expressions like `<foo.Bar />` do not set this flag on `foo`,
+        /// because `foo` is a `JSXMemberExpression` child, not a direct element name.
+        const JSXTag = 1 << 5;
         /// The symbol being referenced is a value.
         ///
         /// Note that this does not necessarily indicate the reference is used
@@ -199,6 +209,12 @@ impl ReferenceFlags {
     #[inline]
     pub const fn is_namespace(self) -> bool {
         self.contains(Self::Namespace)
+    }
+
+    /// Checks if the reference is used as a JSX element tag name.
+    #[inline]
+    pub const fn is_jsx_tag(self) -> bool {
+        self.contains(Self::JSXTag)
     }
 }
 

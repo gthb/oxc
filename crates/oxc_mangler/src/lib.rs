@@ -8,7 +8,6 @@ use rustc_hash::{FxHashMap, FxHashSet};
 
 use base54::{base54, base54_upper_first};
 use oxc_allocator::{Allocator, BitSet, HashSet, Vec};
-use oxc_ast::AstKind;
 use oxc_ast::ast::{Declaration, Program, Statement};
 use oxc_data_structures::inline_string::InlineString;
 use oxc_semantic::{AstNodes, Reference, Scoping, Semantic, SemanticBuilder, SymbolId};
@@ -476,7 +475,7 @@ impl<'t> Mangler<'t> {
 
         // Detect symbols used as JSX component names (their tag must start upper-case).
         let jsx_component_symbols = if program.source_type.is_jsx() {
-            collect_jsx_component_symbols(scoping, ast_nodes, temp_allocator)
+            collect_jsx_component_symbols(scoping, temp_allocator)
         } else {
             None
         };
@@ -816,25 +815,22 @@ fn assign_reserved_names<'a, const CAPACITY: usize>(
 
 /// Collect symbols that are used as JSX component names.
 ///
-/// A symbol is a JSX component symbol if any of its resolved references has a
-/// parent node that is `JSXOpeningElement` or `JSXClosingElement`. Such symbols
-/// must be mangled to names starting with an upper-case letter, because JSX treats
-/// lower-case tags as HTML elements.
+/// A symbol is a JSX component symbol if any of its resolved references has the
+/// `JSXTag` flag set by the semantic builder. Such symbols must be mangled to
+/// names starting with an upper-case letter, because JSX treats lower-case tags
+/// as HTML elements.
 ///
-/// Member expressions like `<foo.Bar />` are excluded: the `foo` identifier's
-/// parent is `JSXMemberExpression`, not `JSXOpeningElement`, so it stays in the
-/// regular pool.
+/// Member expressions like `<foo.Bar />` are excluded: the `foo` identifier
+/// is a `JSXMemberExpression` child, not a direct element name, so its reference
+/// does not have the `JSXTag` flag.
 fn collect_jsx_component_symbols<'a>(
     scoping: &Scoping,
-    ast_nodes: &AstNodes,
     temp_allocator: &'a Allocator,
 ) -> Option<BitSet<'a>> {
     let mut jsx_symbols: Option<BitSet<'a>> = None;
     for symbol_id in scoping.symbol_ids() {
         for reference in scoping.get_resolved_references(symbol_id) {
-            let parent_kind = ast_nodes.parent_kind(reference.node_id());
-            if matches!(parent_kind, AstKind::JSXOpeningElement(_) | AstKind::JSXClosingElement(_))
-            {
+            if reference.flags().is_jsx_tag() {
                 let bitset = jsx_symbols
                     .get_or_insert_with(|| BitSet::new_in(scoping.symbols_len(), temp_allocator));
                 bitset.set_bit(symbol_id.index());

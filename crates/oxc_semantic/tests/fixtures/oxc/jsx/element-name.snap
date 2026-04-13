@@ -24,14 +24,14 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/jsx/element-name.jsx
         "node": "VariableDeclarator(Component)",
         "references": [
           {
-            "flags": "ReferenceFlags(Read)",
+            "flags": "ReferenceFlags(Read | JSXTag)",
             "id": 0,
             "name": "Component",
             "node_id": 16,
             "scope_id": 0
           },
           {
-            "flags": "ReferenceFlags(Read)",
+            "flags": "ReferenceFlags(Read | JSXTag)",
             "id": 1,
             "name": "Component",
             "node_id": 18,
