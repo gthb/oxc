@@ -17,7 +17,7 @@
 //! Vectors have `O(1)` indexing, amortized `O(1)` push (to the end) and
 //! `O(1)` pop (from the end).
 //!
-//! This module is a fork of the [`std::vec`] module, that uses a bump allocator.
+//! This module is a fork of the [`std::vec`] module, that uses an arena allocator.
 //!
 //! [`std::vec`]: https://doc.rust-lang.org/std/vec/index.html
 //!

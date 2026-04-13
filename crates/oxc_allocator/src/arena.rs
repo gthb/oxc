@@ -52,11 +52,11 @@ impl<E: Display> Display for AllocOrInitError<E> {
     }
 }
 
-/// An arena to bump allocate into.
+/// An arena to allocate into.
 ///
 /// # No `Drop`s
 ///
-/// Objects that are bump-allocated will never have their [`Drop`] implementation
+/// Objects that are allocated will never have their [`Drop`] implementation
 /// called &mdash; unless you do it manually yourself. This makes it relatively
 /// easy to leak memory or other resources.
 ///
@@ -72,7 +72,7 @@ impl<E: Display> Display for AllocOrInitError<E> {
 ///
 /// Potential solutions are:
 ///
-/// * Using [`bumpalo::boxed::Box::new_in`] instead of [`Arena::alloc`], that
+/// * Using [`oxc_allocator::Box::new_in`] instead of [`Arena::alloc`], that
 ///   will drop wrapped values similarly to [`std::boxed::Box`]. Note that this
 ///   requires enabling the `"boxed"` Cargo feature for this crate. **This is
 ///   often the easiest solution.**
@@ -80,7 +80,7 @@ impl<E: Display> Display for AllocOrInitError<E> {
 /// * Calling [`drop_in_place`][drop_in_place] or using
 ///   [`std::mem::ManuallyDrop`][manuallydrop] to manually drop these types.
 ///
-/// * Using [`bumpalo::collections::Vec`] instead of [`std::vec::Vec`].
+/// * Using [`oxc_allocator::Vec`] instead of [`std::vec::Vec`].
 ///
 /// * Avoiding allocating these problematic types within an `Arena`.
 ///
@@ -93,9 +93,9 @@ impl<E: Display> Display for AllocOrInitError<E> {
 /// [`std::fs::File`]: https://doc.rust-lang.org/std/fs/struct.File.html
 /// [drop_in_place]: https://doc.rust-lang.org/std/ptr/fn.drop_in_place.html
 /// [manuallydrop]: https://doc.rust-lang.org/std/mem/struct.ManuallyDrop.html
-/// [`bumpalo::collections::Vec`]: collections/vec/struct.Vec.html
+/// [`oxc_allocator::Vec`]: crate::Vec
 /// [`std::vec::Vec`]: https://doc.rust-lang.org/std/vec/struct.Vec.html
-/// [`bumpalo::boxed::Box::new_in`]: boxed/struct.Box.html#method.new_in
+/// [`oxc_allocator::Box::new_in`]: crate::Box::new_in
 /// [`std::boxed::Box`]: https://doc.rust-lang.org/std/boxed/struct.Box.html
 ///
 /// # Example
@@ -103,7 +103,7 @@ impl<E: Display> Display for AllocOrInitError<E> {
 /// ```
 /// # use oxc_allocator::arena::Arena;
 ///
-/// // Create a new bump arena.
+/// // Create a new arena.
 /// let arena = Arena::new();
 ///
 /// // Allocate values into the arena.
@@ -111,8 +111,8 @@ impl<E: Display> Display for AllocOrInitError<E> {
 /// assert_eq!(*forty_two, 42);
 ///
 /// // Mutable references are returned from allocation.
-/// let mut s = arena.alloc("bumpalo");
-/// *s = "the bump allocator; and also is a buffalo";
+/// let mut n = arena.alloc(123u64);
+/// *n = 456;
 /// ```
 ///
 /// # Allocation Methods Come in Many Flavors
@@ -252,9 +252,9 @@ impl<E: Display> Display for AllocOrInitError<E> {
 ///
 /// ## `Arena` Allocation Limits
 ///
-/// `bumpalo` supports setting a limit on the maximum bytes of memory that can
+/// `Arena` supports setting a limit on the maximum bytes of memory that can
 /// be allocated for use in a particular `Arena` arena. This limit can be set and removed with
-/// [`set_allocation_limit`][Arena::set_allocation_limit].
+/// [`set_allocation_limit`].
 /// The allocation limit is only enforced when allocating new backing chunks for
 /// an `Arena`. Updating the allocation limit will not affect existing allocations
 /// or any future allocations within the `Arena`'s current chunk.
@@ -285,6 +285,8 @@ impl<E: Display> Display for AllocOrInitError<E> {
 /// Because of backwards compatibility, allocations that fail
 /// due to allocation limits will not present differently than
 /// errors due to resource exhaustion.
+///
+/// [`set_allocation_limit`]: Arena::set_allocation_limit
 #[derive(Debug)]
 pub struct Arena<const MIN_ALIGN: usize = 1> {
     // The current chunk we are bump allocating within.
@@ -507,7 +509,7 @@ const OVERHEAD: usize = match round_up_to(MALLOC_OVERHEAD + CHUNK_FOOTER_SIZE, C
 };
 
 // The target size of our first allocation, including our overhead.
-// The available bump capacity will be slightly smaller.
+// The available capacity will be slightly smaller.
 // 16 KiB covers the majority of real-world JS/TS files.
 const FIRST_ALLOCATION_GOAL: usize = 16 * 1024;
 
@@ -544,7 +546,7 @@ fn allocation_size_overflow<T>() -> T {
 // workaround, other than putting constructors on the `Arena<DEFAULT>`; even
 // `std` does this same thing with `HashMap`, for example.
 impl Arena<1> {
-    /// Construct a new arena to bump allocate into.
+    /// Construct a new arena to allocate into.
     ///
     /// # Example
     ///
@@ -557,7 +559,7 @@ impl Arena<1> {
         Self::with_capacity(0)
     }
 
-    /// Attempt to construct a new arena to bump allocate into.
+    /// Attempt to construct a new arena to allocate into.
     ///
     /// # Example
     ///
@@ -571,8 +573,7 @@ impl Arena<1> {
         Arena::try_with_capacity(0)
     }
 
-    /// Construct a new arena with the specified byte capacity to bump allocate
-    /// into.
+    /// Construct a new arena with the specified byte capacity to allocate into.
     ///
     /// # Example
     ///
@@ -589,8 +590,7 @@ impl Arena<1> {
         Self::try_with_capacity(capacity).unwrap_or_else(|_| oom())
     }
 
-    /// Attempt to construct a new arena with the specified byte capacity to
-    /// bump allocate into.
+    /// Attempt to construct a new arena with the specified byte capacity to allocate into.
     ///
     /// Propagates errors when allocating the initial capacity.
     ///
@@ -784,7 +784,7 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
         }
     }
 
-    /// Get this bump arena's minimum alignment.
+    /// Get this arena's minimum alignment.
     ///
     /// All objects allocated in this arena get aligned to this value.
     ///
@@ -977,14 +977,14 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
         }
     }
 
-    /// Reset this bump allocator.
+    /// Reset this arena.
     ///
     /// Performs mass deallocation on everything allocated in this arena by
     /// resetting the pointer into the underlying chunk of memory to the start
     /// of the chunk. Does not run any `Drop` implementations on deallocated
     /// objects; see [the top-level documentation](struct.Arena.html) for details.
     ///
-    /// If this arena has allocated multiple chunks to bump allocate into, then
+    /// If this arena has allocated multiple chunks to allocate into, then
     /// the excess chunks are returned to the global allocator.
     ///
     /// # Example
@@ -2184,8 +2184,8 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
         current_footer.ptr.get().as_ptr() as usize - current_footer.data.as_ptr() as usize
     }
 
-    /// Slow path allocation for when we need to allocate a new chunk from the
-    /// parent bump set because there isn't enough room in our current chunk.
+    /// Slow path allocation for when we need to allocate a new chunk,
+    /// because there isn't enough room in our current chunk.
     #[inline(never)]
     #[cold]
     fn alloc_layout_slow(&self, layout: Layout) -> Option<NonNull<u8>> {
@@ -2243,7 +2243,7 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
     }
 
     /// Returns an iterator over each chunk of allocated memory that
-    /// this arena has bump allocated into.
+    /// this arena has allocated into.
     ///
     /// The chunks are returned ordered by allocation time, with the most
     /// recently allocated chunk being returned first, and the least recently
@@ -2255,7 +2255,7 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
     ///
     /// # SAFETY
     ///
-    /// Because this method takes `&mut self`, we know that the bump arena
+    /// Because this method takes `&mut self`, we know that the arena
     /// reference is unique and therefore there aren't any active references to
     /// any of the objects we've allocated in it either. This potential aliasing
     /// of exclusive references is one common footgun for unsafe code that we
@@ -2278,9 +2278,8 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
     /// responsibility to ensure that these properties hold before calling
     /// `MaybeUninit::assume_init` or otherwise reading the returned values.
     ///
-    /// Finally, you must also ensure that any values allocated into the bump
-    /// arena have not had their `Drop` implementations called on them,
-    /// e.g. after dropping a [`bumpalo::boxed::Box<T>`][crate::boxed::Box].
+    /// Finally, you must also ensure that any values allocated into the arena
+    /// have not had their `Drop` implementations called on them.
     ///
     /// # Example
     ///
@@ -2289,13 +2288,13 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
     ///
     /// let mut arena = Arena::new();
     ///
-    /// // Allocate a bunch of `i32`s in this bump arena, potentially causing
+    /// // Allocate a bunch of `i32`s in this arena, potentially causing
     /// // additional memory chunks to be reserved.
     /// for i in 0..10000 {
     ///     arena.alloc(i);
     /// }
     ///
-    /// // Iterate over each chunk we've bump allocated into. This is safe
+    /// // Iterate over each chunk we've allocated into. This is safe
     /// // because we have only allocated `i32`s in this arena, which fulfills
     /// // the above requirements.
     /// for ch in arena.iter_allocated_chunks() {
@@ -2334,7 +2333,7 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
     }
 
     /// Returns an iterator over raw pointers to chunks of allocated memory that
-    /// this arena has bump allocated into.
+    /// this arena has allocated into.
     ///
     /// This is an unsafe version of [`iter_allocated_chunks()`](Arena::iter_allocated_chunks),
     /// with the caller responsible for safe usage of the returned pointers as
@@ -2355,16 +2354,16 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
     }
 
     /// Calculates the number of bytes currently allocated across all chunks in
-    /// this bump arena.
+    /// this arena.
     ///
     /// If you allocate types of different alignments or types with
     /// larger-than-typical alignment in the same arena, some padding
-    /// bytes might get allocated in the bump arena. Note that those padding
+    /// bytes might get allocated in the arena. Note that those padding
     /// bytes will add to this method's resulting sum, so you cannot rely
     /// on it only counting the sum of the sizes of the things
     /// you've allocated in the arena.
     ///
-    /// The allocated bytes do not include the size of bumpalo's metadata,
+    /// The allocated bytes do not include the size of arena metadata,
     /// so the amount of memory requested from the Rust allocator is higher
     /// than the returned value.
     ///
@@ -2387,7 +2386,7 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
     /// Calculates the number of bytes requested from the Rust allocator for this `Arena`.
     ///
     /// This number is equal to the [`allocated_bytes()`](Self::allocated_bytes) plus
-    /// the size of the bump metadata.
+    /// the size of the metadata.
     pub fn allocated_bytes_including_metadata(&self) -> usize {
         let metadata_size =
             unsafe { self.iter_allocated_chunks_raw().count() * mem::size_of::<ChunkFooter>() };
@@ -2695,7 +2694,7 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
 }
 
 /// An iterator over each chunk of allocated memory that
-/// an arena has bump allocated into.
+/// an arena has allocated into.
 ///
 /// The chunks are returned ordered by allocation time, with the most recently
 /// allocated chunk being returned first.
@@ -2729,7 +2728,7 @@ impl<'a, const MIN_ALIGN: usize> Iterator for ChunkIter<'a, MIN_ALIGN> {
 impl<const MIN_ALIGN: usize> iter::FusedIterator for ChunkIter<'_, MIN_ALIGN> {}
 
 /// An iterator over raw pointers to chunks of allocated memory that this
-/// arena has bump allocated into.
+/// arena has allocated into.
 ///
 /// See [`ChunkIter`] for details regarding the returned chunks.
 ///
@@ -2803,7 +2802,7 @@ unsafe impl<const MIN_ALIGN: usize> BumpaloAlloc for &Arena<MIN_ALIGN> {
 
 /// This function tests that Arena isn't Sync.
 /// ```compile_fail
-/// use oxc_allocator::Arena;
+/// use oxc_allocator::arena::Arena;
 /// fn _requires_sync<T: Sync>(_value: T) {}
 /// fn _arena_not_sync(b: Arena) {
 ///    _requires_sync(b);
@@ -2870,7 +2869,7 @@ unsafe impl<const MIN_ALIGN: usize> Allocator for &Arena<MIN_ALIGN> {
 
 // NB: Only tests which require private types, fields, or methods should be in
 // here. Anything that can just be tested via public API surface should be in
-// `bumpalo/tests/all/*`.
+// `tests/arena/*`.
 #[cfg(test)]
 mod tests {
     use super::*;
