@@ -409,14 +409,24 @@ pub(super) fn is_pure_global_method_call(object: &str, method: &str) -> bool {
     }
 }
 
-/// Object methods that introspect their first argument via internal methods
-/// that Proxy can trap (e.g. `[[GetOwnProperty]]`, `[[OwnPropertyKeys]]`).
-/// Pure only when the first argument is known not to be a Proxy.
+/// For global method calls that are pure *except* for Proxy traps on a specific
+/// argument, returns the index of the argument that must not be a Proxy.
+/// Returns `None` for methods not handled here (either unconditionally pure
+/// via `is_pure_global_method_call`, or unconditionally impure).
 #[rustfmt::skip]
-pub(super) fn is_proxy_sensitive_object_method(method: &str) -> bool {
-    matches!(method, "getOwnPropertyDescriptor" | "getOwnPropertyDescriptors"
-        | "getOwnPropertyNames" | "getOwnPropertySymbols" | "getPrototypeOf"
-        | "hasOwn" | "isExtensible" | "isFrozen" | "isSealed" | "keys")
+pub(super) fn proxy_sensitive_arg_index(object: &str, method: &str) -> Option<usize> {
+    match (object, method) {
+        // These Object methods introspect their first argument via internal
+        // methods that Proxy can trap (e.g. [[GetOwnProperty]], [[OwnPropertyKeys]]).
+        ("Object", "getOwnPropertyDescriptor" | "getOwnPropertyDescriptors"
+            | "getOwnPropertyNames" | "getOwnPropertySymbols" | "getPrototypeOf"
+            | "hasOwn" | "isExtensible" | "isFrozen" | "isSealed" | "keys") => Some(0),
+        // Object.create(proto) is pure, but Object.create(proto, props)
+        // calls ObjectDefineProperties which reads [[OwnPropertyKeys]]
+        // and [[Get]] on props — both Proxy-trappable.
+        ("Object", "create") => Some(1),
+        _ => None,
+    }
 }
 
 /// Whether the property read on a known global is side-effect-free.
