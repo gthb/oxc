@@ -611,12 +611,11 @@ impl<'a> MayHaveSideEffects<'a> for CallExpression<'a> {
             }
             // These methods introspect a specific argument via internal methods
             // that Proxy can trap. If that argument's type is undetermined, it
-            // could be a Proxy.
-            return self
-                .arguments
-                .get(idx)
-                .and_then(Argument::as_expression)
-                .is_some_and(|e| e.value_type(ctx).is_undetermined());
+            // could be a Proxy. Spread elements are conservatively treated as
+            // side-effectful since we can't statically determine the spread value.
+            return self.arguments.get(idx).is_some_and(|arg| {
+                arg.as_expression().map_or(true, |e| e.value_type(ctx).is_undetermined())
+            });
         }
 
         true

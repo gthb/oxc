@@ -1234,6 +1234,10 @@ fn test_call_expressions() {
     test("Object[\"keys\"](x)", true);
     test("Object[\"keys\"]({})", false);
 
+    // Spread arguments are conservatively treated as side-effectful
+    test("Object.keys(...x)", true);
+    test("Object.create(null, ...x)", true);
+
     test("String.fromCharCode()", false);
     test("String.fromCodePoint()", false);
     test("String.raw()", false);
