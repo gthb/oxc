@@ -609,10 +609,13 @@ impl<'a> MayHaveSideEffects<'a> for CallExpression<'a> {
             if self.arguments.iter().any(|e| e.may_have_side_effects(ctx)) {
                 return true;
             }
-            // These methods introspect a specific argument via internal methods
-            // that Proxy can trap. If that argument's type is undetermined, it
-            // could be a Proxy. Spread elements are conservatively treated as
-            // side-effectful since we can't statically determine the spread value.
+            // If property reads are assumed pure, then Proxy traps are irrelevant.
+            if ctx.property_read_side_effects() == PropertyReadSideEffects::None {
+                return false;
+            }
+            // Otherwise, if the argument's type is undetermined, it could be a
+            // Proxy. Spread elements are conservatively treated as side-effectful
+            // since we can't statically determine the spread value.
             return self.arguments.get(idx).is_some_and(|arg| {
                 arg.as_expression().map_or(true, |e| e.value_type(ctx).is_undetermined())
             });

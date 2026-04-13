@@ -1363,6 +1363,13 @@ fn test_property_read_side_effects_support() {
     test_with_ctx("({...foo})", &none_ctx, false);
     test_with_ctx("({...foo()})", &all_ctx, true);
     test_with_ctx("({...foo()})", &none_ctx, true); // foo() itself has side effects
+
+    // Proxy-sensitive Object methods: when property reads are assumed pure,
+    // Proxy traps are irrelevant, so these are pure regardless of argument type.
+    test_with_ctx("Object.keys(x)", &all_ctx, true);
+    test_with_ctx("Object.keys(x)", &none_ctx, false);
+    test_with_ctx("Object.create(x, y)", &all_ctx, true);
+    test_with_ctx("Object.create(x, y)", &none_ctx, false);
 }
 
 #[test]
