@@ -2,7 +2,7 @@ commit: 7b8cb3bd
 
 semantic_typescript Summary:
 AST Parsed     : 4773/4773 (100.00%)
-Positive Passed: 2665/4773 (55.83%)
+Positive Passed: 2641/4773 (55.33%)
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/2dArrays.ts
 Symbol reference IDs mismatch for "Cell":
 after transform: SymbolId(0): [ReferenceId(1)]
@@ -942,6 +942,20 @@ Unresolved references mismatch:
 after transform: ["Array", "Boolean"]
 rebuilt        : ["Boolean", "Bullean", "anys", "realanys"]
 
+semantic Error: tasks/coverage/typescript/tests/cases/compiler/booleanLiteralsContextuallyTypedFromUnion.tsx
+Reference flags mismatch for "Funk":
+after transform: ReferenceId(12): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(12): ReferenceFlags(Read)
+Reference flags mismatch for "Funk":
+after transform: ReferenceId(13): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(15): ReferenceFlags(Read)
+Reference flags mismatch for "Funk":
+after transform: ReferenceId(14): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(18): ReferenceFlags(Read)
+Reference flags mismatch for "Funk":
+after transform: ReferenceId(16): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(22): ReferenceFlags(Read)
+
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/cachedContextualTypes.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["MenuWorkbenchToolBar", "createInstance"]
@@ -977,6 +991,15 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/callsOnComplexSig
 Symbol reference IDs mismatch for "React":
 after transform: SymbolId(0): [ReferenceId(28), ReferenceId(32), ReferenceId(33), ReferenceId(36), ReferenceId(38), ReferenceId(42), ReferenceId(44), ReferenceId(46)]
 rebuilt        : SymbolId(0): [ReferenceId(24), ReferenceId(28), ReferenceId(31)]
+Reference flags mismatch for "Tag":
+after transform: ReferenceId(30): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(25): ReferenceFlags(Read)
+Reference flags mismatch for "Comp":
+after transform: ReferenceId(35): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(29): ReferenceFlags(Read)
+Reference flags mismatch for "C":
+after transform: ReferenceId(40): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(32): ReferenceFlags(Read)
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/capturedLetConstInLoop1.ts
 Bindings mismatch:
@@ -3449,6 +3472,9 @@ rebuilt        : <None>
 Reference symbol mismatch for "App4":
 after transform: SymbolId(50) "App4"
 rebuilt        : <None>
+Reference flags mismatch for "App4":
+after transform: ReferenceId(50): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(12): ReferenceFlags(Read)
 Unresolved references mismatch:
 after transform: ["require", "undefined"]
 rebuilt        : ["App4", "app", "app2", "app3", "foo", "require", "undefined"]
@@ -3541,12 +3567,18 @@ rebuilt        : ScopeId(0): ["_jsxFileName", "_reactJsxRuntime"]
 Reference symbol mismatch for "Test":
 after transform: SymbolId(5) "Test"
 rebuilt        : <None>
+Reference flags mismatch for "Test":
+after transform: ReferenceId(7): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(2): ReferenceFlags(Read)
 Reference symbol mismatch for "Test":
 after transform: SymbolId(5) "Test"
 rebuilt        : <None>
 Reference symbol mismatch for "Test":
 after transform: SymbolId(5) "Test"
 rebuilt        : <None>
+Reference flags mismatch for "Test":
+after transform: ReferenceId(9): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(6): ReferenceFlags(Read)
 Unresolved references mismatch:
 after transform: ["require"]
 rebuilt        : ["Test", "require"]
@@ -3555,6 +3587,15 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/contextuallyTyped
 Bindings mismatch:
 after transform: ScopeId(0): ["ComponentPropsWithRef", "ElementType", "React", "UnwrappedLink", "UnwrappedLink2", "_jsxFileName"]
 rebuilt        : ScopeId(0): ["React", "UnwrappedLink", "UnwrappedLink2", "_jsxFileName"]
+Reference flags mismatch for "UnwrappedLink":
+after transform: ReferenceId(7): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(3): ReferenceFlags(Read)
+Reference flags mismatch for "UnwrappedLink2":
+after transform: ReferenceId(16): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(8): ReferenceFlags(Read)
+Reference flags mismatch for "UnwrappedLink2":
+after transform: ReferenceId(17): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(11): ReferenceFlags(Read)
 Unresolved references mismatch:
 after transform: ["Omit"]
 rebuilt        : []
@@ -3569,9 +3610,15 @@ rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(3), ReferenceId(5), R
 Reference symbol mismatch for "DropdownMenu":
 after transform: SymbolId(1) "DropdownMenu"
 rebuilt        : <None>
+Reference flags mismatch for "DropdownMenu":
+after transform: ReferenceId(8): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(1): ReferenceFlags(Read)
 Reference symbol mismatch for "DropdownMenu":
 after transform: SymbolId(1) "DropdownMenu"
 rebuilt        : <None>
+Reference flags mismatch for "DropdownMenu":
+after transform: ReferenceId(11): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(9): ReferenceFlags(Read)
 Unresolved references mismatch:
 after transform: ["JSX"]
 rebuilt        : ["DropdownMenu"]
@@ -3586,12 +3633,21 @@ rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(2), R
 Reference symbol mismatch for "TestComponentWithChildren":
 after transform: SymbolId(1) "TestComponentWithChildren"
 rebuilt        : <None>
+Reference flags mismatch for "TestComponentWithChildren":
+after transform: ReferenceId(16): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(3): ReferenceFlags(Read)
 Reference symbol mismatch for "TestComponentWithoutChildren":
 after transform: SymbolId(7) "TestComponentWithoutChildren"
 rebuilt        : <None>
+Reference flags mismatch for "TestComponentWithoutChildren":
+after transform: ReferenceId(21): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(11): ReferenceFlags(Read)
 Reference symbol mismatch for "Subscribe":
 after transform: SymbolId(19) "Subscribe"
 rebuilt        : <None>
+Reference flags mismatch for "Subscribe":
+after transform: ReferenceId(30): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(19): ReferenceFlags(Read)
 Unresolved references mismatch:
 after transform: ["Math", "NoInfer", "console"]
 rebuilt        : ["Math", "Subscribe", "TestComponentWithChildren", "TestComponentWithoutChildren", "console"]
@@ -6009,6 +6065,9 @@ rebuilt        : SymbolId(6): SymbolFlags(FunctionScopedVariable)
 Symbol reference IDs mismatch for "ListItemVariant":
 after transform: SymbolId(7): [ReferenceId(0), ReferenceId(1), ReferenceId(3), ReferenceId(4), ReferenceId(8), ReferenceId(11), ReferenceId(12), ReferenceId(24)]
 rebuilt        : SymbolId(6): [ReferenceId(5), ReferenceId(15)]
+Reference flags mismatch for "ListItem":
+after transform: ReferenceId(9): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(7): ReferenceFlags(Read)
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/discriminatedUnionWithIndexSignature.ts
 Unresolved references mismatch:
@@ -6114,6 +6173,9 @@ rebuilt        : ScopeId(0): ["_jsxFileName", "thing"]
 Reference symbol mismatch for "__foot":
 after transform: SymbolId(2) "__foot"
 rebuilt        : <None>
+Reference flags mismatch for "__foot":
+after transform: ReferenceId(0): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(1): ReferenceFlags(Read)
 Unresolved references mismatch:
 after transform: ["React"]
 rebuilt        : ["React", "__foot"]
@@ -8581,6 +8643,9 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/genericInferenceD
 Bindings mismatch:
 after transform: ScopeId(0): ["Component", "ComponentPropsWithRef", "ElementType", "React", "ReactNode", "_jsxFileName", "v1"]
 rebuilt        : ScopeId(0): ["Component", "React", "_jsxFileName", "v1"]
+Reference flags mismatch for "Component":
+after transform: ReferenceId(7): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(3): ReferenceFlags(Read)
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/genericMethodOverspecialization.ts
 Bindings mismatch:
@@ -10220,6 +10285,9 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/jsxCallbackWithDe
 Reference symbol mismatch for "Component":
 after transform: SymbolId(0) "Component"
 rebuilt        : <None>
+Reference flags mismatch for "MyComponent":
+after transform: ReferenceId(8): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(2): ReferenceFlags(Read)
 Unresolved references mismatch:
 after transform: ["Readonly"]
 rebuilt        : ["Component"]
@@ -10228,6 +10296,9 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/jsxChildrenSingle
 Symbol reference IDs mismatch for "React":
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(3), ReferenceId(7), ReferenceId(9), ReferenceId(11), ReferenceId(13)]
 rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(3), ReferenceId(6), ReferenceId(8)]
+Reference flags mismatch for "TabLayout":
+after transform: ReferenceId(4): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(4): ReferenceFlags(Read)
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/jsxComplexSignatureHasApplicabilityError.tsx
 Bindings mismatch:
@@ -10239,6 +10310,9 @@ rebuilt        : SymbolId(0): [ReferenceId(0)]
 Reference symbol mismatch for "ReactSelectClass":
 after transform: SymbolId(20) "ReactSelectClass"
 rebuilt        : <None>
+Reference flags mismatch for "ReactSelectClass":
+after transform: ReferenceId(22): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(1): ReferenceFlags(Read)
 Unresolved references mismatch:
 after transform: ["Array", "Exclude", "HTMLAnchorElement", "HTMLDivElement", "HTMLInputElement", "JSX", "Pick", "Promise", "undefined"]
 rebuilt        : ["ReactSelectClass", "undefined"]
@@ -10247,11 +10321,20 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/jsxContainsOnlyTr
 Bindings mismatch:
 after transform: ScopeId(0): ["JSX", "NoticeList", "_jsxFileName", "_reactJsxRuntime"]
 rebuilt        : ScopeId(0): ["NoticeList", "_jsxFileName", "_reactJsxRuntime"]
+Reference flags mismatch for "NoticeList":
+after transform: ReferenceId(1): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(2): ReferenceFlags(Read)
+Reference flags mismatch for "NoticeList":
+after transform: ReferenceId(3): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(5): ReferenceFlags(Read)
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/jsxElementClassTooManyParams.tsx
 Bindings mismatch:
 after transform: ScopeId(0): ["ElemClass", "JSX", "_jsxFileName", "_reactJsxRuntime", "elem"]
 rebuilt        : ScopeId(0): ["ElemClass", "_jsxFileName", "_reactJsxRuntime", "elem"]
+Reference flags mismatch for "ElemClass":
+after transform: ReferenceId(6): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(3): ReferenceFlags(Read)
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/jsxElementsAsIdentifierNames.tsx
 Bindings mismatch:
@@ -10282,6 +10365,9 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/jsxEmptyExpressio
 Symbol reference IDs mismatch for "React":
 after transform: SymbolId(0): [ReferenceId(0)]
 rebuilt        : SymbolId(0): []
+Reference flags mismatch for "Wrapper":
+after transform: ReferenceId(3): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(4): ReferenceFlags(Read)
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/jsxFactoryIdentifier.ts
 Bindings mismatch:
@@ -10325,6 +10411,9 @@ rebuilt        : SymbolId(0): []
 Reference symbol mismatch for "Comp":
 after transform: SymbolId(5) "Comp"
 rebuilt        : <None>
+Reference flags mismatch for "Comp":
+after transform: ReferenceId(9): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(1): ReferenceFlags(Read)
 Reference symbol mismatch for "Comp":
 after transform: SymbolId(5) "Comp"
 rebuilt        : <None>
@@ -10339,6 +10428,9 @@ rebuilt        : ScopeId(0): ["_jsxFileName", "_objectSpread", "_reactJsxRuntime
 Reference symbol mismatch for "GenericComponent":
 after transform: SymbolId(10) "GenericComponent"
 rebuilt        : <None>
+Reference flags mismatch for "GenericComponent":
+after transform: ReferenceId(11): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(3): ReferenceFlags(Read)
 Reference symbol mismatch for "omit":
 after transform: SymbolId(0) "omit"
 rebuilt        : <None>
@@ -10349,15 +10441,29 @@ Unresolved references mismatch:
 after transform: ["Omit", "require"]
 rebuilt        : ["GenericComponent", "omit", "otherProps", "require"]
 
+semantic Error: tasks/coverage/typescript/tests/cases/compiler/jsxHasLiteralType.tsx
+Reference flags mismatch for "MyComponent":
+after transform: ReferenceId(4): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(2): ReferenceFlags(Read)
+
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/jsxInferenceProducesLiteralAsExpected.tsx
 Symbol reference IDs mismatch for "TestObject":
 after transform: SymbolId(4): [ReferenceId(11), ReferenceId(15)]
 rebuilt        : SymbolId(2): [ReferenceId(5)]
+Reference flags mismatch for "Test":
+after transform: ReferenceId(12): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(7): ReferenceFlags(Read)
+Reference flags mismatch for "Test":
+after transform: ReferenceId(14): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(11): ReferenceFlags(Read)
 Unresolved references mismatch:
 after transform: ["Function", "React"]
 rebuilt        : ["React"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/jsxIntrinsicElementsCompatability.tsx
+Reference flags mismatch for "SomeComponent":
+after transform: ReferenceId(5): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(3): ReferenceFlags(Read)
 Unresolved references mismatch:
 after transform: ["JSX"]
 rebuilt        : []
@@ -10370,6 +10476,11 @@ Unresolved references mismatch:
 after transform: ["Record", "require"]
 rebuilt        : ["require"]
 
+semantic Error: tasks/coverage/typescript/tests/cases/compiler/jsxIntrinsicUnions.tsx
+Reference flags mismatch for "El":
+after transform: ReferenceId(1): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(2): ReferenceFlags(Read)
+
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/jsxLibraryManagedAttributesUnusedGeneric.tsx
 Bindings mismatch:
 after transform: ScopeId(0): ["Comp", "React", "_jsxFileName", "jsx"]
@@ -10380,6 +10491,9 @@ rebuilt        : SymbolId(0): [ReferenceId(0)]
 Reference symbol mismatch for "Comp":
 after transform: SymbolId(16) "Comp"
 rebuilt        : <None>
+Reference flags mismatch for "Comp":
+after transform: ReferenceId(4): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(1): ReferenceFlags(Read)
 Unresolved references mismatch:
 after transform: []
 rebuilt        : ["Comp"]
@@ -10412,6 +10526,11 @@ Unresolved references mismatch:
 after transform: ["JSX"]
 rebuilt        : []
 
+semantic Error: tasks/coverage/typescript/tests/cases/compiler/jsxNamespaceNoElementChildrenAttributeReactJsx.tsx
+Reference flags mismatch for "Title":
+after transform: ReferenceId(1): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(4): ReferenceFlags(Read)
+
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/jsxNamespaceReexports.tsx
 Bindings mismatch:
 after transform: ScopeId(0): ["JSX", "createElement"]
@@ -10429,6 +10548,9 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/jsxPartialSpread.
 Symbol reference IDs mismatch for "Select":
 after transform: SymbolId(0): [ReferenceId(2), ReferenceId(3)]
 rebuilt        : SymbolId(3): [ReferenceId(3)]
+Reference flags mismatch for "Select":
+after transform: ReferenceId(3): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(3): ReferenceFlags(Read)
 Unresolved references mismatch:
 after transform: ["Parameters", "Partial"]
 rebuilt        : []
@@ -10437,6 +10559,15 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/jsxSpreadFirstUni
 Bindings mismatch:
 after transform: ScopeId(0): ["Info", "React", "_jsxFileName", "_objectSpread", "a", "b", "c", "infoProps"]
 rebuilt        : ScopeId(0): ["Info", "React", "_jsxFileName", "_objectSpread", "a", "b", "c"]
+Reference flags mismatch for "Info":
+after transform: ReferenceId(3): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(7): ReferenceFlags(Read)
+Reference flags mismatch for "Info":
+after transform: ReferenceId(4): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(10): ReferenceFlags(Read)
+Reference flags mismatch for "Info":
+after transform: ReferenceId(6): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(13): ReferenceFlags(Read)
 Reference symbol mismatch for "infoProps":
 after transform: SymbolId(6) "infoProps"
 rebuilt        : <None>
@@ -14894,11 +15025,22 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/reactHOCSpreadpro
 Symbol reference IDs mismatch for "React":
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(4), ReferenceId(11)]
 rebuilt        : SymbolId(2): [ReferenceId(1), ReferenceId(2)]
+Reference flags mismatch for "App":
+after transform: ReferenceId(6): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(3): ReferenceFlags(Read)
+
+semantic Error: tasks/coverage/typescript/tests/cases/compiler/reactImportDropped.ts
+Reference flags mismatch for "TabBar":
+after transform: ReferenceId(0): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(1): ReferenceFlags(Read)
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/reactReadonlyHOCAssignabilityReal.tsx
 Symbol reference IDs mismatch for "React":
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(4), ReferenceId(10)]
 rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(1)]
+Reference flags mismatch for "Inner":
+after transform: ReferenceId(6): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(2): ReferenceFlags(Read)
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/reactSFCAndFunctionResolvable.tsx
 Bindings mismatch:
@@ -14928,6 +15070,12 @@ rebuilt        : <None>
 Reference symbol mismatch for "condition1":
 after transform: SymbolId(5) "condition1"
 rebuilt        : <None>
+Reference flags mismatch for "Component":
+after transform: ReferenceId(11): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(8): ReferenceFlags(Read)
+Reference flags mismatch for "OtherComponent":
+after transform: ReferenceId(12): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(11): ReferenceFlags(Read)
 Unresolved references mismatch:
 after transform: []
 rebuilt        : ["Checkbox", "OtherRadio", "Radio", "condition1", "condition2"]
@@ -14942,6 +15090,9 @@ rebuilt        : SymbolId(0): [ReferenceId(0)]
 Reference symbol mismatch for "Tag":
 after transform: SymbolId(1) "Tag"
 rebuilt        : <None>
+Reference flags mismatch for "Tag":
+after transform: ReferenceId(1): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(1): ReferenceFlags(Read)
 Unresolved references mismatch:
 after transform: []
 rebuilt        : ["Tag"]
@@ -14956,6 +15107,9 @@ rebuilt        : SymbolId(0): [ReferenceId(0)]
 Reference symbol mismatch for "Tag":
 after transform: SymbolId(1) "Tag"
 rebuilt        : <None>
+Reference flags mismatch for "Tag":
+after transform: ReferenceId(3): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(1): ReferenceFlags(Read)
 Unresolved references mismatch:
 after transform: ["HTMLElement"]
 rebuilt        : ["Tag"]
@@ -15521,6 +15675,11 @@ rebuilt        : SymbolId(6): Span { start: 0, end: 0 }
 Unresolved reference IDs mismatch for "Array":
 after transform: [ReferenceId(0), ReferenceId(2)]
 rebuilt        : [ReferenceId(0)]
+
+semantic Error: tasks/coverage/typescript/tests/cases/compiler/returnTypePredicateIsInstantiateInContextOfTarget.tsx
+Reference flags mismatch for "TestComponent":
+after transform: ReferenceId(4): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(7): ReferenceFlags(Read)
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/reuseInnerModuleMember.ts
 Bindings mismatch:
@@ -17070,6 +17229,9 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/tsxAttributeQuick
 Bindings mismatch:
 after transform: ScopeId(0): ["Foo", "JSX", "_jsxFileName", "_reactJsxRuntime"]
 rebuilt        : ScopeId(0): ["Foo", "_jsxFileName", "_reactJsxRuntime"]
+Reference flags mismatch for "Foo":
+after transform: ReferenceId(2): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(6): ReferenceFlags(Read)
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/tsxAttributesHasInferrableIndex.tsx
 Symbol flags mismatch for "createElement":
@@ -17078,6 +17240,9 @@ rebuilt        : SymbolId(1): SymbolFlags(Function)
 Symbol redeclarations mismatch for "createElement":
 after transform: SymbolId(2): [Span { start: 125, end: 138 }, Span { start: 243, end: 256 }]
 rebuilt        : SymbolId(1): []
+Reference flags mismatch for "Button":
+after transform: ReferenceId(5): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(2): ReferenceFlags(Read)
 Unresolved references mismatch:
 after transform: ["Date", "React"]
 rebuilt        : ["React"]
@@ -17100,15 +17265,27 @@ rebuilt        : ScopeId(0): ["_jsxFileName", "_reactJsxRuntime"]
 Reference symbol mismatch for "Comp":
 after transform: SymbolId(7) "Comp"
 rebuilt        : <None>
+Reference flags mismatch for "Comp":
+after transform: ReferenceId(5): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(2): ReferenceFlags(Read)
 Reference symbol mismatch for "Comp":
 after transform: SymbolId(7) "Comp"
 rebuilt        : <None>
+Reference flags mismatch for "Comp":
+after transform: ReferenceId(8): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(7): ReferenceFlags(Read)
 Reference symbol mismatch for "Comp":
 after transform: SymbolId(7) "Comp"
 rebuilt        : <None>
+Reference flags mismatch for "Comp":
+after transform: ReferenceId(10): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(11): ReferenceFlags(Read)
 Reference symbol mismatch for "Comp":
 after transform: SymbolId(7) "Comp"
 rebuilt        : <None>
+Reference flags mismatch for "Comp":
+after transform: ReferenceId(13): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(16): ReferenceFlags(Read)
 Unresolved references mismatch:
 after transform: ["parseInt", "require", "undefined"]
 rebuilt        : ["Comp", "parseInt", "require", "undefined"]
@@ -17134,9 +17311,17 @@ rebuilt        : SymbolId(0): [ReferenceId(0)]
 Reference symbol mismatch for "Button":
 after transform: SymbolId(3) "Button"
 rebuilt        : <None>
+Reference flags mismatch for "Button":
+after transform: ReferenceId(9): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(1): ReferenceFlags(Read)
 Unresolved references mismatch:
 after transform: ["HTMLButtonElement"]
 rebuilt        : ["Button"]
+
+semantic Error: tasks/coverage/typescript/tests/cases/compiler/tsxStatelessComponentDefaultProps.tsx
+Reference flags mismatch for "BackButton":
+after transform: ReferenceId(2): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(4): ReferenceFlags(Read)
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/tsxUnionMemberChecksFilterDataProps.tsx
 Bindings mismatch:
@@ -17145,9 +17330,15 @@ rebuilt        : ScopeId(0): ["React", "RootHappy", "RootNotHappy", "_jsxFileNam
 Reference symbol mismatch for "NotHappy":
 after transform: SymbolId(2) "NotHappy"
 rebuilt        : <None>
+Reference flags mismatch for "NotHappy":
+after transform: ReferenceId(2): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(1): ReferenceFlags(Read)
 Reference symbol mismatch for "Happy":
 after transform: SymbolId(4) "Happy"
 rebuilt        : <None>
+Reference flags mismatch for "Happy":
+after transform: ReferenceId(3): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(4): ReferenceFlags(Read)
 Unresolved references mismatch:
 after transform: []
 rebuilt        : ["Happy", "NotHappy"]
@@ -17156,6 +17347,12 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/tsxUnionSpread.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["AnimalComponent", "JSX", "_jsx", "_jsxFileName", "_objectSpread", "component", "component2", "getProps", "props", "props2"]
 rebuilt        : ScopeId(0): ["AnimalComponent", "_jsx", "_jsxFileName", "_objectSpread", "component", "component2", "getProps", "props", "props2"]
+Reference flags mismatch for "AnimalComponent":
+after transform: ReferenceId(8): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(3): ReferenceFlags(Read)
+Reference flags mismatch for "AnimalComponent":
+after transform: ReferenceId(11): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(8): ReferenceFlags(Read)
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/tupleTypeInference.ts
 Bindings mismatch:
@@ -17437,6 +17634,9 @@ rebuilt        : ScopeId(0): ["_jsxFileName", "_reactJsxRuntime"]
 Reference symbol mismatch for "T":
 after transform: SymbolId(6) "T"
 rebuilt        : <None>
+Reference flags mismatch for "T":
+after transform: ReferenceId(9): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(2): ReferenceFlags(Read)
 Unresolved references mismatch:
 after transform: ["JSX", "require"]
 rebuilt        : ["T", "require"]
@@ -27316,6 +27516,15 @@ after transform: ScopeId(0): ["NS", "a", "b", "c"]
 rebuilt        : ScopeId(0): ["a", "b", "c"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/jsx/checkJsxChildrenProperty1.tsx
+Reference flags mismatch for "Comp":
+after transform: ReferenceId(3): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(5): ReferenceFlags(Read)
+Reference flags mismatch for "Comp":
+after transform: ReferenceId(4): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(8): ReferenceFlags(Read)
+Reference flags mismatch for "Comp":
+after transform: ReferenceId(6): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(11): ReferenceFlags(Read)
 Unresolved references mismatch:
 after transform: ["JSX", "require"]
 rebuilt        : ["require"]
@@ -27327,30 +27536,114 @@ rebuilt        : ScopeId(0): ["Test", "_Fragment", "_jsx", "_jsxFileName", "_jsx
 Reference symbol mismatch for "Foo":
 after transform: SymbolId(4) "Foo"
 rebuilt        : <None>
+Reference flags mismatch for "Foo":
+after transform: ReferenceId(2): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(3): ReferenceFlags(Read)
 Reference symbol mismatch for "Foo":
 after transform: SymbolId(4) "Foo"
 rebuilt        : <None>
+Reference flags mismatch for "Foo":
+after transform: ReferenceId(4): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(6): ReferenceFlags(Read)
 Reference symbol mismatch for "Foo":
 after transform: SymbolId(4) "Foo"
 rebuilt        : <None>
+Reference flags mismatch for "Foo":
+after transform: ReferenceId(6): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(9): ReferenceFlags(Read)
 Reference symbol mismatch for "Foo":
 after transform: SymbolId(4) "Foo"
 rebuilt        : <None>
+Reference flags mismatch for "Foo":
+after transform: ReferenceId(7): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(12): ReferenceFlags(Read)
 Unresolved references mismatch:
 after transform: ["JSX"]
 rebuilt        : ["Foo"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/jsx/checkJsxChildrenProperty3.tsx
+Reference flags mismatch for "FetchUser":
+after transform: ReferenceId(4): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(4): ReferenceFlags(Read)
+Reference flags mismatch for "FetchUser":
+after transform: ReferenceId(7): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(10): ReferenceFlags(Read)
 Unresolved references mismatch:
 after transform: ["JSX", "require"]
 rebuilt        : ["require"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/jsx/checkJsxChildrenProperty6.tsx
+Reference flags mismatch for "Comp":
+after transform: ReferenceId(5): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(11): ReferenceFlags(Read)
+Reference flags mismatch for "Button":
+after transform: ReferenceId(6): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(13): ReferenceFlags(Read)
+Reference flags mismatch for "AnotherButton":
+after transform: ReferenceId(7): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(16): ReferenceFlags(Read)
+Reference flags mismatch for "Comp":
+after transform: ReferenceId(9): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(20): ReferenceFlags(Read)
+Reference flags mismatch for "Button":
+after transform: ReferenceId(10): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(22): ReferenceFlags(Read)
+Reference flags mismatch for "AnotherButton":
+after transform: ReferenceId(11): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(25): ReferenceFlags(Read)
+Reference flags mismatch for "Comp":
+after transform: ReferenceId(13): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(29): ReferenceFlags(Read)
+Reference flags mismatch for "Button":
+after transform: ReferenceId(14): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(31): ReferenceFlags(Read)
+Reference flags mismatch for "AnotherButton":
+after transform: ReferenceId(15): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(34): ReferenceFlags(Read)
+Reference flags mismatch for "Comp":
+after transform: ReferenceId(17): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(38): ReferenceFlags(Read)
+Reference flags mismatch for "Button":
+after transform: ReferenceId(18): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(40): ReferenceFlags(Read)
 Unresolved references mismatch:
 after transform: ["JSX", "require"]
 rebuilt        : ["require"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/jsx/checkJsxChildrenProperty8.tsx
+Reference flags mismatch for "Comp":
+after transform: ReferenceId(5): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(11): ReferenceFlags(Read)
+Reference flags mismatch for "Button":
+after transform: ReferenceId(6): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(13): ReferenceFlags(Read)
+Reference flags mismatch for "AnotherButton":
+after transform: ReferenceId(7): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(16): ReferenceFlags(Read)
+Reference flags mismatch for "Comp":
+after transform: ReferenceId(9): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(20): ReferenceFlags(Read)
+Reference flags mismatch for "Button":
+after transform: ReferenceId(10): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(22): ReferenceFlags(Read)
+Reference flags mismatch for "AnotherButton":
+after transform: ReferenceId(11): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(25): ReferenceFlags(Read)
+Reference flags mismatch for "Comp":
+after transform: ReferenceId(13): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(29): ReferenceFlags(Read)
+Reference flags mismatch for "Button":
+after transform: ReferenceId(14): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(31): ReferenceFlags(Read)
+Reference flags mismatch for "AnotherButton":
+after transform: ReferenceId(15): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(34): ReferenceFlags(Read)
+Reference flags mismatch for "Comp":
+after transform: ReferenceId(17): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(38): ReferenceFlags(Read)
+Reference flags mismatch for "Button":
+after transform: ReferenceId(18): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(40): ReferenceFlags(Read)
 Unresolved references mismatch:
 after transform: ["JSX", "require"]
 rebuilt        : ["require"]
@@ -27362,14 +27655,25 @@ rebuilt        : ScopeId(0): ["C", "_jsxFileName", "_reactJsxRuntime", "x", "y"]
 Reference symbol mismatch for "Component":
 after transform: SymbolId(2) "Component"
 rebuilt        : <None>
+Reference flags mismatch for "C":
+after transform: ReferenceId(7): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(4): ReferenceFlags(Read)
 Unresolved references mismatch:
 after transform: ["Readonly", "require"]
 rebuilt        : ["Component", "require"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/jsx/checkJsxSubtleSkipContextSensitiveBug.tsx
+Reference flags mismatch for "AsyncLoader":
+after transform: ReferenceId(10): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(8): ReferenceFlags(Read)
 Unresolved references mismatch:
 after transform: ["Exclude", "Promise", "arguments"]
 rebuilt        : ["arguments"]
+
+semantic Error: tasks/coverage/typescript/tests/cases/conformance/jsx/checkJsxUnionSFXContextualTypeInferredCorrectly.tsx
+Reference flags mismatch for "ComponentWithUnion":
+after transform: ReferenceId(2): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(3): ReferenceFlags(Read)
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/jsx/inline/inlineJsxAndJsxFragPragmaOverridesCompilerOptions.tsx
 Bindings mismatch:
@@ -27405,15 +27709,43 @@ Bindings mismatch:
 after transform: ScopeId(0): ["JSX"]
 rebuilt        : ScopeId(0): []
 
+semantic Error: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxAttributeResolution13.tsx
+Reference flags mismatch for "Test":
+after transform: ReferenceId(0): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(2): ReferenceFlags(Read)
+
+semantic Error: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxAttributeResolution16.tsx
+Reference flags mismatch for "AddressComp":
+after transform: ReferenceId(6): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(3): ReferenceFlags(Read)
+
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxAttributeResolution8.tsx
 Bindings mismatch:
 after transform: ScopeId(0): ["JSX", "_jsxFileName", "_objectSpread", "_reactJsxRuntime", "x"]
 rebuilt        : ScopeId(0): ["_jsxFileName", "_objectSpread", "_reactJsxRuntime", "x"]
 
+semantic Error: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxDefaultAttributesResolution1.tsx
+Reference flags mismatch for "Poisoned":
+after transform: ReferenceId(2): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(6): ReferenceFlags(Read)
+
+semantic Error: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxDefaultAttributesResolution2.tsx
+Reference flags mismatch for "Poisoned":
+after transform: ReferenceId(2): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(6): ReferenceFlags(Read)
+
+semantic Error: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxDynamicTagName1.tsx
+Reference flags mismatch for "CustomTag":
+after transform: ReferenceId(0): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(2): ReferenceFlags(Read)
+
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxDynamicTagName4.tsx
 Bindings mismatch:
 after transform: ScopeId(0): ["CustomTag", "JSX", "_jsxFileName", "_reactJsxRuntime"]
 rebuilt        : ScopeId(0): ["CustomTag", "_jsxFileName", "_reactJsxRuntime"]
+Reference flags mismatch for "CustomTag":
+after transform: ReferenceId(0): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(2): ReferenceFlags(Read)
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxDynamicTagName6.tsx
 Bindings mismatch:
@@ -27561,10 +27893,28 @@ Unresolved references mismatch:
 after transform: []
 rebuilt        : ["React"]
 
+semantic Error: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxGenericAttributesType2.tsx
+Reference flags mismatch for "Component":
+after transform: ReferenceId(4): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(3): ReferenceFlags(Read)
+
+semantic Error: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxGenericAttributesType3.tsx
+Reference flags mismatch for "B1":
+after transform: ReferenceId(4): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(8): ReferenceFlags(Read)
+
+semantic Error: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxGenericAttributesType4.tsx
+Reference flags mismatch for "B1":
+after transform: ReferenceId(4): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(8): ReferenceFlags(Read)
+
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxGenericAttributesType9.tsx
 Symbol reference IDs mismatch for "React":
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2)]
 rebuilt        : SymbolId(3): [ReferenceId(1)]
+Reference flags mismatch for "Ctor":
+after transform: ReferenceId(5): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(3): ReferenceFlags(Read)
 Unresolved references mismatch:
 after transform: ["JSX", "require"]
 rebuilt        : ["require"]
@@ -27590,6 +27940,9 @@ rebuilt        : SymbolId(2): []
 Reference symbol mismatch for "MyComp":
 after transform: SymbolId(2) "MyComp"
 rebuilt        : <None>
+Reference flags mismatch for "MyComp":
+after transform: ReferenceId(4): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(3): ReferenceFlags(Read)
 Unresolved references mismatch:
 after transform: ["require"]
 rebuilt        : ["MyComp", "require"]
@@ -27604,9 +27957,15 @@ rebuilt        : SymbolId(2): []
 Reference symbol mismatch for "MyComp":
 after transform: SymbolId(2) "MyComp"
 rebuilt        : <None>
+Reference flags mismatch for "MyComp":
+after transform: ReferenceId(4): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(3): ReferenceFlags(Read)
 Reference symbol mismatch for "MyComp":
 after transform: SymbolId(2) "MyComp"
 rebuilt        : <None>
+Reference flags mismatch for "MyComp":
+after transform: ReferenceId(5): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(6): ReferenceFlags(Read)
 Unresolved references mismatch:
 after transform: ["require"]
 rebuilt        : ["MyComp", "require"]
@@ -27752,10 +28111,73 @@ Unresolved references mismatch:
 after transform: []
 rebuilt        : ["React"]
 
+semantic Error: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxSpreadAttributesResolution1.tsx
+Reference flags mismatch for "Poisoned":
+after transform: ReferenceId(1): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(7): ReferenceFlags(Read)
+Reference flags mismatch for "Poisoned":
+after transform: ReferenceId(3): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(12): ReferenceFlags(Read)
+
+semantic Error: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxSpreadAttributesResolution15.tsx
+Reference flags mismatch for "AnotherComponent":
+after transform: ReferenceId(1): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(1): ReferenceFlags(Read)
+
+semantic Error: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxSpreadAttributesResolution3.tsx
+Reference flags mismatch for "Poisoned":
+after transform: ReferenceId(2): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(7): ReferenceFlags(Read)
+Reference flags mismatch for "Poisoned":
+after transform: ReferenceId(4): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(12): ReferenceFlags(Read)
+
+semantic Error: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxSpreadAttributesResolution7.tsx
+Reference flags mismatch for "TextComponent":
+after transform: ReferenceId(3): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(7): ReferenceFlags(Read)
+Reference flags mismatch for "TextComponent":
+after transform: ReferenceId(6): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(12): ReferenceFlags(Read)
+
+semantic Error: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxSpreadAttributesResolution8.tsx
+Reference flags mismatch for "OverWriteAttr":
+after transform: ReferenceId(2): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(7): ReferenceFlags(Read)
+Reference flags mismatch for "OverWriteAttr":
+after transform: ReferenceId(5): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(14): ReferenceFlags(Read)
+
+semantic Error: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxSpreadAttributesResolution9.tsx
+Reference flags mismatch for "Opt":
+after transform: ReferenceId(4): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(7): ReferenceFlags(Read)
+Reference flags mismatch for "Opt":
+after transform: ReferenceId(5): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(10): ReferenceFlags(Read)
+Reference flags mismatch for "Opt":
+after transform: ReferenceId(7): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(15): ReferenceFlags(Read)
+Reference flags mismatch for "Opt":
+after transform: ReferenceId(9): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(20): ReferenceFlags(Read)
+Reference flags mismatch for "Opt":
+after transform: ReferenceId(11): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(26): ReferenceFlags(Read)
+
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxSpreadChildrenInvalidType.tsx
 Bindings mismatch:
 after transform: ScopeId(0): ["JSX", "React", "Todo", "TodoList", "TodoListNoError", "_jsxFileName", "_objectSpread", "_reactJsxRuntime", "x"]
 rebuilt        : ScopeId(0): ["Todo", "TodoList", "TodoListNoError", "_jsxFileName", "_objectSpread", "_reactJsxRuntime"]
+Reference flags mismatch for "Todo":
+after transform: ReferenceId(4): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(8): ReferenceFlags(Read)
+Reference flags mismatch for "Todo":
+after transform: ReferenceId(8): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(15): ReferenceFlags(Read)
+Reference flags mismatch for "TodoList":
+after transform: ReferenceId(12): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(21): ReferenceFlags(Read)
 Reference symbol mismatch for "x":
 after transform: SymbolId(12) "x"
 rebuilt        : <None>
@@ -27763,10 +28185,92 @@ Unresolved references mismatch:
 after transform: ["require"]
 rebuilt        : ["require", "x"]
 
+semantic Error: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxTypeArgumentsJsxPreserveOutput.tsx
+Reference flags mismatch for "Foo":
+after transform: ReferenceId(0): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(4): ReferenceFlags(Read)
+Reference flags mismatch for "Foo":
+after transform: ReferenceId(1): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(7): ReferenceFlags(Read)
+Reference flags mismatch for "Foo":
+after transform: ReferenceId(2): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(10): ReferenceFlags(Read)
+Reference flags mismatch for "Foo":
+after transform: ReferenceId(3): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(13): ReferenceFlags(Read)
+Reference flags mismatch for "Foo":
+after transform: ReferenceId(4): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(16): ReferenceFlags(Read)
+Reference flags mismatch for "Foo":
+after transform: ReferenceId(5): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(19): ReferenceFlags(Read)
+Reference flags mismatch for "Foo":
+after transform: ReferenceId(6): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(22): ReferenceFlags(Read)
+Reference flags mismatch for "Foo":
+after transform: ReferenceId(7): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(25): ReferenceFlags(Read)
+Reference flags mismatch for "Foo":
+after transform: ReferenceId(8): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(28): ReferenceFlags(Read)
+Reference flags mismatch for "Foo":
+after transform: ReferenceId(10): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(31): ReferenceFlags(Read)
+Reference flags mismatch for "Foo":
+after transform: ReferenceId(12): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(34): ReferenceFlags(Read)
+Reference flags mismatch for "Foo":
+after transform: ReferenceId(14): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(37): ReferenceFlags(Read)
+Reference flags mismatch for "Foo":
+after transform: ReferenceId(16): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(40): ReferenceFlags(Read)
+Reference flags mismatch for "Foo":
+after transform: ReferenceId(18): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(43): ReferenceFlags(Read)
+Reference flags mismatch for "Foo":
+after transform: ReferenceId(20): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(46): ReferenceFlags(Read)
+Reference flags mismatch for "Foo":
+after transform: ReferenceId(22): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(49): ReferenceFlags(Read)
+Reference flags mismatch for "Foo":
+after transform: ReferenceId(24): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(52): ReferenceFlags(Read)
+Reference flags mismatch for "Foo":
+after transform: ReferenceId(26): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(55): ReferenceFlags(Read)
+Reference flags mismatch for "Foo":
+after transform: ReferenceId(28): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(58): ReferenceFlags(Read)
+Reference flags mismatch for "Foo":
+after transform: ReferenceId(31): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(61): ReferenceFlags(Read)
+
+semantic Error: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxUnionElementType5.tsx
+Reference flags mismatch for "EmptySFCComp":
+after transform: ReferenceId(4): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(11): ReferenceFlags(Read)
+Reference flags mismatch for "EmptySFCComp":
+after transform: ReferenceId(5): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(14): ReferenceFlags(Read)
+Reference flags mismatch for "SFC2AndEmptyComp":
+after transform: ReferenceId(6): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(17): ReferenceFlags(Read)
+
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxUnionTypeComponent1.tsx
 Symbol reference IDs mismatch for "React":
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(6), ReferenceId(11), ReferenceId(13), ReferenceId(15), ReferenceId(17)]
 rebuilt        : SymbolId(1): [ReferenceId(1), ReferenceId(2), ReferenceId(5), ReferenceId(7), ReferenceId(10), ReferenceId(11)]
+Reference flags mismatch for "AnyComponent":
+after transform: ReferenceId(4): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(3): ReferenceFlags(Read)
+Reference flags mismatch for "MyComponent":
+after transform: ReferenceId(5): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(6): ReferenceFlags(Read)
+Reference flags mismatch for "MyComponent":
+after transform: ReferenceId(7): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(12): ReferenceFlags(Read)
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/moduleResolution/allowImportingTypesDtsExtension.ts
 Bindings mismatch:
@@ -36158,6 +36662,24 @@ after transform: ["Array"]
 rebuilt        : ["f1", "f2", "f3", "s"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeInference/intraExpressionInferencesJsx.tsx
+Reference flags mismatch for "Component":
+after transform: ReferenceId(19): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(3): ReferenceFlags(Read)
+Reference flags mismatch for "Component":
+after transform: ReferenceId(20): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(6): ReferenceFlags(Read)
+Reference flags mismatch for "Component":
+after transform: ReferenceId(21): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(9): ReferenceFlags(Read)
+Reference flags mismatch for "Foo":
+after transform: ReferenceId(26): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(14): ReferenceFlags(Read)
+Reference flags mismatch for "Foo":
+after transform: ReferenceId(28): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(18): ReferenceFlags(Read)
+Reference flags mismatch for "Foo":
+after transform: ReferenceId(30): ReferenceFlags(Read | JSXTag)
+rebuilt        : ReferenceId(22): ReferenceFlags(Read)
 Unresolved references mismatch:
 after transform: ["Partial", "Record"]
 rebuilt        : []
