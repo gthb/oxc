@@ -617,7 +617,7 @@ impl<'a> MayHaveSideEffects<'a> for CallExpression<'a> {
             // Proxy. Spread elements are conservatively treated as side-effectful
             // since we can't statically determine the spread value.
             return self.arguments.get(idx).is_some_and(|arg| {
-                arg.as_expression().map_or(true, |e| e.value_type(ctx).is_undetermined())
+                arg.as_expression().is_none_or(|e| e.value_type(ctx).is_undetermined())
             });
         }
 
