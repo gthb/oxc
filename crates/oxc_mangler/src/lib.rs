@@ -465,6 +465,7 @@ impl<'t> Mangler<'t> {
 
         let total_number_of_slots = slot_liveness.len();
 
+        let is_jsx_source = program.source_type.is_jsx();
         let frequencies = self.tally_slot_frequencies(
             scoping,
             exported_symbols.as_ref(),
@@ -472,72 +473,153 @@ impl<'t> Mangler<'t> {
             total_number_of_slots,
             &slots,
             top_level,
+            is_jsx_source,
         );
 
-        // Detect symbols used as JSX component names (their tag must start upper-case).
-        let jsx_component_symbols = if program.source_type.is_jsx() {
-            collect_jsx_component_symbols(scoping, temp_allocator)
+        let root_unresolved_references = scoping.root_unresolved_references();
+        let root_bindings = scoping.get_bindings(scoping.root_scope_id());
+
+        // Generate reserved names only for slots that have symbols (frequencies.len())
+        // instead of all slots. This avoids generating unused names.
+        let names_needed = frequencies.len();
+        let mut reserved_names = Vec::with_capacity_in(names_needed, temp_allocator);
+
+        let mut count = 0;
+        for _ in 0..names_needed {
+            let name = loop {
+                let name = generate_name(count);
+                count += 1;
+                // Do not mangle keywords, unresolved references, and names from eval scopes.
+                // Variables in direct-eval-containing scopes keep their original names
+                // (those scopes are skipped during slot assignment), and we also reserve
+                // those names here to prevent mangled names from shadowing them.
+                let n = name.as_str();
+                if !oxc_syntax::keyword::is_reserved_keyword(n)
+                    && !is_special_name(n)
+                    && !root_unresolved_references.contains_key(n)
+                    && !(root_bindings.contains_key(n)
+                        && (!top_level || exported_names.contains(n)))
+                    // TODO: only skip the names that are kept in the current scope
+                    && !keep_name_names.contains(n)
+                    && !eval_reserved_names.contains(n)
+                {
+                    break name;
+                }
+            };
+            reserved_names.push(name);
+        }
+
+        // Check if any JSX component slots need upper-case names.
+        let has_jsx_slots = is_jsx_source && frequencies.iter().any(|f| f.is_jsx);
+
+        // Pre-generate uppercase replacement names for JSX component slots.
+        // This must happen before the mutable assignment phase because the name
+        // availability checks borrow `scoping` immutably (via `keep_name_names`,
+        // `root_unresolved_references`, `root_bindings`).
+        //
+        // We generate enough uppercase names for all JSX slots (typically very
+        // few). During the assignment phase below, JSX slots whose assigned name
+        // already starts uppercase won't need a replacement, so some of these
+        // pre-generated names may go unused — that's fine.
+        let jsx_replacement_names: Option<Vec<InlineString<CAPACITY_JSX, u8>>> = if has_jsx_slots {
+            let assigned_names: FxHashSet<&str> =
+                reserved_names.iter().map(InlineString::as_str).collect();
+            let jsx_slot_count = frequencies.iter().filter(|f| f.is_jsx).count();
+            let mut jsx_names = Vec::with_capacity_in(jsx_slot_count, temp_allocator);
+            let mut jsx_count: u32 = 0;
+            for _ in 0..jsx_slot_count {
+                let name = loop {
+                    let name = generate_name_jsx(jsx_count);
+                    jsx_count += 1;
+                    let n = name.as_str();
+                    if !oxc_syntax::keyword::is_reserved_keyword(n)
+                        && !is_special_name(n)
+                        && !root_unresolved_references.contains_key(n)
+                        && !(root_bindings.contains_key(n)
+                            && (!top_level || exported_names.contains(n)))
+                        && !keep_name_names.contains(n)
+                        && !eval_reserved_names.contains(n)
+                        && !assigned_names.contains(n)
+                    {
+                        break name;
+                    }
+                };
+                jsx_names.push(name);
+            }
+            Some(jsx_names)
         } else {
             None
         };
 
-        // Partition frequencies: a slot goes to the JSX pool if any of its symbols
-        // is a JSX component symbol.
-        let mut regular_frequencies = Vec::with_capacity_in(frequencies.len(), temp_allocator);
-        let mut jsx_frequencies = Vec::new_in(temp_allocator);
-        for freq in frequencies {
-            if jsx_component_symbols
-                .as_ref()
-                .is_some_and(|jsx| freq.symbol_ids.iter().any(|id| jsx.has_bit(id.index())))
-            {
-                jsx_frequencies.push(freq);
-            } else {
-                regular_frequencies.push(freq);
+        // Group similar symbols for smaller gzipped file
+        // <https://github.com/google/closure-compiler/blob/c383a3a1d2fce33b6c778ef76b5a626e07abca41/src/com/google/javascript/jscomp/RenameVars.java#L475-L483>
+        // Original Comment:
+        // 1) The most frequent vars get the shorter names.
+        // 2) If N number of vars are going to be assigned names of the same
+        //    length, we assign the N names based on the order at which the vars
+        //    first appear in the source. This makes the output somewhat less
+        //    random, because symbols declared close together are assigned names
+        //    that are quite similar. With this heuristic, the output is more
+        //    compressible.
+        //    For instance, the output may look like:
+        //    var da = "..", ea = "..";
+        //    function fa() { .. } function ga() { .. }
+
+        let mut freq_iter = frequencies.iter();
+        let mut symbols_renamed_in_this_batch = Vec::with_capacity_in(100, temp_allocator);
+        let mut slice_of_same_len_strings = Vec::with_capacity_in(100, temp_allocator);
+        // 2. "N number of vars are going to be assigned names of the same length"
+        for (_, slice_of_same_len_strings_group) in
+            &reserved_names.into_iter().chunk_by(InlineString::len)
+        {
+            // 1. "The most frequent vars get the shorter names"
+            // (freq_iter is sorted by frequency from highest to lowest,
+            //  so taking means take the N most frequent symbols remaining)
+            slice_of_same_len_strings.clear();
+            slice_of_same_len_strings.extend(slice_of_same_len_strings_group);
+            symbols_renamed_in_this_batch.clear();
+            symbols_renamed_in_this_batch
+                .extend(freq_iter.by_ref().take(slice_of_same_len_strings.len()));
+
+            debug_assert_eq!(symbols_renamed_in_this_batch.len(), slice_of_same_len_strings.len());
+
+            // 2. "we assign the N names based on the order at which the vars first appear in the source."
+            // sorting by slot enables us to sort by the order at which the vars first appear in the source
+            // (this is possible because the slots are discovered currently in a DFS method which is the same order
+            //  as variables appear in the source code)
+            symbols_renamed_in_this_batch.sort_unstable_by_key(|a| a.slot);
+
+            // here we just zip the iterator of symbols to rename with the iterator of new names for the next for loop
+            let symbols_to_rename_with_new_names =
+                symbols_renamed_in_this_batch.iter().zip(slice_of_same_len_strings.iter());
+
+            // rename the variables
+            for (symbol_to_rename, new_name) in symbols_to_rename_with_new_names {
+                for &symbol_id in &symbol_to_rename.symbol_ids {
+                    scoping.set_symbol_name(symbol_id, Ident::from(new_name.as_str()));
+                }
             }
         }
 
-        // Generate names for both pools. Name generation borrows `scoping` immutably
-        // (via `keep_name_names`, `root_unresolved_references`, `root_bindings`), so it must
-        // complete before the assignment pass which borrows `scoping` mutably.
-        let empty_set: FxHashSet<&str> = FxHashSet::default();
-        let regular_reserved_names = generate_reserved_names(
-            regular_frequencies.len(),
-            &generate_name,
-            &empty_set,
-            scoping,
-            top_level,
-            &exported_names,
-            &keep_name_names,
-            &eval_reserved_names,
-            temp_allocator,
-        );
-        let jsx_reserved_names = if jsx_frequencies.is_empty() {
-            Vec::new_in(temp_allocator)
-        } else {
-            // Exclude names already assigned to the regular pool to prevent collisions.
-            let regular_names_set: FxHashSet<&str> =
-                regular_reserved_names.iter().map(InlineString::as_str).collect();
-            generate_reserved_names(
-                jsx_frequencies.len(),
-                &generate_name_jsx,
-                &regular_names_set,
-                scoping,
-                top_level,
-                &exported_names,
-                &keep_name_names,
-                &eval_reserved_names,
-                temp_allocator,
-            )
-        };
-
-        assign_reserved_names(
-            &regular_frequencies,
-            regular_reserved_names,
-            scoping,
-            temp_allocator,
-        );
-        if !jsx_frequencies.is_empty() {
-            assign_reserved_names(&jsx_frequencies, jsx_reserved_names, scoping, temp_allocator);
+        // Fixup JSX component slots: replace lowercase-starting names with uppercase
+        // alternatives. JSX treats `<e />` as an HTML element, so component tags must
+        // start with an uppercase letter. Only a handful of slots typically need fixup.
+        if let Some(jsx_names) = jsx_replacement_names {
+            let mut jsx_name_iter = jsx_names.iter();
+            for freq in &frequencies {
+                if !freq.is_jsx {
+                    continue;
+                }
+                // Check if the assigned name already starts with uppercase
+                let current_name = scoping.symbol_name(freq.symbol_ids[0]);
+                if current_name.as_bytes().first().is_some_and(u8::is_ascii_uppercase) {
+                    continue;
+                }
+                let new_name = jsx_name_iter.next().expect("pre-generated enough JSX names");
+                for &symbol_id in &freq.symbol_ids {
+                    scoping.set_symbol_name(symbol_id, Ident::from(new_name.as_str()));
+                }
+            }
         }
     }
 
@@ -549,6 +631,7 @@ impl<'t> Mangler<'t> {
         total_number_of_slots: usize,
         slots: &[Slot],
         top_level: bool,
+        is_jsx_source: bool,
     ) -> Vec<'a, SlotFrequency<'a>> {
         let root_scope_id = scoping.root_scope_id();
         let temp_allocator = self.temp_allocator.as_ref();
@@ -581,8 +664,15 @@ impl<'t> Mangler<'t> {
             }
             let index = slot as usize;
             frequencies[index].slot = slot;
-            frequencies[index].frequency += scoping.get_resolved_reference_ids(symbol_id).len();
+            let ref_ids = scoping.get_resolved_reference_ids(symbol_id);
+            frequencies[index].frequency += ref_ids.len();
             frequencies[index].symbol_ids.push(symbol_id);
+            // Detect JSX component symbols: if any reference has the JSXTag flag,
+            // this slot needs an uppercase-first mangled name.
+            if is_jsx_source && !frequencies[index].is_jsx {
+                frequencies[index].is_jsx =
+                    ref_ids.iter().any(|&id| scoping.get_reference(id).flags().is_jsx_tag());
+            }
         }
 
         // Remove slots that have no symbols to rename before sorting.
@@ -699,147 +789,15 @@ struct SlotFrequency<'a> {
     pub slot: Slot,
     pub frequency: usize,
     pub symbol_ids: Vec<'a, SymbolId>,
+    /// Whether any symbol in this slot is used as a JSX component tag name.
+    /// If true, the slot's mangled name must start with an uppercase letter.
+    pub is_jsx: bool,
 }
 
 impl<'t> SlotFrequency<'t> {
     fn new(temp_allocator: &'t Allocator) -> Self {
-        Self { slot: 0, frequency: 0, symbol_ids: Vec::new_in(temp_allocator) }
+        Self { slot: 0, frequency: 0, symbol_ids: Vec::new_in(temp_allocator), is_jsx: false }
     }
-}
-
-/// Generate reserved names for a pool of symbol slots.
-///
-/// For each slot, generate the next available name from `generate_name` that
-/// is not a keyword, special name, unresolved reference, or already claimed by
-/// the other pool (`other_pool_names`).
-fn generate_reserved_names<'a, const CAPACITY: usize>(
-    names_needed: usize,
-    generate_name: &impl Fn(u32) -> InlineString<CAPACITY, u8>,
-    other_pool_names: &FxHashSet<&str>,
-    scoping: &Scoping,
-    top_level: bool,
-    exported_names: &HashSet<'_, Str<'_>>,
-    keep_name_names: &FxHashSet<&str>,
-    eval_reserved_names: &FxHashSet<&str>,
-    temp_allocator: &'a Allocator,
-) -> Vec<'a, InlineString<CAPACITY, u8>> {
-    let root_unresolved_references = scoping.root_unresolved_references();
-    let root_bindings = scoping.get_bindings(scoping.root_scope_id());
-    // Generate reserved names only for slots that have symbols (names_needed)
-    // instead of all slots. This avoids generating unused names.
-    let mut reserved_names = Vec::with_capacity_in(names_needed, temp_allocator);
-
-    let mut count: u32 = 0;
-    for _ in 0..names_needed {
-        let name = loop {
-            let name = generate_name(count);
-            count += 1;
-            // Do not mangle keywords, unresolved references, and names from eval scopes.
-            // Variables in direct-eval-containing scopes keep their original names
-            // (those scopes are skipped during slot assignment), and we also reserve
-            // those names here to prevent mangled names from shadowing them.
-            let n = name.as_str();
-            if !oxc_syntax::keyword::is_reserved_keyword(n)
-                && !is_special_name(n)
-                && !root_unresolved_references.contains_key(n)
-                && !(root_bindings.contains_key(n)
-                    && (!top_level || exported_names.contains(n)))
-                // TODO: only skip the names that are kept in the current scope
-                && !keep_name_names.contains(n)
-                && !eval_reserved_names.contains(n)
-                && !other_pool_names.contains(n)
-            {
-                break name;
-            }
-        };
-        reserved_names.push(name);
-    }
-    reserved_names
-}
-
-/// Assign reserved names to symbol slots.
-/// Group similar symbols for smaller gzipped file
-/// <https://github.com/google/closure-compiler/blob/c383a3a1d2fce33b6c778ef76b5a626e07abca41/src/com/google/javascript/jscomp/RenameVars.java#L475-L483>
-/// Original Comment:
-/// 1) The most frequent vars get the shorter names.
-/// 2) If N number of vars are going to be assigned names of the same
-///    length, we assign the N names based on the order at which the vars
-///    first appear in the source. This makes the output somewhat less
-///    random, because symbols declared close together are assigned names
-///    that are quite similar. With this heuristic, the output is more
-///    compressible.
-///    For instance, the output may look like:
-///    var da = "..", ea = "..";
-///    function fa() { .. } function ga() { .. }
-fn assign_reserved_names<'a, const CAPACITY: usize>(
-    frequencies: &Vec<'a, SlotFrequency<'a>>,
-    reserved_names: Vec<'a, InlineString<CAPACITY, u8>>,
-    scoping: &mut Scoping,
-    temp_allocator: &'a Allocator,
-) {
-    let mut freq_iter = frequencies.iter();
-    let mut symbols_renamed_in_this_batch = Vec::with_capacity_in(100, temp_allocator);
-    let mut slice_of_same_len_strings = Vec::with_capacity_in(100, temp_allocator);
-    // 2. "N number of vars are going to be assigned names of the same length"
-    for (_, slice_of_same_len_strings_group) in
-        &reserved_names.into_iter().chunk_by(InlineString::len)
-    {
-        // 1. "The most frequent vars get the shorter names"
-        // (freq_iter is sorted by frequency from highest to lowest,
-        //  so taking means take the N most frequent symbols remaining)
-        slice_of_same_len_strings.clear();
-        slice_of_same_len_strings.extend(slice_of_same_len_strings_group);
-        symbols_renamed_in_this_batch.clear();
-        symbols_renamed_in_this_batch
-            .extend(freq_iter.by_ref().take(slice_of_same_len_strings.len()));
-
-        debug_assert_eq!(symbols_renamed_in_this_batch.len(), slice_of_same_len_strings.len());
-
-        // 2. "we assign the N names based on the order at which the vars first appear in the source."
-        // sorting by slot enables us to sort by the order at which the vars first appear in the source
-        // (this is possible because the slots are discovered currently in a DFS method which is the same order
-        //  as variables appear in the source code)
-        symbols_renamed_in_this_batch.sort_unstable_by_key(|a| a.slot);
-
-        // here we just zip the iterator of symbols to rename with the iterator of new names for the next for loop
-        let symbols_to_rename_with_new_names =
-            symbols_renamed_in_this_batch.iter().zip(slice_of_same_len_strings.iter());
-
-        // rename the variables
-        for (symbol_to_rename, new_name) in symbols_to_rename_with_new_names {
-            for &symbol_id in &symbol_to_rename.symbol_ids {
-                scoping.set_symbol_name(symbol_id, Ident::from(new_name.as_str()));
-            }
-        }
-    }
-}
-
-/// Collect symbols that are used as JSX component names.
-///
-/// A symbol is a JSX component symbol if any of its resolved references has the
-/// `JSXTag` flag set by the semantic builder. Such symbols must be mangled to
-/// names starting with an upper-case letter, because JSX treats lower-case tags
-/// as HTML elements.
-///
-/// Member expressions like `<foo.Bar />` are excluded: the `foo` identifier
-/// is a `JSXMemberExpression` child, not a direct element name, so its reference
-/// does not have the `JSXTag` flag.
-fn collect_jsx_component_symbols<'a>(
-    scoping: &Scoping,
-    temp_allocator: &'a Allocator,
-) -> Option<BitSet<'a>> {
-    let mut jsx_symbols: Option<BitSet<'a>> = None;
-    for symbol_id in scoping.symbol_ids() {
-        for reference in scoping.get_resolved_references(symbol_id) {
-            if reference.flags().is_jsx_tag() {
-                let bitset = jsx_symbols
-                    .get_or_insert_with(|| BitSet::new_in(scoping.symbols_len(), temp_allocator));
-                bitset.set_bit(symbol_id.index());
-                break;
-            }
-        }
-    }
-    jsx_symbols
 }
 
 // Maximum length of string is 15 (`slot_4294967295` for `u32::MAX`).

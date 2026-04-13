@@ -325,9 +325,9 @@ fn jsx_component_mangling() {
     let tags = assert_jsx_tags_upper_case(&mangled);
     assert!(!tags.is_empty(), "Nested JSX component should be mangled: {mangled}");
 
-    // Names from the two pools must not collide: create enough regular symbols that
-    // the regular pool would produce 'S' (the first upper-case name), and verify
-    // that the JSX pool then skips that name.
+    // Collision avoidance: create enough symbols that the regular pool claims both
+    // 'S' and 'C' (the first two upper-case base54 names). The JSX fixup must skip
+    // both and use 'T' (the next base54_upper_first name) instead.
     let mangled = mangle_jsx(
         "
         function Comp() { return null; }
@@ -342,15 +342,13 @@ fn jsx_component_mangling() {
         options,
     );
     let tags = assert_jsx_tags_upper_case(&mangled);
-    // With 23 regular symbols (v0-v21 + x), the regular pool claims base54 indices 0-22,
-    // and index 22 is 'S', the first upper-case base54 name. Verify 'S' is indeed used
-    // as a regular variable, confirming the collision path was exercised.
+    // With 24 slots total, the regular pool claims base54 indices 0-23, which includes
+    // 'S' (index 21) and 'C' (index 22). The JSX fixup skips both and assigns 'T'.
     assert!(
         mangled.contains("let S") || mangled.contains(", S"),
         "Expected regular pool to claim 'S': {mangled}"
     );
-    // The JSX pool must have skipped 'S' and used 'C' (the next upper-case name) instead.
-    assert_eq!(tags, ["C"], "Expected JSX component to get 'C' (skipping 'S'): {mangled}");
+    assert_eq!(tags, ["T"], "Expected JSX component to get 'T' (skipping 'S' and 'C'): {mangled}");
 
     // TSX (TypeScript + JSX) should also produce upper-case component names
     let tsx_mangled = mangle_with_source_type(
@@ -366,16 +364,16 @@ fn jsx_component_mangling() {
 fn jsx_component_mangling_debug_mode() {
     let options = MangleOptions { top_level: Some(true), debug: true, ..MangleOptions::default() };
 
-    // In debug mode, JSX component symbols get "Slot_N" (capital S) while regular symbols
-    // get "slot_N" (lower-case s)
+    // In debug mode, JSX component symbols get "Slot_N" (capital S) via fixup.
+    // All slots initially get "slot_N", then JSX slots are replaced.
     let mangled = mangle_jsx(
         "function Comp() { return null; } let regularVar = 1; let x = <Comp />;",
         options,
     );
-    // Comp is a JSX component → Slot_0; regularVar and x are regular → slot_0, slot_1.
-    // The two pools have independent counters, distinguished by case.
+    // Comp is a JSX component → initially slot_0, fixed up to Slot_0.
+    // regularVar and x are regular → slot_1, slot_2.
     assert!(mangled.contains("Slot_0"), "JSX component should get Slot_0: {mangled}");
-    assert!(mangled.contains("slot_0"), "Regular var should get slot_0: {mangled}");
+    assert!(mangled.contains("slot_1"), "Regular var should get slot_1: {mangled}");
 }
 
 #[test]
