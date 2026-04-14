@@ -9,7 +9,7 @@ use rustc_hash::FxHashMap;
 
 use oxc_allocator::Address;
 use oxc_ast::{AstKind, ast::*};
-use oxc_ast_visit::{Visit, walk};
+use oxc_ast_visit::Visit;
 #[cfg(feature = "cfg")]
 use oxc_cfg::{
     ControlFlowGraphBuilder, CtxCursor, CtxFlags, EdgeType, ErrorEdgeKind, InstructionKind,
@@ -2472,13 +2472,6 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         }
         self.leave_scope();
         self.leave_node(kind);
-    }
-
-    fn visit_jsx_element_name(&mut self, name: &JSXElementName<'a>) {
-        if matches!(name, JSXElementName::IdentifierReference(_)) {
-            self.current_reference_flags = ReferenceFlags::Read | ReferenceFlags::JSXTag;
-        }
-        walk::walk_jsx_element_name(self, name);
     }
 
     fn visit_identifier_reference(&mut self, ident: &IdentifierReference<'a>) {
