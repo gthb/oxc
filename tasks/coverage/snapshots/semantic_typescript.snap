@@ -943,6 +943,9 @@ after transform: ["Array", "Boolean"]
 rebuilt        : ["Boolean", "Bullean", "anys", "realanys"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/booleanLiteralsContextuallyTypedFromUnion.tsx
+Symbol flags mismatch for "Funk":
+after transform: SymbolId(7): SymbolFlags(BlockScopedVariable | JSXTag)
+rebuilt        : SymbolId(6): SymbolFlags(BlockScopedVariable)
 Reference flags mismatch for "Funk":
 after transform: ReferenceId(12): ReferenceFlags(Read | JSXTag)
 rebuilt        : ReferenceId(12): ReferenceFlags(Read)
@@ -991,6 +994,15 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/callsOnComplexSig
 Symbol reference IDs mismatch for "React":
 after transform: SymbolId(0): [ReferenceId(28), ReferenceId(32), ReferenceId(33), ReferenceId(36), ReferenceId(38), ReferenceId(42), ReferenceId(44), ReferenceId(46)]
 rebuilt        : SymbolId(0): [ReferenceId(24), ReferenceId(28), ReferenceId(31)]
+Symbol flags mismatch for "Tag":
+after transform: SymbolId(51): SymbolFlags(BlockScopedVariable | ConstVariable | JSXTag)
+rebuilt        : SymbolId(25): SymbolFlags(BlockScopedVariable | ConstVariable)
+Symbol flags mismatch for "Comp":
+after transform: SymbolId(54): SymbolFlags(BlockScopedVariable | ConstVariable | JSXTag)
+rebuilt        : SymbolId(28): SymbolFlags(BlockScopedVariable | ConstVariable)
+Symbol flags mismatch for "C":
+after transform: SymbolId(58): SymbolFlags(FunctionScopedVariable | JSXTag)
+rebuilt        : SymbolId(30): SymbolFlags(FunctionScopedVariable)
 Reference flags mismatch for "Tag":
 after transform: ReferenceId(30): ReferenceFlags(Read | JSXTag)
 rebuilt        : ReferenceId(25): ReferenceFlags(Read)
@@ -3587,6 +3599,12 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/contextuallyTyped
 Bindings mismatch:
 after transform: ScopeId(0): ["ComponentPropsWithRef", "ElementType", "React", "UnwrappedLink", "UnwrappedLink2", "_jsxFileName"]
 rebuilt        : ScopeId(0): ["React", "UnwrappedLink", "UnwrappedLink2", "_jsxFileName"]
+Symbol flags mismatch for "UnwrappedLink":
+after transform: SymbolId(3): SymbolFlags(Function | JSXTag)
+rebuilt        : SymbolId(2): SymbolFlags(Function)
+Symbol flags mismatch for "UnwrappedLink2":
+after transform: SymbolId(7): SymbolFlags(Function | JSXTag)
+rebuilt        : SymbolId(5): SymbolFlags(Function)
 Reference flags mismatch for "UnwrappedLink":
 after transform: ReferenceId(7): ReferenceFlags(Read | JSXTag)
 rebuilt        : ReferenceId(3): ReferenceFlags(Read)
@@ -6065,6 +6083,9 @@ rebuilt        : SymbolId(6): SymbolFlags(FunctionScopedVariable)
 Symbol reference IDs mismatch for "ListItemVariant":
 after transform: SymbolId(7): [ReferenceId(0), ReferenceId(1), ReferenceId(3), ReferenceId(4), ReferenceId(8), ReferenceId(11), ReferenceId(12), ReferenceId(24)]
 rebuilt        : SymbolId(6): [ReferenceId(5), ReferenceId(15)]
+Symbol flags mismatch for "ListItem":
+after transform: SymbolId(10): SymbolFlags(Function | JSXTag)
+rebuilt        : SymbolId(8): SymbolFlags(Function)
 Reference flags mismatch for "ListItem":
 after transform: ReferenceId(9): ReferenceFlags(Read | JSXTag)
 rebuilt        : ReferenceId(7): ReferenceFlags(Read)
@@ -8643,6 +8664,9 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/genericInferenceD
 Bindings mismatch:
 after transform: ScopeId(0): ["Component", "ComponentPropsWithRef", "ElementType", "React", "ReactNode", "_jsxFileName", "v1"]
 rebuilt        : ScopeId(0): ["Component", "React", "_jsxFileName", "v1"]
+Symbol flags mismatch for "Component":
+after transform: SymbolId(6): SymbolFlags(Function | JSXTag)
+rebuilt        : SymbolId(2): SymbolFlags(Function)
 Reference flags mismatch for "Component":
 after transform: ReferenceId(7): ReferenceFlags(Read | JSXTag)
 rebuilt        : ReferenceId(3): ReferenceFlags(Read)
@@ -10282,6 +10306,9 @@ after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/jsxCallbackWithDestructuring.tsx
+Symbol flags mismatch for "MyComponent":
+after transform: SymbolId(17): SymbolFlags(Class | JSXTag)
+rebuilt        : SymbolId(2): SymbolFlags(Class)
 Reference symbol mismatch for "Component":
 after transform: SymbolId(0) "Component"
 rebuilt        : <None>
@@ -10296,6 +10323,9 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/jsxChildrenSingle
 Symbol reference IDs mismatch for "React":
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(3), ReferenceId(7), ReferenceId(9), ReferenceId(11), ReferenceId(13)]
 rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(3), ReferenceId(6), ReferenceId(8)]
+Symbol flags mismatch for "TabLayout":
+after transform: SymbolId(3): SymbolFlags(Function | JSXTag)
+rebuilt        : SymbolId(2): SymbolFlags(Function)
 Reference flags mismatch for "TabLayout":
 after transform: ReferenceId(4): ReferenceFlags(Read | JSXTag)
 rebuilt        : ReferenceId(4): ReferenceFlags(Read)
@@ -10321,6 +10351,9 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/jsxContainsOnlyTr
 Bindings mismatch:
 after transform: ScopeId(0): ["JSX", "NoticeList", "_jsxFileName", "_reactJsxRuntime"]
 rebuilt        : ScopeId(0): ["NoticeList", "_jsxFileName", "_reactJsxRuntime"]
+Symbol flags mismatch for "NoticeList":
+after transform: SymbolId(3): SymbolFlags(Function | JSXTag)
+rebuilt        : SymbolId(2): SymbolFlags(Function)
 Reference flags mismatch for "NoticeList":
 after transform: ReferenceId(1): ReferenceFlags(Read | JSXTag)
 rebuilt        : ReferenceId(2): ReferenceFlags(Read)
@@ -10332,6 +10365,9 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/jsxElementClassTo
 Bindings mismatch:
 after transform: ScopeId(0): ["ElemClass", "JSX", "_jsxFileName", "_reactJsxRuntime", "elem"]
 rebuilt        : ScopeId(0): ["ElemClass", "_jsxFileName", "_reactJsxRuntime", "elem"]
+Symbol flags mismatch for "ElemClass":
+after transform: SymbolId(10): SymbolFlags(Class | JSXTag)
+rebuilt        : SymbolId(2): SymbolFlags(Class)
 Reference flags mismatch for "ElemClass":
 after transform: ReferenceId(6): ReferenceFlags(Read | JSXTag)
 rebuilt        : ReferenceId(3): ReferenceFlags(Read)
@@ -10365,6 +10401,9 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/jsxEmptyExpressio
 Symbol reference IDs mismatch for "React":
 after transform: SymbolId(0): [ReferenceId(0)]
 rebuilt        : SymbolId(0): []
+Symbol flags mismatch for "Wrapper":
+after transform: SymbolId(2): SymbolFlags(Function | JSXTag)
+rebuilt        : SymbolId(3): SymbolFlags(Function)
 Reference flags mismatch for "Wrapper":
 after transform: ReferenceId(3): ReferenceFlags(Read | JSXTag)
 rebuilt        : ReferenceId(4): ReferenceFlags(Read)
@@ -10442,6 +10481,9 @@ after transform: ["Omit", "require"]
 rebuilt        : ["GenericComponent", "omit", "otherProps", "require"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/jsxHasLiteralType.tsx
+Symbol flags mismatch for "MyComponent":
+after transform: SymbolId(2): SymbolFlags(Class | JSXTag)
+rebuilt        : SymbolId(2): SymbolFlags(Class)
 Reference flags mismatch for "MyComponent":
 after transform: ReferenceId(4): ReferenceFlags(Read | JSXTag)
 rebuilt        : ReferenceId(2): ReferenceFlags(Read)
@@ -10450,6 +10492,9 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/jsxInferenceProdu
 Symbol reference IDs mismatch for "TestObject":
 after transform: SymbolId(4): [ReferenceId(11), ReferenceId(15)]
 rebuilt        : SymbolId(2): [ReferenceId(5)]
+Symbol flags mismatch for "Test":
+after transform: SymbolId(7): SymbolFlags(Function | JSXTag)
+rebuilt        : SymbolId(3): SymbolFlags(Function)
 Reference flags mismatch for "Test":
 after transform: ReferenceId(12): ReferenceFlags(Read | JSXTag)
 rebuilt        : ReferenceId(7): ReferenceFlags(Read)
@@ -10461,6 +10506,9 @@ after transform: ["Function", "React"]
 rebuilt        : ["React"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/jsxIntrinsicElementsCompatability.tsx
+Symbol flags mismatch for "SomeComponent":
+after transform: SymbolId(1): SymbolFlags(Function | JSXTag)
+rebuilt        : SymbolId(2): SymbolFlags(Function)
 Reference flags mismatch for "SomeComponent":
 after transform: ReferenceId(5): ReferenceFlags(Read | JSXTag)
 rebuilt        : ReferenceId(3): ReferenceFlags(Read)
@@ -10477,6 +10525,9 @@ after transform: ["Record", "require"]
 rebuilt        : ["require"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/jsxIntrinsicUnions.tsx
+Symbol flags mismatch for "El":
+after transform: SymbolId(1): SymbolFlags(BlockScopedVariable | ConstVariable | JSXTag)
+rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable | ConstVariable)
 Reference flags mismatch for "El":
 after transform: ReferenceId(1): ReferenceFlags(Read | JSXTag)
 rebuilt        : ReferenceId(2): ReferenceFlags(Read)
@@ -10527,6 +10578,9 @@ after transform: ["JSX"]
 rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/jsxNamespaceNoElementChildrenAttributeReactJsx.tsx
+Symbol flags mismatch for "Title":
+after transform: SymbolId(0): SymbolFlags(BlockScopedVariable | ConstVariable | JSXTag)
+rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable | ConstVariable)
 Reference flags mismatch for "Title":
 after transform: ReferenceId(1): ReferenceFlags(Read | JSXTag)
 rebuilt        : ReferenceId(4): ReferenceFlags(Read)
@@ -10545,6 +10599,9 @@ after transform: ["Function"]
 rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/jsxPartialSpread.tsx
+Symbol flags mismatch for "Select":
+after transform: SymbolId(0): SymbolFlags(BlockScopedVariable | ConstVariable | JSXTag)
+rebuilt        : SymbolId(3): SymbolFlags(BlockScopedVariable | ConstVariable)
 Symbol reference IDs mismatch for "Select":
 after transform: SymbolId(0): [ReferenceId(2), ReferenceId(3)]
 rebuilt        : SymbolId(3): [ReferenceId(3)]
@@ -10559,6 +10616,9 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/jsxSpreadFirstUni
 Bindings mismatch:
 after transform: ScopeId(0): ["Info", "React", "_jsxFileName", "_objectSpread", "a", "b", "c", "infoProps"]
 rebuilt        : ScopeId(0): ["Info", "React", "_jsxFileName", "_objectSpread", "a", "b", "c"]
+Symbol flags mismatch for "Info":
+after transform: SymbolId(2): SymbolFlags(BlockScopedVariable | ConstVariable | JSXTag)
+rebuilt        : SymbolId(3): SymbolFlags(BlockScopedVariable | ConstVariable)
 Reference flags mismatch for "Info":
 after transform: ReferenceId(3): ReferenceFlags(Read | JSXTag)
 rebuilt        : ReferenceId(7): ReferenceFlags(Read)
@@ -15025,11 +15085,17 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/reactHOCSpreadpro
 Symbol reference IDs mismatch for "React":
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(4), ReferenceId(11)]
 rebuilt        : SymbolId(2): [ReferenceId(1), ReferenceId(2)]
+Symbol flags mismatch for "App":
+after transform: SymbolId(3): SymbolFlags(FunctionScopedVariable | JSXTag)
+rebuilt        : SymbolId(4): SymbolFlags(FunctionScopedVariable)
 Reference flags mismatch for "App":
 after transform: ReferenceId(6): ReferenceFlags(Read | JSXTag)
 rebuilt        : ReferenceId(3): ReferenceFlags(Read)
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/reactImportDropped.ts
+Symbol flags mismatch for "TabBar":
+after transform: SymbolId(0): SymbolFlags(Import | JSXTag)
+rebuilt        : SymbolId(0): SymbolFlags(Import)
 Reference flags mismatch for "TabBar":
 after transform: ReferenceId(0): ReferenceFlags(Read | JSXTag)
 rebuilt        : ReferenceId(1): ReferenceFlags(Read)
@@ -15038,6 +15104,9 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/reactReadonlyHOCA
 Symbol reference IDs mismatch for "React":
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(4), ReferenceId(10)]
 rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(1)]
+Symbol flags mismatch for "Inner":
+after transform: SymbolId(3): SymbolFlags(FunctionScopedVariable | JSXTag)
+rebuilt        : SymbolId(4): SymbolFlags(FunctionScopedVariable)
 Reference flags mismatch for "Inner":
 after transform: ReferenceId(6): ReferenceFlags(Read | JSXTag)
 rebuilt        : ReferenceId(2): ReferenceFlags(Read)
@@ -15049,6 +15118,12 @@ rebuilt        : ScopeId(0): ["RandomComponent", "React", "_jsxFileName"]
 Symbol reference IDs mismatch for "React":
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(3), ReferenceId(14), ReferenceId(16)]
 rebuilt        : SymbolId(0): [ReferenceId(7), ReferenceId(10)]
+Symbol flags mismatch for "Component":
+after transform: SymbolId(9): SymbolFlags(BlockScopedVariable | ConstVariable | JSXTag)
+rebuilt        : SymbolId(3): SymbolFlags(BlockScopedVariable | ConstVariable)
+Symbol flags mismatch for "OtherComponent":
+after transform: SymbolId(10): SymbolFlags(BlockScopedVariable | ConstVariable | JSXTag)
+rebuilt        : SymbolId(4): SymbolFlags(BlockScopedVariable | ConstVariable)
 Reference symbol mismatch for "condition1":
 after transform: SymbolId(5) "condition1"
 rebuilt        : <None>
@@ -15677,6 +15752,9 @@ after transform: [ReferenceId(0), ReferenceId(2)]
 rebuilt        : [ReferenceId(0)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/returnTypePredicateIsInstantiateInContextOfTarget.tsx
+Symbol flags mismatch for "TestComponent":
+after transform: SymbolId(1): SymbolFlags(Class | JSXTag)
+rebuilt        : SymbolId(4): SymbolFlags(Class)
 Reference flags mismatch for "TestComponent":
 after transform: ReferenceId(4): ReferenceFlags(Read | JSXTag)
 rebuilt        : ReferenceId(7): ReferenceFlags(Read)
@@ -17229,6 +17307,9 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/tsxAttributeQuick
 Bindings mismatch:
 after transform: ScopeId(0): ["Foo", "JSX", "_jsxFileName", "_reactJsxRuntime"]
 rebuilt        : ScopeId(0): ["Foo", "_jsxFileName", "_reactJsxRuntime"]
+Symbol flags mismatch for "Foo":
+after transform: SymbolId(3): SymbolFlags(BlockScopedVariable | ConstVariable | JSXTag)
+rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable | ConstVariable)
 Reference flags mismatch for "Foo":
 after transform: ReferenceId(2): ReferenceFlags(Read | JSXTag)
 rebuilt        : ReferenceId(6): ReferenceFlags(Read)
@@ -17240,6 +17321,9 @@ rebuilt        : SymbolId(1): SymbolFlags(Function)
 Symbol redeclarations mismatch for "createElement":
 after transform: SymbolId(2): [Span { start: 125, end: 138 }, Span { start: 243, end: 256 }]
 rebuilt        : SymbolId(1): []
+Symbol flags mismatch for "Button":
+after transform: SymbolId(8): SymbolFlags(Function | JSXTag)
+rebuilt        : SymbolId(5): SymbolFlags(Function)
 Reference flags mismatch for "Button":
 after transform: ReferenceId(5): ReferenceFlags(Read | JSXTag)
 rebuilt        : ReferenceId(2): ReferenceFlags(Read)
@@ -17319,6 +17403,9 @@ after transform: ["HTMLButtonElement"]
 rebuilt        : ["Button"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/tsxStatelessComponentDefaultProps.tsx
+Symbol flags mismatch for "BackButton":
+after transform: SymbolId(2): SymbolFlags(Function | JSXTag)
+rebuilt        : SymbolId(2): SymbolFlags(Function)
 Reference flags mismatch for "BackButton":
 after transform: ReferenceId(2): ReferenceFlags(Read | JSXTag)
 rebuilt        : ReferenceId(4): ReferenceFlags(Read)
@@ -17347,6 +17434,9 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/tsxUnionSpread.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["AnimalComponent", "JSX", "_jsx", "_jsxFileName", "_objectSpread", "component", "component2", "getProps", "props", "props2"]
 rebuilt        : ScopeId(0): ["AnimalComponent", "_jsx", "_jsxFileName", "_objectSpread", "component", "component2", "getProps", "props", "props2"]
+Symbol flags mismatch for "AnimalComponent":
+after transform: SymbolId(5): SymbolFlags(Function | JSXTag)
+rebuilt        : SymbolId(3): SymbolFlags(Function)
 Reference flags mismatch for "AnimalComponent":
 after transform: ReferenceId(8): ReferenceFlags(Read | JSXTag)
 rebuilt        : ReferenceId(3): ReferenceFlags(Read)
@@ -27516,6 +27606,9 @@ after transform: ScopeId(0): ["NS", "a", "b", "c"]
 rebuilt        : ScopeId(0): ["a", "b", "c"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/jsx/checkJsxChildrenProperty1.tsx
+Symbol flags mismatch for "Comp":
+after transform: SymbolId(2): SymbolFlags(Function | JSXTag)
+rebuilt        : SymbolId(2): SymbolFlags(Function)
 Reference flags mismatch for "Comp":
 after transform: ReferenceId(3): ReferenceFlags(Read | JSXTag)
 rebuilt        : ReferenceId(5): ReferenceFlags(Read)
@@ -27562,6 +27655,9 @@ after transform: ["JSX"]
 rebuilt        : ["Foo"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/jsx/checkJsxChildrenProperty3.tsx
+Symbol flags mismatch for "FetchUser":
+after transform: SymbolId(4): SymbolFlags(Class | JSXTag)
+rebuilt        : SymbolId(3): SymbolFlags(Class)
 Reference flags mismatch for "FetchUser":
 after transform: ReferenceId(4): ReferenceFlags(Read | JSXTag)
 rebuilt        : ReferenceId(4): ReferenceFlags(Read)
@@ -27573,6 +27669,15 @@ after transform: ["JSX", "require"]
 rebuilt        : ["require"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/jsx/checkJsxChildrenProperty6.tsx
+Symbol flags mismatch for "Button":
+after transform: SymbolId(2): SymbolFlags(Class | JSXTag)
+rebuilt        : SymbolId(3): SymbolFlags(Class)
+Symbol flags mismatch for "AnotherButton":
+after transform: SymbolId(3): SymbolFlags(Function | JSXTag)
+rebuilt        : SymbolId(4): SymbolFlags(Function)
+Symbol flags mismatch for "Comp":
+after transform: SymbolId(5): SymbolFlags(Function | JSXTag)
+rebuilt        : SymbolId(6): SymbolFlags(Function)
 Reference flags mismatch for "Comp":
 after transform: ReferenceId(5): ReferenceFlags(Read | JSXTag)
 rebuilt        : ReferenceId(11): ReferenceFlags(Read)
@@ -27611,6 +27716,15 @@ after transform: ["JSX", "require"]
 rebuilt        : ["require"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/jsx/checkJsxChildrenProperty8.tsx
+Symbol flags mismatch for "Button":
+after transform: SymbolId(2): SymbolFlags(Class | JSXTag)
+rebuilt        : SymbolId(3): SymbolFlags(Class)
+Symbol flags mismatch for "AnotherButton":
+after transform: SymbolId(3): SymbolFlags(Function | JSXTag)
+rebuilt        : SymbolId(4): SymbolFlags(Function)
+Symbol flags mismatch for "Comp":
+after transform: SymbolId(5): SymbolFlags(Function | JSXTag)
+rebuilt        : SymbolId(6): SymbolFlags(Function)
 Reference flags mismatch for "Comp":
 after transform: ReferenceId(5): ReferenceFlags(Read | JSXTag)
 rebuilt        : ReferenceId(11): ReferenceFlags(Read)
@@ -27652,6 +27766,9 @@ semantic Error: tasks/coverage/typescript/tests/cases/conformance/jsx/checkJsxIn
 Bindings mismatch:
 after transform: ScopeId(0): ["C", "Component", "JSX", "_jsxFileName", "_reactJsxRuntime", "x", "y"]
 rebuilt        : ScopeId(0): ["C", "_jsxFileName", "_reactJsxRuntime", "x", "y"]
+Symbol flags mismatch for "C":
+after transform: SymbolId(5): SymbolFlags(Class | JSXTag)
+rebuilt        : SymbolId(2): SymbolFlags(Class)
 Reference symbol mismatch for "Component":
 after transform: SymbolId(2) "Component"
 rebuilt        : <None>
@@ -27663,6 +27780,9 @@ after transform: ["Readonly", "require"]
 rebuilt        : ["Component", "require"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/jsx/checkJsxSubtleSkipContextSensitiveBug.tsx
+Symbol flags mismatch for "AsyncLoader":
+after transform: SymbolId(5): SymbolFlags(Class | JSXTag)
+rebuilt        : SymbolId(3): SymbolFlags(Class)
 Reference flags mismatch for "AsyncLoader":
 after transform: ReferenceId(10): ReferenceFlags(Read | JSXTag)
 rebuilt        : ReferenceId(8): ReferenceFlags(Read)
@@ -27671,6 +27791,9 @@ after transform: ["Exclude", "Promise", "arguments"]
 rebuilt        : ["arguments"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/jsx/checkJsxUnionSFXContextualTypeInferredCorrectly.tsx
+Symbol flags mismatch for "ComponentWithUnion":
+after transform: SymbolId(5): SymbolFlags(Function | JSXTag)
+rebuilt        : SymbolId(2): SymbolFlags(Function)
 Reference flags mismatch for "ComponentWithUnion":
 after transform: ReferenceId(2): ReferenceFlags(Read | JSXTag)
 rebuilt        : ReferenceId(3): ReferenceFlags(Read)
@@ -27710,11 +27833,17 @@ after transform: ScopeId(0): ["JSX"]
 rebuilt        : ScopeId(0): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxAttributeResolution13.tsx
+Symbol flags mismatch for "Test":
+after transform: SymbolId(0): SymbolFlags(Function | JSXTag)
+rebuilt        : SymbolId(2): SymbolFlags(Function)
 Reference flags mismatch for "Test":
 after transform: ReferenceId(0): ReferenceFlags(Read | JSXTag)
 rebuilt        : ReferenceId(2): ReferenceFlags(Read)
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxAttributeResolution16.tsx
+Symbol flags mismatch for "AddressComp":
+after transform: SymbolId(5): SymbolFlags(Class | JSXTag)
+rebuilt        : SymbolId(3): SymbolFlags(Class)
 Reference flags mismatch for "AddressComp":
 after transform: ReferenceId(6): ReferenceFlags(Read | JSXTag)
 rebuilt        : ReferenceId(3): ReferenceFlags(Read)
@@ -27725,16 +27854,25 @@ after transform: ScopeId(0): ["JSX", "_jsxFileName", "_objectSpread", "_reactJsx
 rebuilt        : ScopeId(0): ["_jsxFileName", "_objectSpread", "_reactJsxRuntime", "x"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxDefaultAttributesResolution1.tsx
+Symbol flags mismatch for "Poisoned":
+after transform: SymbolId(2): SymbolFlags(Class | JSXTag)
+rebuilt        : SymbolId(3): SymbolFlags(Class)
 Reference flags mismatch for "Poisoned":
 after transform: ReferenceId(2): ReferenceFlags(Read | JSXTag)
 rebuilt        : ReferenceId(6): ReferenceFlags(Read)
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxDefaultAttributesResolution2.tsx
+Symbol flags mismatch for "Poisoned":
+after transform: SymbolId(2): SymbolFlags(Class | JSXTag)
+rebuilt        : SymbolId(3): SymbolFlags(Class)
 Reference flags mismatch for "Poisoned":
 after transform: ReferenceId(2): ReferenceFlags(Read | JSXTag)
 rebuilt        : ReferenceId(6): ReferenceFlags(Read)
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxDynamicTagName1.tsx
+Symbol flags mismatch for "CustomTag":
+after transform: SymbolId(0): SymbolFlags(FunctionScopedVariable | JSXTag)
+rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
 Reference flags mismatch for "CustomTag":
 after transform: ReferenceId(0): ReferenceFlags(Read | JSXTag)
 rebuilt        : ReferenceId(2): ReferenceFlags(Read)
@@ -27743,6 +27881,9 @@ semantic Error: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxDynamic
 Bindings mismatch:
 after transform: ScopeId(0): ["CustomTag", "JSX", "_jsxFileName", "_reactJsxRuntime"]
 rebuilt        : ScopeId(0): ["CustomTag", "_jsxFileName", "_reactJsxRuntime"]
+Symbol flags mismatch for "CustomTag":
+after transform: SymbolId(3): SymbolFlags(FunctionScopedVariable | JSXTag)
+rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
 Reference flags mismatch for "CustomTag":
 after transform: ReferenceId(0): ReferenceFlags(Read | JSXTag)
 rebuilt        : ReferenceId(2): ReferenceFlags(Read)
@@ -27894,16 +28035,25 @@ after transform: []
 rebuilt        : ["React"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxGenericAttributesType2.tsx
+Symbol flags mismatch for "Component":
+after transform: SymbolId(3): SymbolFlags(FunctionScopedVariable | JSXTag)
+rebuilt        : SymbolId(4): SymbolFlags(FunctionScopedVariable)
 Reference flags mismatch for "Component":
 after transform: ReferenceId(4): ReferenceFlags(Read | JSXTag)
 rebuilt        : ReferenceId(3): ReferenceFlags(Read)
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxGenericAttributesType3.tsx
+Symbol flags mismatch for "B1":
+after transform: SymbolId(1): SymbolFlags(Class | JSXTag)
+rebuilt        : SymbolId(4): SymbolFlags(Class)
 Reference flags mismatch for "B1":
 after transform: ReferenceId(4): ReferenceFlags(Read | JSXTag)
 rebuilt        : ReferenceId(8): ReferenceFlags(Read)
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxGenericAttributesType4.tsx
+Symbol flags mismatch for "B1":
+after transform: SymbolId(1): SymbolFlags(Class | JSXTag)
+rebuilt        : SymbolId(4): SymbolFlags(Class)
 Reference flags mismatch for "B1":
 after transform: ReferenceId(4): ReferenceFlags(Read | JSXTag)
 rebuilt        : ReferenceId(8): ReferenceFlags(Read)
@@ -27912,6 +28062,9 @@ semantic Error: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxGeneric
 Symbol reference IDs mismatch for "React":
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2)]
 rebuilt        : SymbolId(3): [ReferenceId(1)]
+Symbol flags mismatch for "Ctor":
+after transform: SymbolId(3): SymbolFlags(FunctionScopedVariable | JSXTag)
+rebuilt        : SymbolId(5): SymbolFlags(FunctionScopedVariable)
 Reference flags mismatch for "Ctor":
 after transform: ReferenceId(5): ReferenceFlags(Read | JSXTag)
 rebuilt        : ReferenceId(3): ReferenceFlags(Read)
@@ -28112,6 +28265,9 @@ after transform: []
 rebuilt        : ["React"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxSpreadAttributesResolution1.tsx
+Symbol flags mismatch for "Poisoned":
+after transform: SymbolId(1): SymbolFlags(Class | JSXTag)
+rebuilt        : SymbolId(4): SymbolFlags(Class)
 Reference flags mismatch for "Poisoned":
 after transform: ReferenceId(1): ReferenceFlags(Read | JSXTag)
 rebuilt        : ReferenceId(7): ReferenceFlags(Read)
@@ -28120,11 +28276,17 @@ after transform: ReferenceId(3): ReferenceFlags(Read | JSXTag)
 rebuilt        : ReferenceId(12): ReferenceFlags(Read)
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxSpreadAttributesResolution15.tsx
+Symbol flags mismatch for "AnotherComponent":
+after transform: SymbolId(5): SymbolFlags(Function | JSXTag)
+rebuilt        : SymbolId(5): SymbolFlags(Function)
 Reference flags mismatch for "AnotherComponent":
 after transform: ReferenceId(1): ReferenceFlags(Read | JSXTag)
 rebuilt        : ReferenceId(1): ReferenceFlags(Read)
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxSpreadAttributesResolution3.tsx
+Symbol flags mismatch for "Poisoned":
+after transform: SymbolId(2): SymbolFlags(Class | JSXTag)
+rebuilt        : SymbolId(4): SymbolFlags(Class)
 Reference flags mismatch for "Poisoned":
 after transform: ReferenceId(2): ReferenceFlags(Read | JSXTag)
 rebuilt        : ReferenceId(7): ReferenceFlags(Read)
@@ -28133,6 +28295,9 @@ after transform: ReferenceId(4): ReferenceFlags(Read | JSXTag)
 rebuilt        : ReferenceId(12): ReferenceFlags(Read)
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxSpreadAttributesResolution7.tsx
+Symbol flags mismatch for "TextComponent":
+after transform: SymbolId(3): SymbolFlags(Class | JSXTag)
+rebuilt        : SymbolId(4): SymbolFlags(Class)
 Reference flags mismatch for "TextComponent":
 after transform: ReferenceId(3): ReferenceFlags(Read | JSXTag)
 rebuilt        : ReferenceId(7): ReferenceFlags(Read)
@@ -28141,6 +28306,9 @@ after transform: ReferenceId(6): ReferenceFlags(Read | JSXTag)
 rebuilt        : ReferenceId(12): ReferenceFlags(Read)
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxSpreadAttributesResolution8.tsx
+Symbol flags mismatch for "OverWriteAttr":
+after transform: SymbolId(5): SymbolFlags(Class | JSXTag)
+rebuilt        : SymbolId(7): SymbolFlags(Class)
 Reference flags mismatch for "OverWriteAttr":
 after transform: ReferenceId(2): ReferenceFlags(Read | JSXTag)
 rebuilt        : ReferenceId(7): ReferenceFlags(Read)
@@ -28149,6 +28317,9 @@ after transform: ReferenceId(5): ReferenceFlags(Read | JSXTag)
 rebuilt        : ReferenceId(14): ReferenceFlags(Read)
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxSpreadAttributesResolution9.tsx
+Symbol flags mismatch for "Opt":
+after transform: SymbolId(2): SymbolFlags(Class | JSXTag)
+rebuilt        : SymbolId(4): SymbolFlags(Class)
 Reference flags mismatch for "Opt":
 after transform: ReferenceId(4): ReferenceFlags(Read | JSXTag)
 rebuilt        : ReferenceId(7): ReferenceFlags(Read)
@@ -28169,6 +28340,12 @@ semantic Error: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxSpreadC
 Bindings mismatch:
 after transform: ScopeId(0): ["JSX", "React", "Todo", "TodoList", "TodoListNoError", "_jsxFileName", "_objectSpread", "_reactJsxRuntime", "x"]
 rebuilt        : ScopeId(0): ["Todo", "TodoList", "TodoListNoError", "_jsxFileName", "_objectSpread", "_reactJsxRuntime"]
+Symbol flags mismatch for "Todo":
+after transform: SymbolId(6): SymbolFlags(Function | JSXTag)
+rebuilt        : SymbolId(3): SymbolFlags(Function)
+Symbol flags mismatch for "TodoList":
+after transform: SymbolId(8): SymbolFlags(Function | JSXTag)
+rebuilt        : SymbolId(5): SymbolFlags(Function)
 Reference flags mismatch for "Todo":
 after transform: ReferenceId(4): ReferenceFlags(Read | JSXTag)
 rebuilt        : ReferenceId(8): ReferenceFlags(Read)
@@ -28186,6 +28363,9 @@ after transform: ["require"]
 rebuilt        : ["require", "x"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxTypeArgumentsJsxPreserveOutput.tsx
+Symbol flags mismatch for "Foo":
+after transform: SymbolId(3): SymbolFlags(Function | JSXTag)
+rebuilt        : SymbolId(2): SymbolFlags(Function)
 Reference flags mismatch for "Foo":
 after transform: ReferenceId(0): ReferenceFlags(Read | JSXTag)
 rebuilt        : ReferenceId(4): ReferenceFlags(Read)
@@ -28248,6 +28428,12 @@ after transform: ReferenceId(31): ReferenceFlags(Read | JSXTag)
 rebuilt        : ReferenceId(61): ReferenceFlags(Read)
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxUnionElementType5.tsx
+Symbol flags mismatch for "EmptySFCComp":
+after transform: SymbolId(5): SymbolFlags(FunctionScopedVariable | JSXTag)
+rebuilt        : SymbolId(5): SymbolFlags(FunctionScopedVariable)
+Symbol flags mismatch for "SFC2AndEmptyComp":
+after transform: SymbolId(6): SymbolFlags(FunctionScopedVariable | JSXTag)
+rebuilt        : SymbolId(6): SymbolFlags(FunctionScopedVariable)
 Reference flags mismatch for "EmptySFCComp":
 after transform: ReferenceId(4): ReferenceFlags(Read | JSXTag)
 rebuilt        : ReferenceId(11): ReferenceFlags(Read)
@@ -28262,6 +28448,12 @@ semantic Error: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxUnionTy
 Symbol reference IDs mismatch for "React":
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(6), ReferenceId(11), ReferenceId(13), ReferenceId(15), ReferenceId(17)]
 rebuilt        : SymbolId(1): [ReferenceId(1), ReferenceId(2), ReferenceId(5), ReferenceId(7), ReferenceId(10), ReferenceId(11)]
+Symbol flags mismatch for "MyComponent":
+after transform: SymbolId(2): SymbolFlags(Class | JSXTag)
+rebuilt        : SymbolId(2): SymbolFlags(Class)
+Symbol flags mismatch for "AnyComponent":
+after transform: SymbolId(3): SymbolFlags(BlockScopedVariable | ConstVariable | JSXTag)
+rebuilt        : SymbolId(3): SymbolFlags(BlockScopedVariable | ConstVariable)
 Reference flags mismatch for "AnyComponent":
 after transform: ReferenceId(4): ReferenceFlags(Read | JSXTag)
 rebuilt        : ReferenceId(3): ReferenceFlags(Read)
@@ -36662,6 +36854,12 @@ after transform: ["Array"]
 rebuilt        : ["f1", "f2", "f3", "s"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeInference/intraExpressionInferencesJsx.tsx
+Symbol flags mismatch for "Component":
+after transform: SymbolId(9): SymbolFlags(BlockScopedVariable | ConstVariable | JSXTag)
+rebuilt        : SymbolId(3): SymbolFlags(BlockScopedVariable | ConstVariable)
+Symbol flags mismatch for "Foo":
+after transform: SymbolId(20): SymbolFlags(Function | JSXTag)
+rebuilt        : SymbolId(9): SymbolFlags(Function)
 Reference flags mismatch for "Component":
 after transform: ReferenceId(19): ReferenceFlags(Read | JSXTag)
 rebuilt        : ReferenceId(3): ReferenceFlags(Read)

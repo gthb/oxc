@@ -1244,6 +1244,9 @@ after transform: ["Generator"]
 rebuilt        : []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/tsx/brace-is-block/input.tsx
+Symbol flags mismatch for "C":
+after transform: SymbolId(0): SymbolFlags(Class | JSXTag)
+rebuilt        : SymbolId(2): SymbolFlags(Class)
 Reference flags mismatch for "C":
 after transform: ReferenceId(2): ReferenceFlags(Read | JSXTag)
 rebuilt        : ReferenceId(2): ReferenceFlags(Read)

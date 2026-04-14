@@ -591,6 +591,8 @@ impl<'a> SemanticBuilder<'a> {
             return false;
         }
 
+        let is_jsx_tag = flags.is_jsx_tag();
+
         if symbol_flags.is_value() && flags.is_value() {
             // The non type-only ExportSpecifier can reference both type/value symbols,
             // if the symbol is a value symbol and reference flag is not type-only,
@@ -610,6 +612,9 @@ impl<'a> SemanticBuilder<'a> {
         }
         reference.set_symbol_id(symbol_id);
         self.scoping.add_resolved_reference(symbol_id, reference_id);
+        if is_jsx_tag {
+            *self.scoping.symbol_flags_mut(symbol_id) |= SymbolFlags::JSXTag;
+        }
         true
     }
 
