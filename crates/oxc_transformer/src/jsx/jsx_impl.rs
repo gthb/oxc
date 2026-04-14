@@ -802,12 +802,12 @@ impl<'a> JsxImpl<'a> {
                     *ctx.scoping_mut().symbol_flags_mut(symbol_id) -= SymbolFlags::JSXTag;
                 }
                 let reference_id = ctx.create_reference_in_current_scope(
-                    Ident::from(ident.name),
+                    ident.name,
                     ReferenceFlags::Read,
                 );
                 let ident = ctx.ast.alloc_identifier_reference_with_reference_id(
                     ident.span,
-                    Ident::from(ident.name),
+                    ident.name,
                     reference_id,
                 );
                 Expression::Identifier(ident)
