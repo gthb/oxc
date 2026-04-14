@@ -787,13 +787,28 @@ fn fixup_jsx_names<'a, const CAPACITY: usize>(
     exported_names: &HashSet<'_, Str<'_>>,
     temp_allocator: &'a Allocator,
 ) {
+    // Generate replacement names on demand, only for slots that actually need
+    // fixup (i.e., whose assigned name starts lowercase). Names are generated
+    // in a first pass (immutable borrow of scoping) then applied in a second
+    // pass (mutable borrow), because scoping's name data and set_symbol_name
+    // cannot be borrowed simultaneously.
     let root_unresolved_references = scoping.root_unresolved_references();
     let root_bindings = scoping.get_bindings(scoping.root_scope_id());
-    let jsx_slot_count = jsx_slots.ones().count();
-    let mut jsx_names = Vec::with_capacity_in(jsx_slot_count, temp_allocator);
     let mut jsx_count: u32 = 0;
-    for _ in 0..jsx_slot_count {
-        let name = loop {
+    // Collect (frequency index, replacement name) pairs. Most JSX slots will
+    // need fixup (base54 starts with lowercase), so pre-allocate for all of them.
+    let jsx_slot_count = jsx_slots.ones().count();
+    let mut jsx_renamings: Vec<(usize, InlineString<CAPACITY, u8>)> =
+        Vec::with_capacity_in(jsx_slot_count, temp_allocator);
+    for (i, freq) in frequencies.iter().enumerate() {
+        if !jsx_slots.has_bit(freq.slot as usize) {
+            continue;
+        }
+        let current_name = scoping.symbol_name(freq.symbol_ids[0]);
+        if current_name.as_bytes().first().is_some_and(u8::is_ascii_uppercase) {
+            continue;
+        }
+        let new_name = loop {
             let name = generate_name_jsx(jsx_count);
             jsx_count += 1;
             let n = name.as_str();
@@ -808,20 +823,11 @@ fn fixup_jsx_names<'a, const CAPACITY: usize>(
                 break name;
             }
         };
-        jsx_names.push(name);
+        jsx_renamings.push((i, new_name));
     }
-
-    let mut jsx_name_iter = jsx_names.iter();
-    for freq in frequencies {
-        if !jsx_slots.has_bit(freq.slot as usize) {
-            continue;
-        }
-        let current_name = scoping.symbol_name(freq.symbol_ids[0]);
-        if current_name.as_bytes().first().is_some_and(u8::is_ascii_uppercase) {
-            continue;
-        }
-        let new_name = jsx_name_iter.next().expect("pre-generated enough JSX names");
-        for &symbol_id in &freq.symbol_ids {
+    // Apply the fixups.
+    for (i, new_name) in &jsx_renamings {
+        for &symbol_id in &frequencies[*i].symbol_ids {
             scoping.set_symbol_name(symbol_id, Ident::from(new_name.as_str()));
         }
     }
