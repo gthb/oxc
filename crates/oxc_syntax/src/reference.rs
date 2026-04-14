@@ -130,13 +130,16 @@ bitflags! {
         const MemberWriteTarget = 1 << 5;
         /// The identifier is used as a JSX element tag name.
         ///
-        /// In `<Comp />`, the reference to `Comp` has this flag set. This is
-        /// important for the mangler, which must produce upper-case-first names
-        /// for JSX component tags (a lower-case tag like `<e />` would be treated
-        /// as an HTML intrinsic element).
+        /// This is a *transient* flag: it is set when visiting `JSXElementName`
+        /// and consumed during reference resolution, where it propagates
+        /// [`SymbolFlags::JSXTag`] to the resolved symbol and is then stripped
+        /// from the reference. It does not appear on references after semantic
+        /// analysis is complete.
         ///
         /// Member expressions like `<foo.Bar />` do not set this flag on `foo`,
         /// because `foo` is a `JSXMemberExpression` child, not a direct element name.
+        ///
+        /// [`SymbolFlags::JSXTag`]: crate::symbol::SymbolFlags::JSXTag
         const JSXTag = 1 << 6;
         /// The symbol being referenced is a value.
         ///
