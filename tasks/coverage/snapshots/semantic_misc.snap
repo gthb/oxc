@@ -1,6 +1,6 @@
 semantic_misc Summary:
 AST Parsed     : 65/65 (100.00%)
-Positive Passed: 49/65 (75.38%)
+Positive Passed: 51/65 (78.46%)
 semantic Error: tasks/coverage/misc/pass/conditional-arrow-alternate-return-type.ts
 Unresolved references mismatch:
 after transform: ["Pick", "Record"]
@@ -116,11 +116,6 @@ rebuilt        : SymbolId(9): []
 Unresolved references mismatch:
 after transform: ["Super", "WeakMap", "require", "super"]
 rebuilt        : ["Super", "WeakMap", "require"]
-
-semantic Error: tasks/coverage/misc/pass/oxc-1740.tsx
-Reference flags mismatch for "Bar":
-after transform: ReferenceId(1): ReferenceFlags(Read | JSXTag)
-rebuilt        : ReferenceId(3): ReferenceFlags(Read)
 
 semantic Error: tasks/coverage/misc/pass/oxc-2562.ts
 Symbol span mismatch for "HooksController":
@@ -282,12 +277,4 @@ semantic Error: tasks/coverage/misc/pass/oxc-9215.ts
 Unresolved references mismatch:
 after transform: ["a", "b", "d", "e"]
 rebuilt        : ["a", "b", "e"]
-
-semantic Error: tasks/coverage/misc/pass/swc-8243.tsx
-Reference flags mismatch for "Bar":
-after transform: ReferenceId(1): ReferenceFlags(Read | JSXTag)
-rebuilt        : ReferenceId(2): ReferenceFlags(Read)
-Reference flags mismatch for "Baz":
-after transform: ReferenceId(2): ReferenceFlags(Read | JSXTag)
-rebuilt        : ReferenceId(4): ReferenceFlags(Read)
 

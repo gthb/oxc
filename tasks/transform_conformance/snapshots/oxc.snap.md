@@ -1,6 +1,6 @@
 commit: 91b4ce32
 
-Passed: 207/364
+Passed: 218/364
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -645,61 +645,7 @@ after transform: [ReferenceId(0), ReferenceId(1), ReferenceId(4), ReferenceId(9)
 rebuilt        : [ReferenceId(5)]
 
 
-# babel-plugin-transform-react-jsx (38/52)
-* attribute-escapes/input.jsx
-Reference flags mismatch for "Foo":
-after transform: ReferenceId(0): ReferenceFlags(Read | JSXTag)
-rebuilt        : ReferenceId(1): ReferenceFlags(Read)
-Reference flags mismatch for "Foo":
-after transform: ReferenceId(1): ReferenceFlags(Read | JSXTag)
-rebuilt        : ReferenceId(3): ReferenceFlags(Read)
-Reference flags mismatch for "Foo":
-after transform: ReferenceId(2): ReferenceFlags(Read | JSXTag)
-rebuilt        : ReferenceId(5): ReferenceFlags(Read)
-Reference flags mismatch for "Foo":
-after transform: ReferenceId(3): ReferenceFlags(Read | JSXTag)
-rebuilt        : ReferenceId(7): ReferenceFlags(Read)
-Reference flags mismatch for "Foo":
-after transform: ReferenceId(4): ReferenceFlags(Read | JSXTag)
-rebuilt        : ReferenceId(9): ReferenceFlags(Read)
-Reference flags mismatch for "Foo":
-after transform: ReferenceId(5): ReferenceFlags(Read | JSXTag)
-rebuilt        : ReferenceId(11): ReferenceFlags(Read)
-Reference flags mismatch for "Foo":
-after transform: ReferenceId(6): ReferenceFlags(Read | JSXTag)
-rebuilt        : ReferenceId(13): ReferenceFlags(Read)
-
-* issues/issue-6638/input.jsx
-Reference flags mismatch for "Suspense":
-after transform: ReferenceId(0): ReferenceFlags(Read | JSXTag)
-rebuilt        : ReferenceId(1): ReferenceFlags(Read)
-Reference flags mismatch for "Init":
-after transform: ReferenceId(1): ReferenceFlags(Read | JSXTag)
-rebuilt        : ReferenceId(3): ReferenceFlags(Read)
-Reference flags mismatch for "PanelGroup":
-after transform: ReferenceId(2): ReferenceFlags(Read | JSXTag)
-rebuilt        : ReferenceId(5): ReferenceFlags(Read)
-Reference flags mismatch for "Panel":
-after transform: ReferenceId(3): ReferenceFlags(Read | JSXTag)
-rebuilt        : ReferenceId(7): ReferenceFlags(Read)
-Reference flags mismatch for "Input":
-after transform: ReferenceId(4): ReferenceFlags(Read | JSXTag)
-rebuilt        : ReferenceId(9): ReferenceFlags(Read)
-Reference flags mismatch for "PanelResizeHandle":
-after transform: ReferenceId(6): ReferenceFlags(Read | JSXTag)
-rebuilt        : ReferenceId(11): ReferenceFlags(Read)
-Reference flags mismatch for "Panel":
-after transform: ReferenceId(7): ReferenceFlags(Read | JSXTag)
-rebuilt        : ReferenceId(13): ReferenceFlags(Read)
-Reference flags mismatch for "Output":
-after transform: ReferenceId(8): ReferenceFlags(Read | JSXTag)
-rebuilt        : ReferenceId(15): ReferenceFlags(Read)
-
-* refresh/emit-full-signatures-option/input.jsx
-Reference flags mismatch for "Foo":
-after transform: ReferenceId(2): ReferenceFlags(Read | JSXTag)
-rebuilt        : ReferenceId(5): ReferenceFlags(Read)
-
+# babel-plugin-transform-react-jsx (49/52)
 * refresh/import-after-component/input.js
 Missing ScopeId
 Missing ReferenceId: "useFoo"
@@ -707,135 +653,11 @@ Symbol reference IDs mismatch for "useFoo":
 after transform: SymbolId(1): [ReferenceId(1), ReferenceId(7)]
 rebuilt        : SymbolId(1): [ReferenceId(6), ReferenceId(11), ReferenceId(12)]
 
-* refresh/react-refresh/does-not-consider-require-like-methods-to-be-hocs/input.jsx
-Symbol flags mismatch for "A":
-after transform: SymbolId(0): SymbolFlags(BlockScopedVariable | ConstVariable | JSXTag)
-rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable | ConstVariable)
-Symbol flags mismatch for "B":
-after transform: SymbolId(1): SymbolFlags(BlockScopedVariable | ConstVariable | JSXTag)
-rebuilt        : SymbolId(3): SymbolFlags(BlockScopedVariable | ConstVariable)
-Symbol flags mismatch for "C":
-after transform: SymbolId(2): SymbolFlags(BlockScopedVariable | ConstVariable | JSXTag)
-rebuilt        : SymbolId(4): SymbolFlags(BlockScopedVariable | ConstVariable)
-Symbol flags mismatch for "D":
-after transform: SymbolId(3): SymbolFlags(BlockScopedVariable | ConstVariable | JSXTag)
-rebuilt        : SymbolId(5): SymbolFlags(BlockScopedVariable | ConstVariable)
-Reference flags mismatch for "A":
-after transform: ReferenceId(6): ReferenceFlags(Read | JSXTag)
-rebuilt        : ReferenceId(8): ReferenceFlags(Read)
-Reference flags mismatch for "B":
-after transform: ReferenceId(7): ReferenceFlags(Read | JSXTag)
-rebuilt        : ReferenceId(10): ReferenceFlags(Read)
-Reference flags mismatch for "C":
-after transform: ReferenceId(8): ReferenceFlags(Read | JSXTag)
-rebuilt        : ReferenceId(12): ReferenceFlags(Read)
-Reference flags mismatch for "D":
-after transform: ReferenceId(9): ReferenceFlags(Read | JSXTag)
-rebuilt        : ReferenceId(14): ReferenceFlags(Read)
-
 * refresh/react-refresh/includes-custom-hooks-into-the-signatures-when-commonjs-target-is-used/input.jsx
 x Output mismatch
 
-* refresh/react-refresh/registers-identifiers-used-in-jsx-at-definition-site/input.jsx
-Symbol flags mismatch for "A":
-after transform: SymbolId(0): SymbolFlags(Import | JSXTag)
-rebuilt        : SymbolId(0): SymbolFlags(Import)
-Symbol flags mismatch for "Header":
-after transform: SymbolId(2): SymbolFlags(BlockScopedVariable | ConstVariable | JSXTag)
-rebuilt        : SymbolId(4): SymbolFlags(BlockScopedVariable | ConstVariable)
-Symbol flags mismatch for "StyledFactory1":
-after transform: SymbolId(3): SymbolFlags(BlockScopedVariable | ConstVariable | JSXTag)
-rebuilt        : SymbolId(5): SymbolFlags(BlockScopedVariable | ConstVariable)
-Symbol flags mismatch for "StyledFactory2":
-after transform: SymbolId(4): SymbolFlags(BlockScopedVariable | ConstVariable | JSXTag)
-rebuilt        : SymbolId(6): SymbolFlags(BlockScopedVariable | ConstVariable)
-Symbol flags mismatch for "StyledFactory3":
-after transform: SymbolId(5): SymbolFlags(BlockScopedVariable | ConstVariable | JSXTag)
-rebuilt        : SymbolId(7): SymbolFlags(BlockScopedVariable | ConstVariable)
-Symbol flags mismatch for "Alias1":
-after transform: SymbolId(7): SymbolFlags(BlockScopedVariable | JSXTag)
-rebuilt        : SymbolId(9): SymbolFlags(BlockScopedVariable)
-Symbol flags mismatch for "Alias2":
-after transform: SymbolId(8): SymbolFlags(BlockScopedVariable | JSXTag)
-rebuilt        : SymbolId(10): SymbolFlags(BlockScopedVariable)
-Symbol flags mismatch for "B":
-after transform: SymbolId(11): SymbolFlags(BlockScopedVariable | ConstVariable | JSXTag)
-rebuilt        : SymbolId(13): SymbolFlags(BlockScopedVariable | ConstVariable)
-Reference flags mismatch for "A":
-after transform: ReferenceId(9): ReferenceFlags(Read | JSXTag)
-rebuilt        : ReferenceId(19): ReferenceFlags(Read)
-Reference flags mismatch for "B":
-after transform: ReferenceId(10): ReferenceFlags(Read | JSXTag)
-rebuilt        : ReferenceId(21): ReferenceFlags(Read)
-Reference flags mismatch for "StyledFactory1":
-after transform: ReferenceId(11): ReferenceFlags(Read | JSXTag)
-rebuilt        : ReferenceId(23): ReferenceFlags(Read)
-Reference flags mismatch for "StyledFactory2":
-after transform: ReferenceId(12): ReferenceFlags(Read | JSXTag)
-rebuilt        : ReferenceId(25): ReferenceFlags(Read)
-Reference flags mismatch for "StyledFactory3":
-after transform: ReferenceId(13): ReferenceFlags(Read | JSXTag)
-rebuilt        : ReferenceId(27): ReferenceFlags(Read)
-Reference flags mismatch for "Alias1":
-after transform: ReferenceId(14): ReferenceFlags(Read | JSXTag)
-rebuilt        : ReferenceId(29): ReferenceFlags(Read)
-Reference flags mismatch for "Alias2":
-after transform: ReferenceId(15): ReferenceFlags(Read | JSXTag)
-rebuilt        : ReferenceId(31): ReferenceFlags(Read)
-Reference flags mismatch for "Header":
-after transform: ReferenceId(16): ReferenceFlags(Read | JSXTag)
-rebuilt        : ReferenceId(33): ReferenceFlags(Read)
-
-* refresh/react-refresh/registers-top-level-exported-function-declarations/input.jsx
-Symbol flags mismatch for "Hello":
-after transform: SymbolId(0): SymbolFlags(Function | JSXTag)
-rebuilt        : SymbolId(1): SymbolFlags(Function)
-Reference flags mismatch for "Hello":
-after transform: ReferenceId(1): ReferenceFlags(Read | JSXTag)
-rebuilt        : ReferenceId(5): ReferenceFlags(Read)
-
-* refresh/react-refresh/registers-top-level-exported-named-arrow-functions/input.jsx
-Symbol flags mismatch for "Hello":
-after transform: SymbolId(0): SymbolFlags(BlockScopedVariable | ConstVariable | JSXTag)
-rebuilt        : SymbolId(1): SymbolFlags(BlockScopedVariable | ConstVariable)
-Reference flags mismatch for "Hello":
-after transform: ReferenceId(1): ReferenceFlags(Read | JSXTag)
-rebuilt        : ReferenceId(5): ReferenceFlags(Read)
-Reference flags mismatch for "Hello":
-after transform: ReferenceId(2): ReferenceFlags(Read | JSXTag)
-rebuilt        : ReferenceId(9): ReferenceFlags(Read)
-
-* refresh/react-refresh/registers-top-level-function-declarations/input.jsx
-Symbol flags mismatch for "Hello":
-after transform: SymbolId(0): SymbolFlags(Function | JSXTag)
-rebuilt        : SymbolId(1): SymbolFlags(Function)
-Reference flags mismatch for "Hello":
-after transform: ReferenceId(1): ReferenceFlags(Read | JSXTag)
-rebuilt        : ReferenceId(5): ReferenceFlags(Read)
-
-* refresh/react-refresh/registers-top-level-variable-declarations-with-arrow-functions/input.jsx
-Symbol flags mismatch for "Hello":
-after transform: SymbolId(0): SymbolFlags(BlockScopedVariable | JSXTag)
-rebuilt        : SymbolId(1): SymbolFlags(BlockScopedVariable)
-Reference flags mismatch for "Hello":
-after transform: ReferenceId(1): ReferenceFlags(Read | JSXTag)
-rebuilt        : ReferenceId(5): ReferenceFlags(Read)
-
-* refresh/react-refresh/registers-top-level-variable-declarations-with-function-expressions/input.jsx
-Symbol flags mismatch for "Hello":
-after transform: SymbolId(0): SymbolFlags(BlockScopedVariable | JSXTag)
-rebuilt        : SymbolId(1): SymbolFlags(BlockScopedVariable)
-Reference flags mismatch for "Hello":
-after transform: ReferenceId(1): ReferenceFlags(Read | JSXTag)
-rebuilt        : ReferenceId(5): ReferenceFlags(Read)
-
 * refresh/react-refresh/supports-typescript-namespace-syntax/input.tsx
 x Output mismatch
-
-* refresh/react-refresh/uses-custom-identifiers-for-refresh-reg-and-refresh-sig/input.jsx
-Reference flags mismatch for "Foo":
-after transform: ReferenceId(2): ReferenceFlags(Read | JSXTag)
-rebuilt        : ReferenceId(4): ReferenceFlags(Read)
 
 
 # legacy-decorators (8/94)
