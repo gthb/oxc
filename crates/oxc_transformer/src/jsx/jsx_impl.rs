@@ -792,22 +792,15 @@ impl<'a> JsxImpl<'a> {
                 ctx.ast.expression_string_literal(ident.span, ident.name, None)
             }
             JSXElementName::IdentifierReference(ident) => {
-                // The ident's reference has ReferenceFlags::JSXTag from semantic analysis.
-                // After transformation to createElement/jsx, it's a regular value reference.
-                // Replace it with a clean Read reference so conformance checks don't see
-                // a stale JSXTag flag, and clear SymbolFlags::JSXTag on the symbol.
-                let symbol_id = ctx.scoping().get_reference(ident.reference_id()).symbol_id();
-                ctx.delete_reference_for_identifier(&ident);
-                if let Some(symbol_id) = symbol_id {
+                // Clear the SymbolFlags::JSXTag set during semantic analysis — after
+                // transformation to createElement/jsx, the symbol is no longer used
+                // as a JSX tag. ReferenceFlags::JSXTag was already consumed during
+                // reference resolution (it's a transient signal, not stored permanently).
+                if let Some(symbol_id) =
+                    ctx.scoping().get_reference(ident.reference_id()).symbol_id()
+                {
                     *ctx.scoping_mut().symbol_flags_mut(symbol_id) -= SymbolFlags::JSXTag;
                 }
-                let reference_id =
-                    ctx.create_reference_in_current_scope(ident.name, ReferenceFlags::Read);
-                let ident = ctx.ast.alloc_identifier_reference_with_reference_id(
-                    ident.span,
-                    ident.name,
-                    reference_id,
-                );
                 Expression::Identifier(ident)
             }
             JSXElementName::MemberExpression(member_expr) => {

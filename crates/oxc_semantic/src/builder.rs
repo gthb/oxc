@@ -542,6 +542,10 @@ impl<'a> SemanticBuilder<'a> {
         let refs = self.unresolved_references.take();
         for (name, reference_id) in refs {
             if !self.walk_up_resolve_reference(name, reference_id) {
+                // Strip transient JSXTag flag from unresolved references — it was
+                // only needed to propagate SymbolFlags::JSXTag during resolution,
+                // which didn't happen for this reference.
+                *self.scoping.references[reference_id].flags_mut() -= ReferenceFlags::JSXTag;
                 self.scoping.add_root_unresolved_reference(name, reference_id);
             }
         }
@@ -609,6 +613,14 @@ impl<'a> SemanticBuilder<'a> {
             //                                            not a value symbol, so we need to
             //                                            make sure the reference is a type only.
             *flags = ReferenceFlags::Type;
+        }
+        // Propagate JSXTag to the symbol and strip it from the reference — the
+        // reference flag is a transient signal used only during resolution, not a
+        // permanent classification. Stripping it avoids the transformer needing to
+        // create replacement references when converting JSX to createElement calls.
+        if is_jsx_tag {
+            *flags -= ReferenceFlags::JSXTag;
+            // `reference` borrow must end before `symbol_flags_mut`
         }
         reference.set_symbol_id(symbol_id);
         self.scoping.add_resolved_reference(symbol_id, reference_id);

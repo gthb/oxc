@@ -975,7 +975,7 @@ rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/callsOnComplexSignatures.tsx
 Symbol reference IDs mismatch for "React":
-after transform: SymbolId(0): [ReferenceId(28), ReferenceId(32), ReferenceId(33), ReferenceId(36), ReferenceId(38), ReferenceId(43), ReferenceId(46), ReferenceId(49)]
+after transform: SymbolId(0): [ReferenceId(28), ReferenceId(32), ReferenceId(33), ReferenceId(36), ReferenceId(38), ReferenceId(42), ReferenceId(44), ReferenceId(46)]
 rebuilt        : SymbolId(0): [ReferenceId(24), ReferenceId(28), ReferenceId(31)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/capturedLetConstInLoop1.ts
@@ -3564,7 +3564,7 @@ Bindings mismatch:
 after transform: ScopeId(0): ["DropdownMenu", "React", "_jsxFileName"]
 rebuilt        : ScopeId(0): ["React", "_jsxFileName"]
 Symbol reference IDs mismatch for "React":
-after transform: SymbolId(0): [ReferenceId(6), ReferenceId(15), ReferenceId(16), ReferenceId(19), ReferenceId(22), ReferenceId(23), ReferenceId(26)]
+after transform: SymbolId(0): [ReferenceId(6), ReferenceId(15), ReferenceId(16), ReferenceId(18), ReferenceId(21), ReferenceId(22), ReferenceId(24)]
 rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(3), ReferenceId(5), ReferenceId(8), ReferenceId(10), ReferenceId(12)]
 Reference symbol mismatch for "DropdownMenu":
 after transform: SymbolId(1) "DropdownMenu"
@@ -3581,7 +3581,7 @@ Bindings mismatch:
 after transform: ScopeId(0): ["App", "React", "Subscribe", "TestComponentWithChildren", "TestComponentWithoutChildren", "_jsxFileName", "_result"]
 rebuilt        : ScopeId(0): ["App", "React", "_jsxFileName", "_result"]
 Symbol reference IDs mismatch for "React":
-after transform: SymbolId(0): [ReferenceId(6), ReferenceId(7), ReferenceId(14), ReferenceId(15), ReferenceId(29), ReferenceId(36), ReferenceId(38), ReferenceId(41), ReferenceId(44), ReferenceId(45), ReferenceId(46), ReferenceId(49)]
+after transform: SymbolId(0): [ReferenceId(6), ReferenceId(7), ReferenceId(14), ReferenceId(15), ReferenceId(29), ReferenceId(36), ReferenceId(38), ReferenceId(40), ReferenceId(42), ReferenceId(43), ReferenceId(44), ReferenceId(46)]
 rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(6), ReferenceId(10), ReferenceId(13), ReferenceId(18)]
 Reference symbol mismatch for "TestComponentWithChildren":
 after transform: SymbolId(1) "TestComponentWithChildren"
@@ -6007,7 +6007,7 @@ Symbol flags mismatch for "ListItemVariant":
 after transform: SymbolId(7): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(6): SymbolFlags(FunctionScopedVariable)
 Symbol reference IDs mismatch for "ListItemVariant":
-after transform: SymbolId(7): [ReferenceId(0), ReferenceId(1), ReferenceId(3), ReferenceId(4), ReferenceId(8), ReferenceId(11), ReferenceId(12), ReferenceId(25)]
+after transform: SymbolId(7): [ReferenceId(0), ReferenceId(1), ReferenceId(3), ReferenceId(4), ReferenceId(8), ReferenceId(11), ReferenceId(12), ReferenceId(24)]
 rebuilt        : SymbolId(6): [ReferenceId(5), ReferenceId(15)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/discriminatedUnionWithIndexSignature.ts
@@ -10226,7 +10226,7 @@ rebuilt        : ["Component"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/jsxChildrenSingleChildConfusableWithMultipleChildrenNoError.tsx
 Symbol reference IDs mismatch for "React":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(3), ReferenceId(7), ReferenceId(9), ReferenceId(11), ReferenceId(14)]
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(3), ReferenceId(7), ReferenceId(9), ReferenceId(11), ReferenceId(13)]
 rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(3), ReferenceId(6), ReferenceId(8)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/jsxComplexSignatureHasApplicabilityError.tsx
@@ -10234,7 +10234,7 @@ Bindings mismatch:
 after transform: ScopeId(0): ["React", "ReactSelectClass", "_jsxFileName", "_objectSpread", "createReactSingleSelect"]
 rebuilt        : ScopeId(0): ["React", "_jsxFileName", "_objectSpread", "createReactSingleSelect"]
 Symbol reference IDs mismatch for "React":
-after transform: SymbolId(0): [ReferenceId(17), ReferenceId(19), ReferenceId(44), ReferenceId(50), ReferenceId(54), ReferenceId(82), ReferenceId(85), ReferenceId(88), ReferenceId(102), ReferenceId(180), ReferenceId(196), ReferenceId(206), ReferenceId(209), ReferenceId(233), ReferenceId(236), ReferenceId(243)]
+after transform: SymbolId(0): [ReferenceId(17), ReferenceId(19), ReferenceId(44), ReferenceId(50), ReferenceId(54), ReferenceId(82), ReferenceId(85), ReferenceId(88), ReferenceId(102), ReferenceId(180), ReferenceId(196), ReferenceId(206), ReferenceId(209), ReferenceId(233), ReferenceId(236), ReferenceId(242)]
 rebuilt        : SymbolId(0): [ReferenceId(0)]
 Reference symbol mismatch for "ReactSelectClass":
 after transform: SymbolId(20) "ReactSelectClass"
@@ -10375,7 +10375,7 @@ Bindings mismatch:
 after transform: ScopeId(0): ["Comp", "React", "_jsxFileName", "jsx"]
 rebuilt        : ScopeId(0): ["React", "_jsxFileName"]
 Symbol reference IDs mismatch for "React":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(7)]
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(6)]
 rebuilt        : SymbolId(0): [ReferenceId(0)]
 Reference symbol mismatch for "Comp":
 after transform: SymbolId(16) "Comp"
@@ -10427,7 +10427,7 @@ rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/jsxPartialSpread.tsx
 Symbol reference IDs mismatch for "Select":
-after transform: SymbolId(0): [ReferenceId(2), ReferenceId(9)]
+after transform: SymbolId(0): [ReferenceId(2), ReferenceId(3)]
 rebuilt        : SymbolId(3): [ReferenceId(3)]
 Unresolved references mismatch:
 after transform: ["Parameters", "Partial"]
@@ -14892,12 +14892,12 @@ rebuilt        : ["print"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/reactHOCSpreadprops.tsx
 Symbol reference IDs mismatch for "React":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(4), ReferenceId(12)]
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(4), ReferenceId(11)]
 rebuilt        : SymbolId(2): [ReferenceId(1), ReferenceId(2)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/reactReadonlyHOCAssignabilityReal.tsx
 Symbol reference IDs mismatch for "React":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(4), ReferenceId(11)]
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(4), ReferenceId(10)]
 rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(1)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/reactSFCAndFunctionResolvable.tsx
@@ -14905,7 +14905,7 @@ Bindings mismatch:
 after transform: ScopeId(0): ["Checkbox", "OtherRadio", "Radio", "RandomComponent", "React", "_jsxFileName", "condition1", "condition2", "condition3"]
 rebuilt        : ScopeId(0): ["RandomComponent", "React", "_jsxFileName"]
 Symbol reference IDs mismatch for "React":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(3), ReferenceId(15), ReferenceId(18)]
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(3), ReferenceId(14), ReferenceId(16)]
 rebuilt        : SymbolId(0): [ReferenceId(7), ReferenceId(10)]
 Reference symbol mismatch for "condition1":
 after transform: SymbolId(5) "condition1"
@@ -14937,7 +14937,7 @@ Bindings mismatch:
 after transform: ScopeId(0): ["React", "Tag", "_jsxFileName", "_objectSpread", "children", "classes", "rest"]
 rebuilt        : ScopeId(0): ["React", "_jsxFileName", "_objectSpread", "children", "classes", "rest"]
 Symbol reference IDs mismatch for "React":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(10)]
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(9)]
 rebuilt        : SymbolId(0): [ReferenceId(0)]
 Reference symbol mismatch for "Tag":
 after transform: SymbolId(1) "Tag"
@@ -14951,7 +14951,7 @@ Bindings mismatch:
 after transform: ScopeId(0): ["React", "Tag", "_jsxFileName", "_objectSpread", "children", "classes", "rest"]
 rebuilt        : ScopeId(0): ["React", "_jsxFileName", "_objectSpread", "children", "classes", "rest"]
 Symbol reference IDs mismatch for "React":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(12)]
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(11)]
 rebuilt        : SymbolId(0): [ReferenceId(0)]
 Reference symbol mismatch for "Tag":
 after transform: SymbolId(1) "Tag"
@@ -17129,7 +17129,7 @@ Bindings mismatch:
 after transform: ScopeId(0): ["Button", "CustomButton", "React", "_jsxFileName", "_objectSpread"]
 rebuilt        : ScopeId(0): ["CustomButton", "React", "_jsxFileName", "_objectSpread"]
 Symbol reference IDs mismatch for "React":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(3), ReferenceId(7), ReferenceId(15)]
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(3), ReferenceId(7), ReferenceId(14)]
 rebuilt        : SymbolId(0): [ReferenceId(0)]
 Reference symbol mismatch for "Button":
 after transform: SymbolId(3) "Button"
@@ -27765,7 +27765,7 @@ rebuilt        : ["require", "x"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxUnionTypeComponent1.tsx
 Symbol reference IDs mismatch for "React":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(6), ReferenceId(12), ReferenceId(14), ReferenceId(17), ReferenceId(20)]
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(6), ReferenceId(11), ReferenceId(13), ReferenceId(15), ReferenceId(17)]
 rebuilt        : SymbolId(1): [ReferenceId(1), ReferenceId(2), ReferenceId(5), ReferenceId(7), ReferenceId(10), ReferenceId(11)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/moduleResolution/allowImportingTypesDtsExtension.ts
