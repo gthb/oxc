@@ -425,7 +425,7 @@ impl<'t> Mangler<'t> {
                     .map(|r| ast_nodes.get_node(r.declaration).scope_id());
 
                 let referenced_scope_ids =
-                    scoping.get_resolved_references(symbol_id).map(|r| r.scope_id());
+                    scoping.get_resolved_references(symbol_id).map(oxc_semantic::Reference::scope_id);
 
                 // Calculate the scope ids that this symbol is alive in.
                 // For each used_scope_id, we walk up the ancestor chain and collect scopes
