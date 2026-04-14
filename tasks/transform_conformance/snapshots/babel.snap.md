@@ -1,6 +1,6 @@
 commit: 91b4ce32
 
-Passed: 495/1000
+Passed: 526/1000
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -2437,7 +2437,7 @@ after transform: ["T", "f"]
 rebuilt        : ["f"]
 
 
-# babel-preset-react (1/10)
+# babel-preset-react (4/10)
 * preset-options/development/input.js
 react: unknown field `developmentSourceSelf`, expected one of `runtime`, `development`, `throwIfNamespace`, `pure`, `importSource`, `pragma`, `pragmaFrag`, `useBuiltIns`, `useSpread`, `refresh`
 
@@ -2447,23 +2447,8 @@ x Output mismatch
 * preset-options/development-runtime-automatic/input.js
 react: unknown field `developmentSourceSelf`, expected one of `runtime`, `development`, `throwIfNamespace`, `pure`, `importSource`, `pragma`, `pragmaFrag`, `useBuiltIns`, `useSpread`, `refresh`
 
-* preset-options/empty-options/input.js
-Reference flags mismatch for "Foo":
-after transform: ReferenceId(0): ReferenceFlags(Read | JSXTag)
-rebuilt        : ReferenceId(2): ReferenceFlags(Read)
-
 * preset-options/pure/input.js
 x Output mismatch
-
-* preset-options/runtime-automatic/input.js
-Reference flags mismatch for "Foo":
-after transform: ReferenceId(0): ReferenceFlags(Read | JSXTag)
-rebuilt        : ReferenceId(2): ReferenceFlags(Read)
-
-* preset-options/runtime-classic/input.js
-Reference flags mismatch for "Foo":
-after transform: ReferenceId(0): ReferenceFlags(Read | JSXTag)
-rebuilt        : ReferenceId(1): ReferenceFlags(Read)
 
 * preset-options/runtime-classic-pragma-no-frag/input.js
 x Output mismatch
@@ -2472,7 +2457,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-react-jsx (109/149)
+# babel-plugin-transform-react-jsx (137/149)
 * autoImport/after-polyfills-compiled-to-cjs/input.mjs
 x Output mismatch
 
@@ -2481,69 +2466,6 @@ x Output mismatch
 
 * pure/false-default-pragma-classic-runtime/input.js
 x Output mismatch
-
-* react/adds-appropriate-newlines-when-using-spread-attribute/input.js
-Reference flags mismatch for "Component":
-after transform: ReferenceId(0): ReferenceFlags(Read | JSXTag)
-rebuilt        : ReferenceId(1): ReferenceFlags(Read)
-
-* react/assignment/input.js
-Reference flags mismatch for "Component":
-after transform: ReferenceId(0): ReferenceFlags(Read | JSXTag)
-rebuilt        : ReferenceId(1): ReferenceFlags(Read)
-
-* react/comments/input.js
-Reference flags mismatch for "Trans":
-after transform: ReferenceId(0): ReferenceFlags(Read | JSXTag)
-rebuilt        : ReferenceId(3): ReferenceFlags(Read)
-Reference flags mismatch for "Trans":
-after transform: ReferenceId(1): ReferenceFlags(Read | JSXTag)
-rebuilt        : ReferenceId(7): ReferenceFlags(Read)
-Reference flags mismatch for "Trans":
-after transform: ReferenceId(2): ReferenceFlags(Read | JSXTag)
-rebuilt        : ReferenceId(10): ReferenceFlags(Read)
-Reference flags mismatch for "Trans":
-after transform: ReferenceId(3): ReferenceFlags(Read | JSXTag)
-rebuilt        : ReferenceId(13): ReferenceFlags(Read)
-
-* react/dont-coerce-expression-containers/input.js
-Reference flags mismatch for "Text":
-after transform: ReferenceId(0): ReferenceFlags(Read | JSXTag)
-rebuilt        : ReferenceId(1): ReferenceFlags(Read)
-
-* react/honor-custom-jsx-comment/input.js
-Reference flags mismatch for "Foo":
-after transform: ReferenceId(0): ReferenceFlags(Read | JSXTag)
-rebuilt        : ReferenceId(1): ReferenceFlags(Read)
-
-* react/honor-custom-jsx-comment-if-jsx-pragma-option-set/input.js
-Reference flags mismatch for "Foo":
-after transform: ReferenceId(0): ReferenceFlags(Read | JSXTag)
-rebuilt        : ReferenceId(1): ReferenceFlags(Read)
-
-* react/honor-custom-jsx-pragma-option/input.js
-Reference flags mismatch for "Foo":
-after transform: ReferenceId(0): ReferenceFlags(Read | JSXTag)
-rebuilt        : ReferenceId(1): ReferenceFlags(Read)
-
-* react/should-allow-constructor-as-prop/input.js
-Reference flags mismatch for "Component":
-after transform: ReferenceId(0): ReferenceFlags(Read | JSXTag)
-rebuilt        : ReferenceId(1): ReferenceFlags(Read)
-
-* react/should-avoid-wrapping-in-extra-parens-if-not-needed/input.js
-Reference flags mismatch for "Component":
-after transform: ReferenceId(0): ReferenceFlags(Read | JSXTag)
-rebuilt        : ReferenceId(2): ReferenceFlags(Read)
-Reference flags mismatch for "Composite":
-after transform: ReferenceId(2): ReferenceFlags(Read | JSXTag)
-rebuilt        : ReferenceId(6): ReferenceFlags(Read)
-Reference flags mismatch for "Composite":
-after transform: ReferenceId(5): ReferenceFlags(Read | JSXTag)
-rebuilt        : ReferenceId(9): ReferenceFlags(Read)
-Reference flags mismatch for "Composite2":
-after transform: ReferenceId(6): ReferenceFlags(Read | JSXTag)
-rebuilt        : ReferenceId(11): ReferenceFlags(Read)
 
 * react/should-disallow-valueless-key/input.js
 
@@ -2567,24 +2489,6 @@ rebuilt        : ReferenceId(11): ReferenceFlags(Read)
    `----
 
 
-* react/should-handle-attributed-elements/input.js
-Symbol flags mismatch for "HelloMessage":
-after transform: SymbolId(0): SymbolFlags(FunctionScopedVariable | JSXTag)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-Reference flags mismatch for "HelloMessage":
-after transform: ReferenceId(2): ReferenceFlags(Read | JSXTag)
-rebuilt        : ReferenceId(4): ReferenceFlags(Read)
-
-* react/should-have-correct-comma-in-nested-children/input.js
-Reference flags mismatch for "Component":
-after transform: ReferenceId(0): ReferenceFlags(Read | JSXTag)
-rebuilt        : ReferenceId(4): ReferenceFlags(Read)
-
-* react/should-not-add-quotes-to-identifier-names/input.js
-Reference flags mismatch for "F":
-after transform: ReferenceId(0): ReferenceFlags(Read | JSXTag)
-rebuilt        : ReferenceId(1): ReferenceFlags(Read)
-
 * react/should-throw-error-namespaces-if-not-flag/input.js
 
   ! Namespace tags are not supported by default. React's JSX doesn't support
@@ -2596,76 +2500,8 @@ rebuilt        : ReferenceId(1): ReferenceFlags(Read)
    `----
 
 
-* react/weird-symbols/input.js
-Reference flags mismatch for "Text":
-after transform: ReferenceId(1): ReferenceFlags(Read | JSXTag)
-rebuilt        : ReferenceId(2): ReferenceFlags(Read)
-
-* react/wraps-props-in-react-spread-for-first-spread-attributes/input.js
-Reference flags mismatch for "Component":
-after transform: ReferenceId(0): ReferenceFlags(Read | JSXTag)
-rebuilt        : ReferenceId(1): ReferenceFlags(Read)
-
-* react/wraps-props-in-react-spread-for-last-spread-attributes/input.js
-Reference flags mismatch for "Component":
-after transform: ReferenceId(0): ReferenceFlags(Read | JSXTag)
-rebuilt        : ReferenceId(1): ReferenceFlags(Read)
-
-* react/wraps-props-in-react-spread-for-middle-spread-attributes/input.js
-Reference flags mismatch for "Component":
-after transform: ReferenceId(0): ReferenceFlags(Read | JSXTag)
-rebuilt        : ReferenceId(1): ReferenceFlags(Read)
-
-* react-automatic/adds-appropriate-newlines-when-using-spread-attribute/input.js
-Reference flags mismatch for "Component":
-after transform: ReferenceId(0): ReferenceFlags(Read | JSXTag)
-rebuilt        : ReferenceId(1): ReferenceFlags(Read)
-
-* react-automatic/assignment/input.js
-Reference flags mismatch for "Component":
-after transform: ReferenceId(0): ReferenceFlags(Read | JSXTag)
-rebuilt        : ReferenceId(1): ReferenceFlags(Read)
-
-* react-automatic/comments/input.js
-Reference flags mismatch for "Trans":
-after transform: ReferenceId(0): ReferenceFlags(Read | JSXTag)
-rebuilt        : ReferenceId(3): ReferenceFlags(Read)
-Reference flags mismatch for "Trans":
-after transform: ReferenceId(1): ReferenceFlags(Read | JSXTag)
-rebuilt        : ReferenceId(7): ReferenceFlags(Read)
-Reference flags mismatch for "Trans":
-after transform: ReferenceId(2): ReferenceFlags(Read | JSXTag)
-rebuilt        : ReferenceId(10): ReferenceFlags(Read)
-Reference flags mismatch for "Trans":
-after transform: ReferenceId(3): ReferenceFlags(Read | JSXTag)
-rebuilt        : ReferenceId(13): ReferenceFlags(Read)
-
 * react-automatic/does-not-add-source-self-automatic/input.mjs
 transform-react-jsx: unknown field `autoImport`, expected one of `runtime`, `development`, `throwIfNamespace`, `pure`, `importSource`, `pragma`, `pragmaFrag`, `useBuiltIns`, `useSpread`, `refresh`
-
-* react-automatic/dont-coerce-expression-containers/input.js
-Reference flags mismatch for "Text":
-after transform: ReferenceId(0): ReferenceFlags(Read | JSXTag)
-rebuilt        : ReferenceId(1): ReferenceFlags(Read)
-
-* react-automatic/should-allow-constructor-as-prop/input.js
-Reference flags mismatch for "Component":
-after transform: ReferenceId(0): ReferenceFlags(Read | JSXTag)
-rebuilt        : ReferenceId(1): ReferenceFlags(Read)
-
-* react-automatic/should-avoid-wrapping-in-extra-parens-if-not-needed/input.js
-Reference flags mismatch for "Component":
-after transform: ReferenceId(0): ReferenceFlags(Read | JSXTag)
-rebuilt        : ReferenceId(2): ReferenceFlags(Read)
-Reference flags mismatch for "Composite":
-after transform: ReferenceId(2): ReferenceFlags(Read | JSXTag)
-rebuilt        : ReferenceId(6): ReferenceFlags(Read)
-Reference flags mismatch for "Composite":
-after transform: ReferenceId(5): ReferenceFlags(Read | JSXTag)
-rebuilt        : ReferenceId(9): ReferenceFlags(Read)
-Reference flags mismatch for "Composite2":
-after transform: ReferenceId(6): ReferenceFlags(Read | JSXTag)
-rebuilt        : ReferenceId(11): ReferenceFlags(Read)
 
 * react-automatic/should-disallow-valueless-key/input.js
 
@@ -2689,24 +2525,6 @@ rebuilt        : ReferenceId(11): ReferenceFlags(Read)
    `----
 
 
-* react-automatic/should-handle-attributed-elements/input.js
-Symbol flags mismatch for "HelloMessage":
-after transform: SymbolId(0): SymbolFlags(FunctionScopedVariable | JSXTag)
-rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
-Reference flags mismatch for "HelloMessage":
-after transform: ReferenceId(2): ReferenceFlags(Read | JSXTag)
-rebuilt        : ReferenceId(4): ReferenceFlags(Read)
-
-* react-automatic/should-have-correct-comma-in-nested-children/input.js
-Reference flags mismatch for "Component":
-after transform: ReferenceId(0): ReferenceFlags(Read | JSXTag)
-rebuilt        : ReferenceId(4): ReferenceFlags(Read)
-
-* react-automatic/should-not-add-quotes-to-identifier-names/input.js
-Reference flags mismatch for "F":
-after transform: ReferenceId(0): ReferenceFlags(Read | JSXTag)
-rebuilt        : ReferenceId(1): ReferenceFlags(Read)
-
 * react-automatic/should-throw-error-namespaces-if-not-flag/input.js
 
   ! Namespace tags are not supported by default. React's JSX doesn't support
@@ -2717,21 +2535,6 @@ rebuilt        : ReferenceId(1): ReferenceFlags(Read)
    :  ^^^^^^^
    `----
 
-
-* react-automatic/weird-symbols/input.js
-Reference flags mismatch for "Text":
-after transform: ReferenceId(1): ReferenceFlags(Read | JSXTag)
-rebuilt        : ReferenceId(2): ReferenceFlags(Read)
-
-* react-automatic/wraps-props-in-react-spread-for-last-spread-attributes/input.js
-Reference flags mismatch for "Component":
-after transform: ReferenceId(0): ReferenceFlags(Read | JSXTag)
-rebuilt        : ReferenceId(1): ReferenceFlags(Read)
-
-* react-automatic/wraps-props-in-react-spread-for-middle-spread-attributes/input.js
-Reference flags mismatch for "Component":
-after transform: ReferenceId(0): ReferenceFlags(Read | JSXTag)
-rebuilt        : ReferenceId(1): ReferenceFlags(Read)
 
 * spread-transform/transform-to-babel-extend/input.js
 
