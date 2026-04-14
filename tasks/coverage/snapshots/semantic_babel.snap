@@ -2,7 +2,7 @@ commit: 91b4ce32
 
 semantic_babel Summary:
 AST Parsed     : 2232/2232 (100.00%)
-Positive Passed: 2028/2232 (90.86%)
+Positive Passed: 2030/2232 (90.95%)
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/decorators/decorators-after-export/input.js
 Symbol span mismatch for "C":
 after transform: SymbolId(0): Span { start: 65, end: 66 }
@@ -1244,9 +1244,6 @@ after transform: ["Generator"]
 rebuilt        : []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/tsx/brace-is-block/input.tsx
-Reference flags mismatch for "C":
-after transform: ReferenceId(2): ReferenceFlags(Read | JSXTag)
-rebuilt        : ReferenceId(2): ReferenceFlags(Read)
 Unresolved references mismatch:
 after transform: ["D", "T"]
 rebuilt        : ["D"]
@@ -1321,14 +1318,6 @@ Unresolved references mismatch:
 after transform: ["C", "T"]
 rebuilt        : ["C"]
 
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/tsx/input.ts
-Reference flags mismatch for "C":
-after transform: ReferenceId(0): ReferenceFlags(Read | JSXTag)
-rebuilt        : ReferenceId(1): ReferenceFlags(Read)
-Reference flags mismatch for "C":
-after transform: ReferenceId(2): ReferenceFlags(Read | JSXTag)
-rebuilt        : ReferenceId(4): ReferenceFlags(Read)
-
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments-bit-shift-left-like/after-bit-shift/input.ts
 Unresolved references mismatch:
 after transform: ["T", "f", "x"]
@@ -1338,11 +1327,6 @@ semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescr
 Unresolved references mismatch:
 after transform: ["f"]
 rebuilt        : []
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments-bit-shift-left-like/jsx-opening-element/input.tsx
-Reference flags mismatch for "Component":
-after transform: ReferenceId(0): ReferenceFlags(Read | JSXTag)
-rebuilt        : ReferenceId(1): ReferenceFlags(Read)
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-only-import-export-specifiers/export-type-only-as-as-keyword/input.ts
 Unresolved references mismatch:
