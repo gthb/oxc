@@ -801,10 +801,8 @@ impl<'a> JsxImpl<'a> {
                 if let Some(symbol_id) = symbol_id {
                     *ctx.scoping_mut().symbol_flags_mut(symbol_id) -= SymbolFlags::JSXTag;
                 }
-                let reference_id = ctx.create_reference_in_current_scope(
-                    ident.name,
-                    ReferenceFlags::Read,
-                );
+                let reference_id =
+                    ctx.create_reference_in_current_scope(ident.name, ReferenceFlags::Read);
                 let ident = ctx.ast.alloc_identifier_reference_with_reference_id(
                     ident.span,
                     ident.name,
