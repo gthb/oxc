@@ -773,9 +773,7 @@ fn is_special_name(name: &str) -> bool {
 }
 
 /// Replace lowercase-starting mangled names in JSX component slots with
-/// uppercase alternatives from `generate_name_jsx`. Outlined from the main
-/// mangling function to avoid code-size effects on the hot assignment loop.
-#[cold]
+/// uppercase alternatives from `generate_name_jsx`.
 fn fixup_jsx_names<'a, const CAPACITY: usize>(
     frequencies: &Vec<'a, SlotFrequency<'a>>,
     jsx_slots: &BitSet<'a>,
