@@ -10,7 +10,7 @@ use base54::{base54, base54_upper_first};
 use oxc_allocator::{Allocator, BitSet, HashSet, Vec};
 use oxc_ast::ast::{Declaration, Program, Statement};
 use oxc_data_structures::inline_string::InlineString;
-use oxc_semantic::{AstNodes, Reference, Scoping, Semantic, SemanticBuilder, SymbolId};
+use oxc_semantic::{AstNodes, Scoping, Semantic, SemanticBuilder, SymbolId};
 use oxc_span::SourceType;
 use oxc_str::{CompactStr, Ident, Str};
 
@@ -331,6 +331,13 @@ impl<'t> Mangler<'t> {
         // All symbols with their assigned slots. Keyed by symbol id.
         let mut slots = Vec::from_iter_in(iter::repeat_n(0, scoping.symbols_len()), temp_allocator);
 
+        // Pre-compute which symbols are used as JSX component tags. This is populated
+        // during the slot-assignment walk below, piggybacking on the reference iteration
+        // already needed for liveness computation, to avoid a separate scan.
+        let is_jsx_source = program.source_type.is_jsx();
+        let mut jsx_symbols: Option<BitSet> =
+            if is_jsx_source { Some(BitSet::new_in(symbols_len, temp_allocator)) } else { None };
+
         // Stores the lived scope ids for each slot. Keyed by slot number.
         // Pre-allocate capacity based on number of symbols (upper bound for slots).
         let mut slot_liveness: Vec<BitSet> =
@@ -427,8 +434,13 @@ impl<'t> Mangler<'t> {
                     .iter()
                     .map(|r| ast_nodes.get_node(r.declaration).scope_id());
 
-                let referenced_scope_ids =
-                    scoping.get_resolved_references(symbol_id).map(Reference::scope_id);
+                let mut symbol_is_jsx = false;
+                let referenced_scope_ids = scoping.get_resolved_references(symbol_id).map(|r| {
+                    if is_jsx_source && !symbol_is_jsx && r.flags().is_jsx_tag() {
+                        symbol_is_jsx = true;
+                    }
+                    r.scope_id()
+                });
 
                 // Calculate the scope ids that this symbol is alive in.
                 // For each used_scope_id, we walk up the ancestor chain and collect scopes
@@ -460,12 +472,14 @@ impl<'t> Mangler<'t> {
                         slot_liveness_bitset.set_bit(ancestor_index);
                     }
                 }
+                if symbol_is_jsx && let Some(jsx_symbols) = &mut jsx_symbols {
+                    jsx_symbols.set_bit(symbol_id.index());
+                }
             }
         }
 
         let total_number_of_slots = slot_liveness.len();
 
-        let is_jsx_source = program.source_type.is_jsx();
         let frequencies = self.tally_slot_frequencies(
             scoping,
             exported_symbols.as_ref(),
@@ -473,7 +487,7 @@ impl<'t> Mangler<'t> {
             total_number_of_slots,
             &slots,
             top_level,
-            is_jsx_source,
+            jsx_symbols.as_ref(),
         );
 
         let root_unresolved_references = scoping.root_unresolved_references();
@@ -631,7 +645,7 @@ impl<'t> Mangler<'t> {
         total_number_of_slots: usize,
         slots: &[Slot],
         top_level: bool,
-        is_jsx_source: bool,
+        jsx_symbols: Option<&BitSet<'a>>,
     ) -> Vec<'a, SlotFrequency<'a>> {
         let root_scope_id = scoping.root_scope_id();
         let temp_allocator = self.temp_allocator.as_ref();
@@ -664,14 +678,14 @@ impl<'t> Mangler<'t> {
             }
             let index = slot as usize;
             frequencies[index].slot = slot;
-            let ref_ids = scoping.get_resolved_reference_ids(symbol_id);
-            frequencies[index].frequency += ref_ids.len();
+            frequencies[index].frequency += scoping.get_resolved_reference_ids(symbol_id).len();
             frequencies[index].symbol_ids.push(symbol_id);
-            // Detect JSX component symbols: if any reference has the JSXTag flag,
-            // this slot needs an uppercase-first mangled name.
-            if is_jsx_source && !frequencies[index].is_jsx {
-                frequencies[index].is_jsx =
-                    ref_ids.iter().any(|&id| scoping.get_reference(id).flags().is_jsx_tag());
+            // Mark slot as JSX if this symbol was identified as a JSX component tag
+            // during the slot-assignment walk (O(1) bitset lookup, no reference scan).
+            if !frequencies[index].is_jsx
+                && jsx_symbols.is_some_and(|jsx| jsx.has_bit(symbol_id.index()))
+            {
+                frequencies[index].is_jsx = true;
             }
         }
 
