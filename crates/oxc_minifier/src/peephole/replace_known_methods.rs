@@ -279,9 +279,7 @@ impl<'a> PeepholeOptimizations {
                     args.iter().filter(|arg| !matches!(arg, Argument::StringLiteral(_))).count();
                 let string_count = args.len() - expression_count;
 
-                // Template literal codegen prints raw values verbatim and cannot handle
-                // the internal lone surrogate encoding (U+FFFD markers). Bail out when
-                // the result would be a template literal and any input has lone surrogates.
+                // Lone surrogates can't go into template raw values.
                 if expression_count > 0 {
                     let has_lone_surrogates = base_str.lone_surrogates
                         || args.iter().any(

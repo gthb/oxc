@@ -469,8 +469,7 @@ impl<'a> PeepholeOptimizations {
 
             // "`${x}y` + 'z'" => "`${x}yz`"
             if let Some(right_str) = right_expr.get_side_free_string_value(ctx) {
-                // Template literal codegen prints raw values verbatim and cannot handle
-                // the internal lone surrogate encoding (U+FFFD markers).
+                // Lone surrogates can't go into template raw values.
                 if has_lone_surrogates(&right_str) {
                     return None;
                 }
@@ -490,8 +489,7 @@ impl<'a> PeepholeOptimizations {
         } else if let Expression::TemplateLiteral(right) = right_expr {
             // "'x' + `y${z}`" => "`xy${z}`"
             if let Some(left_str) = left_expr.get_side_free_string_value(ctx) {
-                // Template literal codegen prints raw values verbatim and cannot handle
-                // the internal lone surrogate encoding (U+FFFD markers).
+                // Lone surrogates can't go into template raw values.
                 if has_lone_surrogates(&left_str) {
                     return None;
                 }
@@ -773,8 +771,7 @@ impl<'a> PeepholeOptimizations {
             !expr.may_have_side_effects(ctx)
                 && expr
                     .to_js_string(ctx)
-                    // Template literal codegen prints raw values verbatim and cannot handle
-                    // the internal lone surrogate encoding (U+FFFD markers).
+                    // Lone surrogates can't go into template raw values.
                     .is_some_and(|s| !has_lone_surrogates(&s))
         });
         if !has_expr_to_inline {
