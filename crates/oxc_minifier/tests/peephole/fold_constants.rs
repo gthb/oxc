@@ -1202,6 +1202,15 @@ fn test_lone_surrogate_propagation() {
     test("x = `a${b}[\\uDC00]` + `[\\uDFFF]${c}d`", "x=`a${b}[\\uDC00][\\uDFFF]${c}d`");
     // Inline values in template with lone surrogates
     fold("`foo${1}[\\uDC00]`", "'foo1[\\udc00]'");
+    // String with lone surrogates + template with expressions: bail out
+    test_same("x = '[\\uDC00]' + `${a}`");
+    // Template with expressions + string with lone surrogates: bail out
+    test_same("x = `${a}` + '[\\uDC00]'");
+    // Inline string literal with lone surrogates into template (fully inlines to string)
+    test("x = `foo${'[\\uDC00]'}bar`", "x='foo[\\udc00]bar'");
+    // Inline string with lone surrogates into template that retains other expressions:
+    // skip inlining because template raw values can't represent lone surrogates
+    test_same("x = `${a}${'[\\uDC00]'}${b}`");
 }
 
 mod bigint {

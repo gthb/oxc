@@ -447,6 +447,11 @@ impl<'a> PeepholeOptimizations {
 
             // "`${x}y` + 'z'" => "`${x}yz`"
             if let Some(right_str) = right_expr.get_side_free_string_value(ctx) {
+                // Template literal codegen prints raw values verbatim and cannot handle
+                // the internal lone surrogate encoding (U+FFFD markers).
+                if has_lone_surrogates(&right_str) {
+                    return None;
+                }
                 left.span = left.span.merge_within(right_expr.span(), parent_span).unwrap_or(SPAN);
                 let last_quasi =
                     left.quasis.last_mut().expect("template literal must have at least one quasi");
@@ -458,20 +463,21 @@ impl<'a> PeepholeOptimizations {
                     .cooked
                     .map(|cooked| ctx.ast.str(&(cooked.as_str().to_string() + &right_str)));
                 last_quasi.value.cooked = new_cooked;
-                if has_lone_surrogates(&right_str) {
-                    last_quasi.lone_surrogates = true;
-                }
                 return Some(left_expr.take_in(ctx.ast));
             }
         } else if let Expression::TemplateLiteral(right) = right_expr {
             // "'x' + `y${z}`" => "`xy${z}`"
             if let Some(left_str) = left_expr.get_side_free_string_value(ctx) {
+                // Template literal codegen prints raw values verbatim and cannot handle
+                // the internal lone surrogate encoding (U+FFFD markers).
+                if has_lone_surrogates(&left_str) {
+                    return None;
+                }
                 right.span = right.span.merge_within(left_expr.span(), parent_span).unwrap_or(SPAN);
                 let first_quasi = right
                     .quasis
                     .first_mut()
                     .expect("template literal must have at least one quasi");
-                let lone_surrogates = has_lone_surrogates(&left_str);
                 let new_raw = Self::escape_string_for_template_literal(&left_str).into_owned()
                     + first_quasi.value.raw.as_str();
                 first_quasi.value.raw = ctx.ast.str(&new_raw);
@@ -480,9 +486,6 @@ impl<'a> PeepholeOptimizations {
                     .cooked
                     .map(|cooked| ctx.ast.str(&(left_str.into_owned() + cooked.as_str())));
                 first_quasi.value.cooked = new_cooked;
-                if lone_surrogates {
-                    first_quasi.lone_surrogates = true;
-                }
                 return Some(right_expr.take_in(ctx.ast));
             }
         }
@@ -744,10 +747,14 @@ impl<'a> PeepholeOptimizations {
     ///
     /// - `foo${1}bar${i}` => `foo1bar${i}`
     pub fn inline_template_literal(t: &mut TemplateLiteral<'a>, ctx: &mut TraverseCtx<'a>) {
-        let has_expr_to_inline = t
-            .expressions
-            .iter()
-            .any(|expr| !expr.may_have_side_effects(ctx) && expr.to_js_string(ctx).is_some());
+        let has_expr_to_inline = t.expressions.iter().any(|expr| {
+            !expr.may_have_side_effects(ctx)
+                && expr
+                    .to_js_string(ctx)
+                    // Template literal codegen prints raw values verbatim and cannot handle
+                    // the internal lone surrogate encoding (U+FFFD markers).
+                    .is_some_and(|s| !has_lone_surrogates(&s))
+        });
         if !has_expr_to_inline {
             return;
         }
@@ -758,6 +765,9 @@ impl<'a> PeepholeOptimizations {
                 if expr.may_have_side_effects(ctx) {
                     Some(expr)
                 } else if let Some(str) = expr.to_js_string(ctx) {
+                    if has_lone_surrogates(&str) {
+                        return Some(expr);
+                    }
                     inline_exprs.push((idx, str));
                     None
                 } else {
@@ -785,7 +795,7 @@ impl<'a> PeepholeOptimizations {
                 None
             };
             quasi.value.cooked = new_cooked;
-            if next_quasi.as_ref().is_some_and(|q| q.lone_surrogates) || has_lone_surrogates(&str) {
+            if next_quasi.as_ref().is_some_and(|q| q.lone_surrogates) {
                 quasi.lone_surrogates = true;
             }
             if next_quasi.is_some_and(|q| q.tail) {
