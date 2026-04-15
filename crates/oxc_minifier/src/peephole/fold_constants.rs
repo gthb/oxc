@@ -30,13 +30,25 @@ pub fn has_lone_surrogates(s: &str) -> bool {
         if bytes[i] == 0xEF
             && bytes[i + 1] == 0xBF
             && bytes[i + 2] == 0xBD
-            && bytes[i + 3..i + 7].iter().all(|b| matches!(b, b'0'..=b'9' | b'a'..=b'f'))
+            && is_lone_surrogate_suffix(&bytes[i + 3..i + 7])
         {
             return true;
         }
         i += 1;
     }
     false
+}
+
+/// Check if 4 bytes are a valid lone surrogate encoding suffix:
+/// either a surrogate code point (d800–dfff) or the U+FFFD self-escape (fffd).
+fn is_lone_surrogate_suffix(b: &[u8]) -> bool {
+    debug_assert_eq!(b.len(), 4);
+    // Surrogate range d800–dfff: first char 'd', second '8'–'f', rest hex.
+    (b[0] == b'd'
+        && matches!(b[1], b'8'..=b'9' | b'a'..=b'f')
+        && matches!(b[2], b'0'..=b'9' | b'a'..=b'f')
+        && matches!(b[3], b'0'..=b'9' | b'a'..=b'f'))
+        || b == b"fffd"
 }
 
 /// Constant Folding
