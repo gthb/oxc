@@ -1222,6 +1222,8 @@ fn test_lone_surrogate_propagation() {
     // U+FFFD followed by 4 hex chars that aren't in the surrogate range is NOT
     // a lone surrogate encoding — it should fold normally.
     fold("'\\uFFFD' + '0000'", "'\\uFFFD0000'");
+    // U+FFFD not at position 0 with a short string (regression test for off-by-one in scan bounds)
+    fold("'x\\uFFFD' + 'abc'", "'x\\uFFFDabc'");
 }
 
 mod bigint {
