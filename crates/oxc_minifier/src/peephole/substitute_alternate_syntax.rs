@@ -19,7 +19,7 @@ use oxc_syntax::{
 
 use crate::TraverseCtx;
 
-use super::PeepholeOptimizations;
+use super::{PeepholeOptimizations, has_lone_surrogates};
 
 /// A peephole optimization that minimizes code by simplifying conditional
 /// expressions, replacing IFs with HOOKs, replacing object constructors
@@ -1262,10 +1262,7 @@ impl<'a> PeepholeOptimizations {
     pub fn substitute_template_literal(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let Expression::TemplateLiteral(t) = expr else { return };
         let Some(val) = t.to_js_string(ctx) else { return };
-        let lone_surrogates = t.quasis.iter().any(|q| q.lone_surrogates)
-            || t.expressions
-                .iter()
-                .any(|expr| matches!(expr, Expression::StringLiteral(s) if s.lone_surrogates));
+        let lone_surrogates = has_lone_surrogates(&val);
         *expr = ctx.ast.expression_string_literal_with_lone_surrogates(
             t.span(),
             ctx.ast.str_from_cow(&val),
