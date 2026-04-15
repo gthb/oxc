@@ -312,6 +312,9 @@ fn test_template_string_to_string() {
     test("x = `hello ${'foo'}`", "x = 'hello foo'");
     test("x = `${2} bananas`", "x = '2 bananas'");
     test("x = `This is ${true}`", "x = 'This is true'");
+    // Template with lone surrogates folds to string with lone_surrogates flag
+    test("x = `[\\uDC00]`", "x = '[\\udc00]'");
+    test("x = `a[\\uDC00]b`", "x = 'a[\\udc00]b'");
 }
 
 #[test]

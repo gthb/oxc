@@ -1219,6 +1219,9 @@ fn test_lone_surrogate_propagation() {
 
     // U+FFFD (replacement character) is NOT a lone surrogate — should still fold correctly
     fold("'\\uFFFD' + 'x'", "'\\uFFFDx'");
+    // U+FFFD followed by 4 hex chars that aren't in the surrogate range is NOT
+    // a lone surrogate encoding — it should fold normally.
+    fold("'\\uFFFD' + '0000'", "'\\uFFFD0000'");
 }
 
 mod bigint {
