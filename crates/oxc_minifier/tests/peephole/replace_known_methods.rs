@@ -932,6 +932,12 @@ fn test_fold_string_concat() {
     test("x = '\\\\s'.concat(a)", "x = `\\\\s${a}`");
     test("x = '`'.concat(a)", "x = `\\`${a}`");
     test("x = '${'.concat(a)", "x = `\\${${a}`");
+
+    // lone surrogates in concat (all string args → string literal)
+    test("x = ''.concat('[\\uDC00]')", "x = '[\\udc00]'");
+    // lone surrogates in concat with non-string args: bail out of template conversion
+    // because template literal codegen can't handle the internal lone surrogate encoding
+    test_same("x = '[\\uDC00]'.concat(a)");
 }
 
 #[test]

@@ -1543,6 +1543,11 @@ impl<'a> PeepholeOptimizations {
         });
         let Some(delimiter) = Self::pick_delimiter(&strings) else { return };
 
+        let lone_surrogates = array.elements.iter().any(|element| {
+            let Expression::StringLiteral(str) = element.to_expression() else { unreachable!() };
+            str.lone_surrogates
+        });
+
         let concatenated_string = strings.collect::<std::vec::Vec<_>>().join(delimiter);
 
         // "str1,str2".split(',')
@@ -1550,10 +1555,11 @@ impl<'a> PeepholeOptimizations {
             expr.span(),
             Expression::StaticMemberExpression(ctx.ast.alloc_static_member_expression(
                 expr.span(),
-                ctx.ast.expression_string_literal(
+                ctx.ast.expression_string_literal_with_lone_surrogates(
                     expr.span(),
                     ctx.ast.str(&concatenated_string),
                     None,
+                    lone_surrogates,
                 ),
                 ctx.ast.identifier_name(expr.span(), "split"),
                 false,

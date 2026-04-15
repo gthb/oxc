@@ -279,6 +279,19 @@ impl<'a> PeepholeOptimizations {
                     args.iter().filter(|arg| !matches!(arg, Argument::StringLiteral(_))).count();
                 let string_count = args.len() - expression_count;
 
+                // Template literal codegen prints raw values verbatim and cannot handle
+                // the internal lone surrogate encoding (U+FFFD markers). Bail out when
+                // the result would be a template literal and any input has lone surrogates.
+                if expression_count > 0 {
+                    let has_lone_surrogates = base_str.lone_surrogates
+                        || args.iter().any(|arg| {
+                            matches!(arg, Argument::StringLiteral(s) if s.lone_surrogates)
+                        });
+                    if has_lone_surrogates {
+                        return None;
+                    }
+                }
+
                 // whether it is shorter to use `String::concat`
                 if ".concat()".len() + args.len() + "''".len() * string_count
                     < "${}".len() * expression_count
@@ -288,10 +301,12 @@ impl<'a> PeepholeOptimizations {
 
                 let mut quasi_strs: Vec<Cow<'a, str>> =
                     vec![Cow::Borrowed(base_str.value.as_str())];
+                let mut lone_surrogates = base_str.lone_surrogates;
                 let mut expressions = ctx.ast.vec_with_capacity(expression_count);
                 let mut pushed_quasi = true;
                 for argument in args.drain(..) {
                     if let Argument::StringLiteral(str_lit) = argument {
+                        lone_surrogates |= str_lit.lone_surrogates;
                         if pushed_quasi {
                             let last_quasi = quasi_strs
                                 .last_mut()
@@ -317,10 +332,11 @@ impl<'a> PeepholeOptimizations {
 
                 if expressions.is_empty() {
                     debug_assert_eq!(quasi_strs.len(), 1);
-                    return Some(ctx.ast.expression_string_literal(
+                    return Some(ctx.ast.expression_string_literal_with_lone_surrogates(
                         span,
                         ctx.ast.str_from_cow(&quasi_strs.pop().unwrap()),
                         None,
+                        lone_surrogates,
                     ));
                 }
 

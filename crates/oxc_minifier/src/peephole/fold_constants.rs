@@ -571,7 +571,12 @@ impl<'a> PeepholeOptimizations {
                     *expr = ctx.ast.expression_unary(
                         e.span,
                         UnaryOperator::UnaryPlus,
-                        ctx.ast.expression_string_literal(n.span, n.value, n.raw),
+                        ctx.ast.expression_string_literal_with_lone_surrogates(
+                            n.span,
+                            n.value,
+                            n.raw,
+                            n.lone_surrogates,
+                        ),
                     );
                     ctx.state.changed = true;
                     return;
