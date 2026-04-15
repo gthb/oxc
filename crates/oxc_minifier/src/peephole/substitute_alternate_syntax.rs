@@ -1263,9 +1263,9 @@ impl<'a> PeepholeOptimizations {
         let Expression::TemplateLiteral(t) = expr else { return };
         let Some(val) = t.to_js_string(ctx) else { return };
         let lone_surrogates = t.quasis.iter().any(|q| q.lone_surrogates)
-            || t.expressions.iter().any(|expr| {
-                matches!(expr, Expression::StringLiteral(s) if s.lone_surrogates)
-            });
+            || t.expressions
+                .iter()
+                .any(|expr| matches!(expr, Expression::StringLiteral(s) if s.lone_surrogates));
         *expr = ctx.ast.expression_string_literal_with_lone_surrogates(
             t.span(),
             ctx.ast.str_from_cow(&val),

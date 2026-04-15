@@ -27,6 +27,7 @@ use oxc_ast::ast::*;
 
 use crate::{ReusableTraverseCtx, Traverse, TraverseCtx, minifier_traverse::traverse_mut_with_ctx};
 
+pub use self::fold_constants::has_lone_surrogates;
 pub use self::normalize::{Normalize, NormalizeOptions};
 
 /// Stateless peephole optimizer. The `dce` flag and `changed` state are stored in `MinifierState`.

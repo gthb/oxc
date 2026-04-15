@@ -12,9 +12,31 @@ use crate::TraverseCtx;
 
 use super::PeepholeOptimizations;
 
-/// See [`StringLiteral::lone_surrogates`] for the encoding scheme.
-fn has_lone_surrogates(s: &str) -> bool {
-    s.contains('\u{FFFD}')
+/// Check if a string uses the lone surrogate encoding scheme.
+///
+/// See [`StringLiteral::lone_surrogates`] for the encoding scheme: lone surrogates
+/// are encoded as `\u{FFFD}XXXX` (U+FFFD followed by 4 lowercase hex chars).
+/// A bare U+FFFD (replacement character) without a trailing 4-hex-char suffix is
+/// just an ordinary character and does NOT indicate lone surrogates.
+pub fn has_lone_surrogates(s: &str) -> bool {
+    let bytes = s.as_bytes();
+    // U+FFFD is 3 UTF-8 bytes (0xEF 0xBF 0xBD) + 4 lowercase hex chars = 7 bytes minimum.
+    if bytes.len() < 7 {
+        return false;
+    }
+    let mut i = 0;
+    let end = bytes.len() - 6; // need at least 7 bytes from position i
+    while i <= end {
+        if bytes[i] == 0xEF
+            && bytes[i + 1] == 0xBF
+            && bytes[i + 2] == 0xBD
+            && bytes[i + 3..i + 7].iter().all(|b| matches!(b, b'0'..=b'9' | b'a'..=b'f'))
+        {
+            return true;
+        }
+        i += 1;
+    }
+    false
 }
 
 /// Constant Folding

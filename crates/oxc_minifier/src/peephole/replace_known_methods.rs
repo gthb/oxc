@@ -284,9 +284,9 @@ impl<'a> PeepholeOptimizations {
                 // the result would be a template literal and any input has lone surrogates.
                 if expression_count > 0 {
                     let has_lone_surrogates = base_str.lone_surrogates
-                        || args.iter().any(|arg| {
-                            matches!(arg, Argument::StringLiteral(s) if s.lone_surrogates)
-                        });
+                        || args.iter().any(
+                            |arg| matches!(arg, Argument::StringLiteral(s) if s.lone_surrogates),
+                        );
                     if has_lone_surrogates {
                         return None;
                     }

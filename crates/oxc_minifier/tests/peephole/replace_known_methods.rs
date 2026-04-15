@@ -938,6 +938,8 @@ fn test_fold_string_concat() {
     // lone surrogates in concat with non-string args: bail out of template conversion
     // because template literal codegen can't handle the internal lone surrogate encoding
     test_same("x = '[\\uDC00]'.concat(a)");
+    // U+FFFD (replacement character) is NOT a lone surrogate — should still fold
+    test("x = '\\uFFFD'.concat(a)", "x = `\u{FFFD}${a}`");
 }
 
 #[test]

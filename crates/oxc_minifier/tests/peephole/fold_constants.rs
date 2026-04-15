@@ -1211,6 +1211,14 @@ fn test_lone_surrogate_propagation() {
     // Inline string with lone surrogates into template that retains other expressions:
     // skip inlining because template raw values can't represent lone surrogates
     test_same("x = `${a}${'[\\uDC00]'}${b}`");
+
+    // String + string with lone surrogates: exercises evaluate_value → value_to_expr path
+    fold("'[\\uDC00]' + '[\\uDFFF]'", "'[\\udc00][\\udfff]'");
+    fold("'a' + '[\\uDC00]'", "'a[\\udc00]'");
+    fold("'[\\uDC00]' + 'a'", "'[\\udc00]a'");
+
+    // U+FFFD (replacement character) is NOT a lone surrogate — should still fold correctly
+    fold("'\\uFFFD' + 'x'", "'\\uFFFDx'");
 }
 
 mod bigint {

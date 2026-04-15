@@ -14,8 +14,8 @@ use oxc_str::format_str;
 use oxc_syntax::{reference::ReferenceId, scope::ScopeFlags};
 
 use crate::{
-    generated::ancestor::Ancestor, options::CompressOptions, state::MinifierState,
-    symbol_value::SymbolValue,
+    generated::ancestor::Ancestor, options::CompressOptions, peephole::has_lone_surrogates,
+    state::MinifierState, symbol_value::SymbolValue,
 };
 
 use super::TraverseCtx;
@@ -206,7 +206,7 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
                 self.ast.expression_big_int_literal(span, value, None, BigintBase::Decimal)
             }
             ConstantValue::String(s) => {
-                let lone_surrogates = s.contains('\u{FFFD}');
+                let lone_surrogates = has_lone_surrogates(&s);
                 self.ast.expression_string_literal_with_lone_surrogates(
                     span,
                     self.ast.str_from_cow(&s),
