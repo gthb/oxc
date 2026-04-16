@@ -1254,6 +1254,13 @@ fn test_lone_surrogate_propagation() {
         "const a = '\\uDC00'; log(a); log(String(a))",
         "const a = '\\uDC00'; log('\\udc00'), log('\\udc00')",
     );
+
+    // Template with lone surrogate expression folds to a string, then the
+    // string + template-with-expressions correctly bails out of merging.
+    test(
+        "x = `a${'[\\uDC00]'}` + `${b}c`",
+        "x = 'a[\\uDC00]' + `${b}c`",
+    );
 }
 
 mod bigint {

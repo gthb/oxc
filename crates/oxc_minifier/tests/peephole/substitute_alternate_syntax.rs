@@ -295,6 +295,9 @@ fn test_string_array_splitting() {
     // all possible delimiters used, leave it alone
     test_same_with_longer_args("'.', ',', '(', ')', ' '");
 
+    // Lone surrogates in array elements propagate to the joined string.
+    test_with_longer_args("'[\\uDC00]','2','3','4','5','6'", "[\\udc00].2.3.4.5.6", ".");
+
     test_options(
         &format!("var x=['1','2','3','4','5','6'{additional_args}]"),
         "",
