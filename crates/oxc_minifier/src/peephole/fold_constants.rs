@@ -47,26 +47,45 @@ fn is_lone_surrogate_suffix(b: &[u8]) -> bool {
         || b == b"fffd"
 }
 
-/// Check if an expression carries the `lone_surrogates` flag.
+/// Check if an expression's string value may contain lone surrogates.
 ///
 /// Based on AST node flags, so not prone to the false positives that
 /// [`scan_for_lone_surrogate_encoding`] can produce. For identifiers, looks
 /// up the symbol table to check the initializer's flag.
 ///
-/// Only handles the expression kinds that can appear as a *folded* result
-/// (literals, identifiers, `+`, calls) plus `ArrayExpression`, which reaches
-/// this helper via `String([...])` and `` `${[...]}` `` — both route through
-/// `ArrayExpression::to_js_string` (array_join), which concatenates the raw
-/// lone-surrogate encoding bytes of element strings. Non-literal
-/// string-yielding parents — `LogicalExpression`, `ConditionalExpression`,
-/// `SequenceExpression`, `Static/ComputedMemberExpression` — are not handled
-/// directly and yield `false`. That is safe **only** because exit-order
-/// traversal folds any foldable string-yielding child into a literal before
-/// its parent reaches the call sites of this helper. If that invariant is
-/// ever broken, the byte scan in `value_to_expr` would correctly flag the
-/// result as having lone surrogates and `correct_lone_surrogates_flag` would
-/// silently clear it back, producing wrong codegen. See
+/// Called on source subexpressions of a string-producing fold. Must cover
+/// every kind whose `to_js_string` / `evaluate_value_to_string` result can
+/// contain the lone-surrogate encoding bytes:
+///
+/// - `StringLiteral` — flag on the node.
+/// - `TemplateLiteral` — flags on quasis, recurse on expressions.
+/// - `Identifier` — resolve through the symbol table.
+/// - `BinaryExpression(+)` — recurse on both sides.
+/// - `ArrayExpression` — recurse on element expressions (`array_join`
+///   concatenates element `to_js_string` values, so a lone-surrogate element
+///   ends up in `String([...])` and `` `${[...]}` `` results).
+/// - `CallExpression` — conservative: recurse on callee's object (for method
+///   calls) and arguments. False positives are harmless because
+///   `correct_lone_surrogates_flag` only acts when the byte scan also flagged
+///   the result.
+///
+/// Other `to_js_string` producers are safe-by-shape — their result is a
+/// fixed ASCII string (`"undefined"`, `"true"`, `"false"`, `"null"`,
+/// `"[object Object]"`) or a number/BigInt/regex-source representation — and
+/// return `false` trivially.
+///
+/// `LogicalExpression`, `ConditionalExpression`, `SequenceExpression`, and
+/// `Static/ComputedMemberExpression` also yield `false` here. That is safe
+/// by traversal order: exit-order peephole folds any foldable
+/// string-yielding child into a literal before its parent reaches this
+/// helper's call sites, so they never arrive here with a string value. See
 /// `test_lone_surrogate_through_non_literal_subexprs`.
+///
+/// If either invariant breaks — a newly string-producing kind is added to
+/// `to_js_string`, or a parent is folded before its children — the byte
+/// scan in `value_to_expr` would flag the result and
+/// `correct_lone_surrogates_flag` would silently clear it back, producing
+/// wrong codegen.
 pub fn expr_has_lone_surrogates(expr: &Expression, ctx: &TraverseCtx) -> bool {
     match expr {
         Expression::StringLiteral(s) => s.lone_surrogates,
