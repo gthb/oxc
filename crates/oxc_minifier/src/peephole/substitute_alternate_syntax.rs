@@ -1027,8 +1027,7 @@ impl<'a> PeepholeOptimizations {
                         .evaluate_value_to_string(ctx)
                         .filter(|_| !arg.may_have_side_effects(ctx))
                         .map(|s| {
-                            let mut result =
-                                ctx.value_to_expr(span, ConstantValue::String(s));
+                            let mut result = ctx.value_to_expr(span, ConstantValue::String(s));
                             // Correct false positives from has_lone_surrogates() scan.
                             if let Expression::StringLiteral(lit) = &mut result
                                 && lit.lone_surrogates

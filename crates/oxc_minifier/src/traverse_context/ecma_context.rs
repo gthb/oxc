@@ -247,6 +247,7 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
         symbol_id: SymbolId,
         constant: Option<ConstantValue<'a>>,
         is_fresh_value: bool,
+        lone_surrogates: bool,
     ) {
         let mut exported = false;
         if self.scoping.current_scope_id() == self.scoping().root_scope_id() {
@@ -288,6 +289,7 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
             write_references_count,
             member_write_target_read_count,
             is_fresh_value,
+            lone_surrogates,
             scope_id,
         };
         self.state.symbol_values.init_value(symbol_id, symbol_value);
