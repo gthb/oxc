@@ -14,8 +14,8 @@ use oxc_str::format_str;
 use oxc_syntax::{reference::ReferenceId, scope::ScopeFlags};
 
 use crate::{
-    generated::ancestor::Ancestor, options::CompressOptions, peephole::has_lone_surrogates,
-    state::MinifierState, symbol_value::SymbolValue,
+    generated::ancestor::Ancestor, options::CompressOptions,
+    peephole::scan_for_lone_surrogate_encoding, state::MinifierState, symbol_value::SymbolValue,
 };
 
 use super::TraverseCtx;
@@ -206,11 +206,11 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
                 self.ast.expression_big_int_literal(span, value, None, BigintBase::Decimal)
             }
             ConstantValue::String(s) => {
-                // has_lone_surrogates can yield false positives in the edge case where
-                // the original string contains U+FFFD followed by surrogate-range hex
-                // chars. Callers that have access to the source expression should
-                // double-check this using expr_has_lone_surrogates().
-                let lone_surrogates = has_lone_surrogates(&s);
+                // scan_for_lone_surrogate_encoding can yield false positives in the
+                // edge case where the original string contains U+FFFD followed by
+                // surrogate-range hex chars. Callers that have access to the source
+                // expression should double-check using expr_has_lone_surrogates().
+                let lone_surrogates = scan_for_lone_surrogate_encoding(&s);
                 self.ast.expression_string_literal_with_lone_surrogates(
                     span,
                     self.ast.str_from_cow(&s),

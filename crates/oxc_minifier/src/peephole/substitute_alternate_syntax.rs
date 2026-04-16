@@ -1028,11 +1028,11 @@ impl<'a> PeepholeOptimizations {
                         .filter(|_| !arg.may_have_side_effects(ctx))
                         .map(|s| {
                             let mut result = ctx.value_to_expr(span, ConstantValue::String(s));
-                            // Correct false positives from has_lone_surrogates() scan.
+                            // Correct false positives from scan_for_lone_surrogate_encoding().
                             if let Expression::StringLiteral(lit) = &mut result
                                 && lit.lone_surrogates
                             {
-                                lit.lone_surrogates = expr_has_lone_surrogates(arg);
+                                lit.lone_surrogates = expr_has_lone_surrogates(arg, ctx);
                             }
                             result
                         }),
@@ -1269,7 +1269,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     pub fn substitute_template_literal(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        let lone_surrogates = expr_has_lone_surrogates(expr);
+        let lone_surrogates = expr_has_lone_surrogates(expr, ctx);
         let Expression::TemplateLiteral(t) = expr else { return };
         let Some(val) = t.to_js_string(ctx) else { return };
         *expr = ctx.ast.expression_string_literal_with_lone_surrogates(

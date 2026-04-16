@@ -1244,6 +1244,16 @@ fn test_lone_surrogate_propagation() {
     // where left_binary_expr.right carries the lone_surrogates flag.
     test("x = a + '[\\uDC00]' + 'b'", "x=a+'[\\udc00]b'");
     test("x = a + 'b' + '[\\uDC00]'", "x=a+'b[\\udc00]'");
+
+    // Multi-referenced constant with lone surrogates passed to String():
+    // the identifier isn't inlined (>3 bytes, 2 references), so
+    // evaluate_value_to_string resolves it via the symbol table. The
+    // lone_surrogates flag must survive the round-trip through
+    // ConstantValue::String → value_to_expr.
+    test(
+        "const a = '\\uDC00'; log(a); log(String(a))",
+        "const a = '\\uDC00'; log('\\udc00'), log('\\udc00')",
+    );
 }
 
 mod bigint {

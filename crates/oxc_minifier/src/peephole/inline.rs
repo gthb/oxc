@@ -19,7 +19,7 @@ impl<'a> PeepholeOptimizations {
             decl.init.as_ref().map_or(Some(ConstantValue::Undefined), |e| e.evaluate_value(ctx))
         };
         let is_fresh_value = decl.init.as_ref().is_some_and(Self::is_fresh_value_expression);
-        let lone_surrogates = decl.init.as_ref().is_some_and(|e| expr_has_lone_surrogates(e));
+        let lone_surrogates = decl.init.as_ref().is_some_and(|e| expr_has_lone_surrogates(e, ctx));
         ctx.init_value(symbol_id, value, is_fresh_value, lone_surrogates);
     }
 
@@ -145,7 +145,7 @@ impl<'a> PeepholeOptimizations {
             }
         {
             let mut result = ctx.value_to_expr(expr.span(), cv.clone());
-            // Correct false positives from has_lone_surrogates() byte scan.
+            // Correct false positives from scan_for_lone_surrogate_encoding().
             if let Expression::StringLiteral(lit) = &mut result
                 && lit.lone_surrogates
             {
