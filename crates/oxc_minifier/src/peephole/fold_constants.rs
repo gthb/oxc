@@ -62,6 +62,17 @@ fn is_lone_surrogate_suffix(b: &[u8]) -> bool {
 /// Based on AST node flags, so not prone to the false positives that
 /// [`scan_for_lone_surrogate_encoding`] can produce. For identifiers, looks
 /// up the symbol table to check the initializer's flag.
+///
+/// Only handles the expression kinds that can appear as a *folded* result
+/// (literals, identifiers, `+`, calls). Non-literal string-yielding parents —
+/// `LogicalExpression`, `ConditionalExpression`, `SequenceExpression`,
+/// `Static/ComputedMemberExpression` — are not handled directly and yield
+/// `false`. That is safe **only** because exit-order traversal folds any
+/// foldable string-yielding child into a literal before its parent reaches
+/// the call sites of this helper. If that invariant is ever broken, the byte
+/// scan in `value_to_expr` would correctly flag the result as having lone
+/// surrogates and `correct_lone_surrogates_flag` would silently clear it
+/// back, producing wrong codegen. See `test_lone_surrogate_through_non_literal_subexprs`.
 pub fn expr_has_lone_surrogates(expr: &Expression, ctx: &TraverseCtx) -> bool {
     match expr {
         Expression::StringLiteral(s) => s.lone_surrogates,
@@ -79,6 +90,11 @@ pub fn expr_has_lone_surrogates(expr: &Expression, ctx: &TraverseCtx) -> bool {
             .and_then(|sid| ctx.state.symbol_values.get_symbol_value(sid))
             .is_some_and(|sv| sv.lone_surrogates),
         Expression::CallExpression(call) => {
+            // Conservatively true if the receiver or any argument carries
+            // lone surrogates, even when the callee doesn't actually reflect
+            // them into its return value (e.g. `arr.find('\uDC00')`). False
+            // positives here are harmless: `correct_lone_surrogates_flag` only
+            // acts when the byte scan also flagged the result.
             let object_has = match &call.callee {
                 Expression::StaticMemberExpression(m) => expr_has_lone_surrogates(&m.object, ctx),
                 Expression::ComputedMemberExpression(m) => expr_has_lone_surrogates(&m.object, ctx),

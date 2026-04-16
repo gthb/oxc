@@ -1260,6 +1260,31 @@ fn test_lone_surrogate_propagation() {
     test("x = `a${'[\\uDC00]'}` + `${b}c`", "x = 'a[\\uDC00]' + `${b}c`");
 }
 
+#[test]
+fn test_lone_surrogate_through_non_literal_subexprs() {
+    // expr_has_lone_surrogates only handles a subset of expression types
+    // (string/template literals, identifiers, addition, call). It relies on the
+    // invariant that exit traversal folds string-yielding sub-expressions
+    // (LogicalExpression, ConditionalExpression, SequenceExpression, …) into
+    // string literals *before* their parent is folded — so by the time the
+    // helper sees a child, that child is either a literal/identifier or
+    // unfoldable (and therefore can't contribute a constant string anyway).
+    // These tests lock that invariant in: if a future change folds a parent
+    // before its children, the byte scan in `value_to_expr` would set the
+    // flag and `correct_lone_surrogates_flag` would clear it back — silently
+    // producing wrong codegen — and one of these would catch it.
+    fold("'' || '\\uDC00'", "'\\udc00'");
+    fold("(true ? '\\uDC00' : 'a')", "'\\udc00'");
+    fold("(0, '\\uDC00')", "'\\udc00'");
+    fold("'a' + (true ? '\\uDC00' : '')", "'a\\udc00'");
+    fold("'a' + (0, '\\uDC00')", "'a\\udc00'");
+    fold("'a' + ('' || '\\uDC00')", "'a\\udc00'");
+    fold("String(true ? '\\uDC00' : 'a')", "'\\udc00'");
+    fold("String((0, '\\uDC00'))", "'\\udc00'");
+    fold("String('' || '\\uDC00')", "'\\udc00'");
+    fold("`x${(0, '\\uDC00')}y`", "'x\\udc00y'");
+}
+
 mod bigint {
     use super::{
         MAX_SAFE_FLOAT, MAX_SAFE_INT, NEG_MAX_SAFE_FLOAT, NEG_MAX_SAFE_INT, fold, fold_same,
