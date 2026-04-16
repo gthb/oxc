@@ -1270,6 +1270,23 @@ fn test_lone_surrogate_propagation() {
     // Template with lone surrogate expression folds to a string, then the
     // string + template-with-expressions correctly bails out of merging.
     test("x = `a${'[\\uDC00]'}` + `${b}c`", "x = 'a[\\uDC00]' + `${b}c`");
+
+    // ArrayExpression in string context: `String([...])` and
+    // `` `${[...]}` `` both route through `ArrayExpression::to_js_string`
+    // (array_join), which emits the raw lone-surrogate encoding bytes.
+    // `expr_has_lone_surrogates` must recurse into array elements so
+    // `correct_lone_surrogates_flag` keeps the flag set on the folded string.
+    fold("String(['\\uDC00', 'y'])", "'\\udc00,y'");
+    fold("String(['a', '\\uDC00'])", "'a,\\udc00'");
+    fold("`${['\\uDC00']}`", "'\\udc00'");
+    fold("`${['a', '\\uDC00']}`", "'a,\\udc00'");
+    // Nested array: recursion into element arrays.
+    fold("String([['\\uDC00']])", "'\\udc00'");
+    // U+FFFD followed by surrogate-range hex inside an array element is NOT
+    // a lone surrogate when the source StringLiteral has lone_surrogates: false.
+    fold("String(['\\uFFFDdc00'])", "'\\uFFFDdc00'");
+    // Elision elements contribute empty strings — not lone surrogates.
+    fold("String(['\\uDC00',,'y'])", "'\\udc00,,y'");
 }
 
 #[test]

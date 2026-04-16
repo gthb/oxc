@@ -54,15 +54,19 @@ fn is_lone_surrogate_suffix(b: &[u8]) -> bool {
 /// up the symbol table to check the initializer's flag.
 ///
 /// Only handles the expression kinds that can appear as a *folded* result
-/// (literals, identifiers, `+`, calls). Non-literal string-yielding parents —
-/// `LogicalExpression`, `ConditionalExpression`, `SequenceExpression`,
-/// `Static/ComputedMemberExpression` — are not handled directly and yield
-/// `false`. That is safe **only** because exit-order traversal folds any
-/// foldable string-yielding child into a literal before its parent reaches
-/// the call sites of this helper. If that invariant is ever broken, the byte
-/// scan in `value_to_expr` would correctly flag the result as having lone
-/// surrogates and `correct_lone_surrogates_flag` would silently clear it
-/// back, producing wrong codegen. See `test_lone_surrogate_through_non_literal_subexprs`.
+/// (literals, identifiers, `+`, calls) plus `ArrayExpression`, which reaches
+/// this helper via `String([...])` and `` `${[...]}` `` — both route through
+/// `ArrayExpression::to_js_string` (array_join), which concatenates the raw
+/// lone-surrogate encoding bytes of element strings. Non-literal
+/// string-yielding parents — `LogicalExpression`, `ConditionalExpression`,
+/// `SequenceExpression`, `Static/ComputedMemberExpression` — are not handled
+/// directly and yield `false`. That is safe **only** because exit-order
+/// traversal folds any foldable string-yielding child into a literal before
+/// its parent reaches the call sites of this helper. If that invariant is
+/// ever broken, the byte scan in `value_to_expr` would correctly flag the
+/// result as having lone surrogates and `correct_lone_surrogates_flag` would
+/// silently clear it back, producing wrong codegen. See
+/// `test_lone_surrogate_through_non_literal_subexprs`.
 pub fn expr_has_lone_surrogates(expr: &Expression, ctx: &TraverseCtx) -> bool {
     match expr {
         Expression::StringLiteral(s) => s.lone_surrogates,
@@ -73,6 +77,10 @@ pub fn expr_has_lone_surrogates(expr: &Expression, ctx: &TraverseCtx) -> bool {
         Expression::BinaryExpression(e) if e.operator == BinaryOperator::Addition => {
             expr_has_lone_surrogates(&e.left, ctx) || expr_has_lone_surrogates(&e.right, ctx)
         }
+        Expression::ArrayExpression(arr) => arr
+            .elements
+            .iter()
+            .any(|el| el.as_expression().is_some_and(|e| expr_has_lone_surrogates(e, ctx))),
         Expression::Identifier(ident) => ident
             .reference_id
             .get()
