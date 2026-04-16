@@ -853,11 +853,14 @@ impl<'a> PeepholeOptimizations {
     ///
     /// - `foo${1}bar${i}` => `foo1bar${i}`
     pub fn inline_template_literal(t: &mut TemplateLiteral<'a>, ctx: &mut TraverseCtx<'a>) {
-        let has_expr_to_inline = t.expressions.iter().any(|expr| {
-            !expr.may_have_side_effects(ctx)
-                && expr.to_js_string(ctx).is_some()
-                && !expr_has_lone_surrogates(expr, ctx)
-        });
+        // Pre-check: cheap skip when no expression is foldable. The main loop
+        // below also rejects lone-surrogate expressions, so don't repeat that
+        // check here — false positives just lead to a no-op walk in the main
+        // loop, which is fine.
+        let has_expr_to_inline = t
+            .expressions
+            .iter()
+            .any(|expr| !expr.may_have_side_effects(ctx) && expr.to_js_string(ctx).is_some());
         if !has_expr_to_inline {
             return;
         }
@@ -879,6 +882,15 @@ impl<'a> PeepholeOptimizations {
                 }
             }));
         t.expressions = new_exprs;
+
+        // The pre-check is a fast over-approximation that doesn't reject
+        // lone-surrogate expressions — if every foldable expression had lone
+        // surrogates, `inline_exprs` is empty and there's nothing to do.
+        // (Without this guard, `ctx.state.changed = true` below would loop the
+        // compressor.)
+        if inline_exprs.is_empty() {
+            return;
+        }
 
         // inline the extracted inline-able expressions into quasis
         // "current_quasis + extracted_value + next_quasis"
