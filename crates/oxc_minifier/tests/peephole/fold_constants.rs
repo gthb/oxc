@@ -1236,10 +1236,14 @@ fn test_lone_surrogate_propagation() {
     // Multi-char string with U+FFFD + surrogate-range hex across a concat boundary
     fold("'a\\uFFFD' + 'dc00b'", "'a\\uFFFDdc00b'");
 
-    // Triple concatenation: exercises the `a + 'bc'` path where left_binary_expr.right
-    // carries the lone_surrogates flag through multi-step folding.
+    // All-constant triple concatenation: each `+` folds via evaluate_value →
+    // value_to_expr, confirming the lone_surrogates flag survives multi-step folding.
     fold("'a' + '[\\uDC00]' + 'b'", "'a[\\udc00]b'");
     fold("'[\\uDC00]' + 'a' + '[\\uDFFF]'", "'[\\udc00]a[\\udfff]'");
+    // Non-constant left operand: exercises the `a + 'b' + 'c' → a + 'bc'` path
+    // where left_binary_expr.right carries the lone_surrogates flag.
+    test("x = a + '[\\uDC00]' + 'b'", "x=a+'[\\udc00]b'");
+    test("x = a + 'b' + '[\\uDC00]'", "x=a+'b[\\udc00]'");
 }
 
 mod bigint {
