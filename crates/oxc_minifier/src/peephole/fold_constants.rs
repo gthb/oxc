@@ -453,8 +453,8 @@ impl<'a> PeepholeOptimizations {
         if !e.may_have_side_effects(ctx)
             && let Some(v) = e.evaluate_value(ctx)
         {
-            let lone_surrogates = expr_has_lone_surrogates(&e.left, ctx)
-                || expr_has_lone_surrogates(&e.right, ctx);
+            let lone_surrogates =
+                expr_has_lone_surrogates(&e.left, ctx) || expr_has_lone_surrogates(&e.right, ctx);
             let mut result = ctx.value_to_expr(e.span, v);
             correct_lone_surrogates_flag(&mut result, lone_surrogates);
             return Some(result);
