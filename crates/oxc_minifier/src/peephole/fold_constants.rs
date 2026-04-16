@@ -94,6 +94,20 @@ pub fn expr_has_lone_surrogates(expr: &Expression, ctx: &TraverseCtx) -> bool {
     }
 }
 
+/// Correct the `lone_surrogates` flag on a [`TraverseCtx::value_to_expr`] result.
+///
+/// `value_to_expr` uses [`scan_for_lone_surrogate_encoding`] which can yield
+/// false positives when U+FFFD naturally appears before surrogate-range hex
+/// chars. When the authoritative answer is available (from AST flags or the
+/// symbol table), call this to override the scan's false positive.
+pub fn correct_lone_surrogates_flag(result: &mut Expression, lone_surrogates: bool) {
+    if let Expression::StringLiteral(lit) = result
+        && lit.lone_surrogates
+    {
+        lit.lone_surrogates = lone_surrogates;
+    }
+}
+
 /// Constant Folding
 ///
 /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/PeepholeFoldConstants.java>
@@ -439,15 +453,10 @@ impl<'a> PeepholeOptimizations {
         if !e.may_have_side_effects(ctx)
             && let Some(v) = e.evaluate_value(ctx)
         {
+            let lone_surrogates = expr_has_lone_surrogates(&e.left, ctx)
+                || expr_has_lone_surrogates(&e.right, ctx);
             let mut result = ctx.value_to_expr(e.span, v);
-            // lone_surrogates from value_to_expr can be a false positive;
-            // double-check using authoritative flag from source operands.
-            if let Expression::StringLiteral(lit) = &mut result
-                && lit.lone_surrogates
-            {
-                lit.lone_surrogates = expr_has_lone_surrogates(&e.left, ctx)
-                    || expr_has_lone_surrogates(&e.right, ctx);
-            }
+            correct_lone_surrogates_flag(&mut result, lone_surrogates);
             return Some(result);
         }
         debug_assert_eq!(e.operator, BinaryOperator::Addition);

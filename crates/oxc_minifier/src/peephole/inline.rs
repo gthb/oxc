@@ -5,7 +5,7 @@ use oxc_span::GetSpan;
 
 use crate::TraverseCtx;
 
-use super::{PeepholeOptimizations, expr_has_lone_surrogates};
+use super::{PeepholeOptimizations, correct_lone_surrogates_flag, expr_has_lone_surrogates};
 
 impl<'a> PeepholeOptimizations {
     pub fn init_symbol_value(decl: &VariableDeclarator<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -145,12 +145,7 @@ impl<'a> PeepholeOptimizations {
             }
         {
             let mut result = ctx.value_to_expr(expr.span(), cv.clone());
-            // Correct false positives from scan_for_lone_surrogate_encoding().
-            if let Expression::StringLiteral(lit) = &mut result
-                && lit.lone_surrogates
-            {
-                lit.lone_surrogates = symbol_value.lone_surrogates;
-            }
+            correct_lone_surrogates_flag(&mut result, symbol_value.lone_surrogates);
             *expr = result;
             ctx.state.changed = true;
         }
