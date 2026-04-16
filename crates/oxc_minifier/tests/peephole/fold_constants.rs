@@ -1211,6 +1211,11 @@ fn test_lone_surrogate_propagation() {
     // Inline string with lone surrogates into template that retains other expressions:
     // skip inlining because template raw values can't represent lone surrogates
     test_same("x = `${a}${'[\\uDC00]'}${b}`");
+    // Partial inline: a clean foldable is inlined into the surrounding quasis,
+    // while the lone-surrogate foldable is kept as a template expression. This
+    // exercises `inline_template_literal` with a non-empty `inline_exprs` where
+    // not all foldables were inlined.
+    test("x = `${a}${'foo'}${'[\\uDC00]'}${b}`", "x = `${a}foo${'[\\uDC00]'}${b}`");
 
     // String + string with lone surrogates: exercises evaluate_value → value_to_expr path
     fold("'[\\uDC00]' + '[\\uDFFF]'", "'[\\udc00][\\udfff]'");
