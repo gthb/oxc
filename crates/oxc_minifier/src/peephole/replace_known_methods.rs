@@ -287,6 +287,9 @@ impl<'a> PeepholeOptimizations {
                 let string_count = args.len() - expression_count;
 
                 // Encoded lone surrogates can't go into template raw values.
+                // Only StringLiteral args are checked here; non-string args become
+                // `${}` expressions (not quasis), so their content doesn't enter
+                // the template's raw/cooked strings.
                 if expression_count > 0 {
                     let has_lone_surrogates = base_str.lone_surrogates
                         || args.iter().any(

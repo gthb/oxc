@@ -949,6 +949,13 @@ fn test_fold_string_concat() {
     test("x = '\\uFFFD'.concat('dc00')", "x = '\\uFFFDdc00'");
     // lone surrogates in a non-base string arg with expression args: bail out
     test_same("x = 'a'.concat(b, '[\\uDC00]')");
+    // lone surrogate behind an identifier arg with multiple references (so it
+    // won't be inlined): the identifier becomes a template expression (not a
+    // quasi), so the template itself is valid.
+    test(
+        "const a = '[\\uDC00]'; log(a); x = 'y'.concat(a, b)",
+        "const a = '[\\udc00]'; log(a), x = `y${a}${b}`",
+    );
 }
 
 #[test]
