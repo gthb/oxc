@@ -26,23 +26,13 @@ use super::PeepholeOptimizations;
 /// See [`StringLiteral::lone_surrogates`] for the encoding scheme.
 pub fn scan_for_lone_surrogate_encoding(s: &str) -> bool {
     let bytes = s.as_bytes();
-    // U+FFFD is 3 UTF-8 bytes (0xEF 0xBF 0xBD) + 4 lowercase hex chars = 7 bytes minimum.
-    if bytes.len() < 7 {
+    // 0xEF is the leading byte of U+FFFD's UTF-8 encoding (0xEF 0xBF 0xBD) and
+    // is rare in typical JS strings. Skip the windowed scan entirely if absent.
+    if !bytes.contains(&0xEF) {
         return false;
     }
-    let mut i = 0;
-    let end = bytes.len() - 7; // need 7 bytes from position i (indices i..=i+6)
-    while i <= end {
-        if bytes[i] == 0xEF
-            && bytes[i + 1] == 0xBF
-            && bytes[i + 2] == 0xBD
-            && is_lone_surrogate_suffix(&bytes[i + 3..i + 7])
-        {
-            return true;
-        }
-        i += 1;
-    }
-    false
+    // Need 7 bytes: 3 for U+FFFD + 4 hex chars.
+    bytes.windows(7).any(|w| w[..3] == [0xEF, 0xBF, 0xBD] && is_lone_surrogate_suffix(&w[3..]))
 }
 
 /// Check if 4 bytes are a valid lone surrogate encoding suffix:
