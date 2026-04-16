@@ -1216,6 +1216,13 @@ fn test_lone_surrogate_propagation() {
     // exercises `inline_template_literal` with a non-empty `inline_exprs` where
     // not all foldables were inlined.
     test("x = `${a}${'foo'}${'[\\uDC00]'}${b}`", "x = `${a}foo${'[\\uDC00]'}${b}`");
+    // Multi-iteration quasi merge with lone surrogates in a middle quasi:
+    // after the first inline absorbs `1` + the `\uDC00` quasi into the left
+    // quasi (setting its `lone_surrogates` flag via `next_quasi`), the second
+    // inline must preserve that flag when merging in the trailing quasi.
+    // `substitute_template_literal` then folds the single-quasi template to a
+    // string literal whose `lone_surrogates` flag governs the codegen escape.
+    fold("`a${1}\\uDC00${2}b`", "'a1\\udc002b'");
 
     // String + string with lone surrogates: exercises evaluate_value → value_to_expr path
     fold("'[\\uDC00]' + '[\\uDFFF]'", "'[\\udc00][\\udfff]'");
