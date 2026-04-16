@@ -940,6 +940,8 @@ fn test_fold_string_concat() {
     test_same("x = '[\\uDC00]'.concat(a)");
     // U+FFFD (replacement character) is NOT a lone surrogate — should still fold
     test("x = '\\uFFFD'.concat(a)", "x = `\u{FFFD}${a}`");
+    // U+FFFD followed by surrogate-range hex in all-string concat: NOT a lone surrogate
+    test("x = '\\uFFFD'.concat('dc00')", "x = '\\uFFFDdc00'");
 }
 
 #[test]

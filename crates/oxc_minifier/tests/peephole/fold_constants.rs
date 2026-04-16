@@ -1224,6 +1224,17 @@ fn test_lone_surrogate_propagation() {
     fold("'\\uFFFD' + '0000'", "'\\uFFFD0000'");
     // U+FFFD not at position 0 with a short string (regression test for off-by-one in scan bounds)
     fold("'x\\uFFFD' + 'abc'", "'x\\uFFFDabc'");
+
+    // U+FFFD followed by 4 hex chars that ARE in the surrogate range is still NOT a lone
+    // surrogate encoding when the source StringLiteral has lone_surrogates: false.
+    // These would be false positives if we relied on byte-pattern scanning instead of flags.
+    fold("'\\uFFFD' + 'dc00'", "'\\uFFFDdc00'");
+    fold("'\\uFFFD' + 'dfff'", "'\\uFFFDdfff'");
+    fold("'\\uFFFD' + 'd800'", "'\\uFFFDd800'");
+    // U+FFFD followed by "fffd" (the self-escape suffix) — also not a lone surrogate.
+    fold("'\\uFFFD' + 'fffd'", "'\\uFFFDfffd'");
+    // Multi-char string with U+FFFD + surrogate-range hex across a concat boundary
+    fold("'a\\uFFFD' + 'dc00b'", "'a\\uFFFDdc00b'");
 }
 
 mod bigint {

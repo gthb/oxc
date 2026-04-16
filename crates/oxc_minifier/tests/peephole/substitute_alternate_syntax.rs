@@ -315,6 +315,9 @@ fn test_template_string_to_string() {
     // Template with lone surrogates folds to string with lone_surrogates flag
     test("x = `[\\uDC00]`", "x = '[\\udc00]'");
     test("x = `a[\\uDC00]b`", "x = 'a[\\udc00]b'");
+    // Template containing U+FFFD followed by surrogate-range hex — NOT a lone surrogate.
+    // This exercises the expr_has_lone_surrogates path (checks the flag, not string bytes).
+    test("x = `\\uFFFDdc00`", "x = '\\uFFFDdc00'");
 }
 
 #[test]

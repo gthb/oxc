@@ -19,7 +19,7 @@ use oxc_syntax::{
 
 use crate::TraverseCtx;
 
-use super::{PeepholeOptimizations, has_lone_surrogates};
+use super::{PeepholeOptimizations, expr_has_lone_surrogates};
 
 /// A peephole optimization that minimizes code by simplifying conditional
 /// expressions, replacing IFs with HOOKs, replacing object constructors
@@ -1023,10 +1023,20 @@ impl<'a> PeepholeOptimizations {
                 match arg {
                     // `String()` -> `''`
                     None => Some(ctx.ast.expression_string_literal(span, "", None)),
-                    Some(arg) => arg
-                        .evaluate_value_to_string(ctx)
-                        .filter(|_| !arg.may_have_side_effects(ctx))
-                        .map(|s| ctx.value_to_expr(e.span, ConstantValue::String(s))),
+                    Some(arg) => {
+                        let lone_surrogates = expr_has_lone_surrogates(arg);
+                        arg.evaluate_value_to_string(ctx)
+                            .filter(|_| !arg.may_have_side_effects(ctx))
+                            .map(|s| {
+                                let mut result =
+                                    ctx.value_to_expr(e.span, ConstantValue::String(s));
+                                // Override has_lone_surrogates() scan with the flag.
+                                if let Expression::StringLiteral(lit) = &mut result {
+                                    lit.lone_surrogates = lone_surrogates;
+                                }
+                                result
+                            })
+                    }
                 }
             }
             "Number" => Some(ctx.ast.expression_numeric_literal(
@@ -1262,7 +1272,8 @@ impl<'a> PeepholeOptimizations {
     pub fn substitute_template_literal(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let Expression::TemplateLiteral(t) = expr else { return };
         let Some(val) = t.to_js_string(ctx) else { return };
-        let lone_surrogates = has_lone_surrogates(&val);
+        let lone_surrogates = t.quasis.iter().any(|q| q.lone_surrogates)
+            || t.expressions.iter().any(|e| expr_has_lone_surrogates(e));
         *expr = ctx.ast.expression_string_literal_with_lone_surrogates(
             t.span(),
             ctx.ast.str_from_cow(&val),
