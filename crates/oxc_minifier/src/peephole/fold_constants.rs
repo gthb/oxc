@@ -13,12 +13,12 @@ use crate::TraverseCtx;
 use super::PeepholeOptimizations;
 
 /// Check if a string uses the lone surrogate encoding scheme by scanning its bytes
-/// for the `\u{FFFD}XXXX` pattern.
+/// for the `\u{FFFD}XXXX` pattern where XXXX is in the surrogate range (d800–dfff).
 ///
 /// **Warning:** This can produce false positives if the string naturally contains
-/// U+FFFD followed by 4 hex chars that happen to be in the surrogate range (d800–dfff)
-/// or "fffd". Prefer [`expr_has_lone_surrogates`] when the source AST node is available,
-/// since that checks the `lone_surrogates` flag directly without false positives.
+/// U+FFFD followed by 4 hex chars that happen to be in the surrogate range or "fffd".
+/// Prefer [`expr_has_lone_surrogates`] when the source AST node is available, since
+/// that checks the `lone_surrogates` flag directly without false positives.
 ///
 /// This function is the fallback for paths where only the string value is available
 /// (e.g. `value_to_expr` receiving a `ConstantValue::String` with no origin info).
@@ -421,8 +421,10 @@ impl<'a> PeepholeOptimizations {
             let mut result = ctx.value_to_expr(e.span, v);
             // value_to_expr uses has_lone_surrogates() which can have false positives
             // for strings naturally containing U+FFFD + surrogate-range hex chars.
-            // Override with the authoritative flag from the source operands.
-            if let Expression::StringLiteral(lit) = &mut result {
+            // Correct false positives using the authoritative flag from the source operands.
+            if let Expression::StringLiteral(lit) = &mut result
+                && lit.lone_surrogates
+            {
                 lit.lone_surrogates =
                     expr_has_lone_surrogates(&e.left) || expr_has_lone_surrogates(&e.right);
             }
