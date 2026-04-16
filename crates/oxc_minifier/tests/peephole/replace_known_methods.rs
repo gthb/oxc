@@ -420,6 +420,11 @@ fn test_to_lower() {
     test("x = 'SS'.toLowerCase()", "x = 'ss'");
     test("x = 'Σ'.toLowerCase()", "x = 'σ'");
     test("x = 'ΣΣ'.toLowerCase()", "x = 'σς'");
+
+    // U+FFFD followed by uppercase surrogate-range hex — NOT a lone surrogate.
+    // toLowerCase creates a result that matches the lone surrogate encoding pattern,
+    // but the source has lone_surrogates: false so the result must too.
+    test("x = '\\uFFFDDC00'.toLowerCase()", "x = '\\uFFFDdc00'");
 }
 
 #[test]

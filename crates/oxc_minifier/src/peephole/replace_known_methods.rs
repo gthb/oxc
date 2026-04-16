@@ -18,7 +18,7 @@ use oxc_span::SPAN;
 
 use crate::TraverseCtx;
 
-use super::PeepholeOptimizations;
+use super::{PeepholeOptimizations, expr_has_lone_surrogates};
 
 type Arguments<'a> = oxc_allocator::Vec<'a, Argument<'a>>;
 
@@ -31,7 +31,14 @@ impl<'a> PeepholeOptimizations {
         // Use constant evaluation for known method calls
         if let Some(constant_value) = ce.evaluate_value(ctx) {
             ctx.state.changed = true;
-            *node = ctx.value_to_expr(ce.span, constant_value);
+            let mut result = ctx.value_to_expr(ce.span, constant_value);
+            // Correct false positives from scan_for_lone_surrogate_encoding().
+            if let Expression::StringLiteral(lit) = &mut result
+                && lit.lone_surrogates
+            {
+                lit.lone_surrogates = expr_has_lone_surrogates(node, ctx);
+            }
+            *node = result;
             return;
         }
 

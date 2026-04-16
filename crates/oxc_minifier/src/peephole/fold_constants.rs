@@ -78,6 +78,18 @@ pub fn expr_has_lone_surrogates(expr: &Expression, ctx: &TraverseCtx) -> bool {
             .and_then(|rid| ctx.scoping().get_reference(rid).symbol_id())
             .and_then(|sid| ctx.state.symbol_values.get_symbol_value(sid))
             .is_some_and(|sv| sv.lone_surrogates),
+        Expression::CallExpression(call) => {
+            let object_has = match &call.callee {
+                Expression::StaticMemberExpression(m) => expr_has_lone_surrogates(&m.object, ctx),
+                Expression::ComputedMemberExpression(m) => expr_has_lone_surrogates(&m.object, ctx),
+                _ => false,
+            };
+            object_has
+                || call
+                    .arguments
+                    .iter()
+                    .any(|a| a.as_expression().is_some_and(|e| expr_has_lone_surrogates(e, ctx)))
+        }
         _ => false,
     }
 }
