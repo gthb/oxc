@@ -1290,18 +1290,37 @@ fn test_lone_surrogate_propagation() {
 }
 
 #[test]
+fn test_lone_surrogate_safe_by_shape() {
+    // Lock in the "safe-by-shape" kinds listed in expr_has_lone_surrogates'
+    // doc comment: their `to_js_string` result is an ASCII-only string that
+    // cannot carry lone surrogates, so returning `false` from the helper is
+    // correct even when a subexpression carries lone surrogates.
+    //
+    // If any of these grows a `to_js_string` case that can include string
+    // content (e.g. `ObjectExpression` ever stringifies a property value),
+    // the scan in `value_to_expr` would flag the result and the helper would
+    // fail to mirror it — one of these tests would then catch the divergence
+    // by producing garbage codegen for the lone-surrogate half.
+    fold("String({a: '\\uDC00'})", "'[object Object]'");
+    fold("String(void '\\uDC00')", "'undefined'");
+    fold("String(!'\\uDC00')", "'false'");
+    fold("`${{a: '\\uDC00'}}`", "'[object Object]'");
+}
+
+#[test]
 fn test_lone_surrogate_through_non_literal_subexprs() {
     // expr_has_lone_surrogates only handles a subset of expression types
-    // (string/template literals, identifiers, addition, call). It relies on the
-    // invariant that exit traversal folds string-yielding sub-expressions
-    // (LogicalExpression, ConditionalExpression, SequenceExpression, …) into
-    // string literals *before* their parent is folded — so by the time the
-    // helper sees a child, that child is either a literal/identifier or
-    // unfoldable (and therefore can't contribute a constant string anyway).
-    // These tests lock that invariant in: if a future change folds a parent
-    // before its children, the byte scan in `value_to_expr` would set the
-    // flag and `correct_lone_surrogates_flag` would clear it back — silently
-    // producing wrong codegen — and one of these would catch it.
+    // (string/template literals, identifiers, addition, arrays, calls). It
+    // relies on the invariant that exit traversal folds string-yielding
+    // sub-expressions (LogicalExpression, ConditionalExpression,
+    // SequenceExpression, …) into string literals *before* their parent is
+    // folded — so by the time the helper sees a child, that child is either
+    // a literal/identifier or unfoldable (and therefore can't contribute a
+    // constant string anyway). These tests lock that invariant in: if a
+    // future change folds a parent before its children, the byte scan in
+    // `value_to_expr` would set the flag and `correct_lone_surrogates_flag`
+    // would clear it back — silently producing wrong codegen — and one of
+    // these would catch it.
     fold("'' || '\\uDC00'", "'\\udc00'");
     fold("(true ? '\\uDC00' : 'a')", "'\\udc00'");
     fold("(0, '\\uDC00')", "'\\udc00'");
