@@ -1269,6 +1269,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     pub fn substitute_template_literal(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        // Check before destructuring, since the destructure borrows `expr`.
         let lone_surrogates = expr_has_lone_surrogates(expr, ctx);
         let Expression::TemplateLiteral(t) = expr else { return };
         let Some(val) = t.to_js_string(ctx) else { return };
