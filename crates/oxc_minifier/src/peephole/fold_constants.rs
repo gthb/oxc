@@ -65,7 +65,10 @@ fn is_lone_surrogate_suffix(b: &[u8]) -> bool {
 pub fn expr_has_lone_surrogates(expr: &Expression) -> bool {
     match expr {
         Expression::StringLiteral(s) => s.lone_surrogates,
-        Expression::TemplateLiteral(t) => t.quasis.iter().any(|q| q.lone_surrogates),
+        Expression::TemplateLiteral(t) => {
+            t.quasis.iter().any(|q| q.lone_surrogates)
+                || t.expressions.iter().any(|e| expr_has_lone_surrogates(e))
+        }
         Expression::BinaryExpression(e) if e.operator == BinaryOperator::Addition => {
             expr_has_lone_surrogates(&e.left) || expr_has_lone_surrogates(&e.right)
         }
