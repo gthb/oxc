@@ -206,10 +206,10 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
                 self.ast.expression_big_int_literal(span, value, None, BigintBase::Decimal)
             }
             ConstantValue::String(s) => {
-                // has_lone_surrogates scans for the encoding pattern in the string bytes.
-                // This can have false positives if the string naturally contains U+FFFD
-                // followed by surrogate-range hex chars. Callers that have access to the
-                // source expression should override this with expr_has_lone_surrogates().
+                // has_lone_surrogates can yield false positives in the edge case where
+                // the original string contains U+FFFD followed by surrogate-range hex
+                // chars. Callers that have access to the source expression should
+                // double-check this using expr_has_lone_surrogates().
                 let lone_surrogates = has_lone_surrogates(&s);
                 self.ast.expression_string_literal_with_lone_surrogates(
                     span,

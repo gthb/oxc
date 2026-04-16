@@ -12,8 +12,8 @@ use crate::TraverseCtx;
 
 use super::PeepholeOptimizations;
 
-/// Check if a string uses the lone surrogate encoding scheme by scanning its bytes
-/// for the `\u{FFFD}XXXX` pattern where XXXX is in the surrogate range (d800–dfff).
+/// Check if a string has lone surrogates encoded as `\u{FFFD}XXXX` where XXXX is in
+/// the surrogate range (d800–dfff).
 ///
 /// **Warning:** This can produce false positives if the string naturally contains
 /// U+FFFD followed by 4 hex chars that happen to be in the surrogate range or "fffd".
@@ -59,9 +59,8 @@ fn is_lone_surrogate_suffix(b: &[u8]) -> bool {
 
 /// Check if an expression carries the `lone_surrogates` flag.
 ///
-/// Unlike [`has_lone_surrogates`] (which scans string bytes for the encoding pattern),
-/// this checks the AST node's flag directly, avoiding false positives from strings that
-/// naturally contain U+FFFD followed by hex characters.
+/// Based on the AST node's flag, so not prone to false positives like
+/// [`has_lone_surrogates`] is.
 pub fn expr_has_lone_surrogates(expr: &Expression) -> bool {
     match expr {
         Expression::StringLiteral(s) => s.lone_surrogates,
@@ -422,9 +421,8 @@ impl<'a> PeepholeOptimizations {
             && let Some(v) = e.evaluate_value(ctx)
         {
             let mut result = ctx.value_to_expr(e.span, v);
-            // value_to_expr uses has_lone_surrogates() which can have false positives
-            // for strings naturally containing U+FFFD + surrogate-range hex chars.
-            // Correct false positives using the authoritative flag from the source operands.
+            // lone_surrogates from value_to_expr can be a false positive;
+            // double-check using authoritative flag from source operands.
             if let Expression::StringLiteral(lit) = &mut result
                 && lit.lone_surrogates
             {
@@ -516,7 +514,7 @@ impl<'a> PeepholeOptimizations {
 
             // "`${x}y` + 'z'" => "`${x}yz`"
             if let Some(right_str) = right_expr.get_side_free_string_value(ctx) {
-                // Lone surrogates can't go into template raw values.
+                // Encoded lone surrogates can't go into template raw values.
                 if expr_has_lone_surrogates(right_expr) {
                     return None;
                 }
@@ -536,7 +534,7 @@ impl<'a> PeepholeOptimizations {
         } else if let Expression::TemplateLiteral(right) = right_expr {
             // "'x' + `y${z}`" => "`xy${z}`"
             if let Some(left_str) = left_expr.get_side_free_string_value(ctx) {
-                // Lone surrogates can't go into template raw values.
+                // Encoded lone surrogates can't go into template raw values.
                 if expr_has_lone_surrogates(left_expr) {
                     return None;
                 }
@@ -817,7 +815,6 @@ impl<'a> PeepholeOptimizations {
         let has_expr_to_inline = t.expressions.iter().any(|expr| {
             !expr.may_have_side_effects(ctx)
                 && expr.to_js_string(ctx).is_some()
-                // Lone surrogates can't go into template raw values.
                 && !expr_has_lone_surrogates(expr)
         });
         if !has_expr_to_inline {
@@ -830,7 +827,7 @@ impl<'a> PeepholeOptimizations {
                 if expr.may_have_side_effects(ctx) {
                     Some(expr)
                 } else if let Some(str) = expr.to_js_string(ctx) {
-                    // Lone surrogates can't go into template raw values.
+                    // Encoded lone surrogates can't go into template raw values.
                     if expr_has_lone_surrogates(&expr) {
                         return Some(expr);
                     }
