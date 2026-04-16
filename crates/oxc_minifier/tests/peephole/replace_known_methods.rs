@@ -942,6 +942,8 @@ fn test_fold_string_concat() {
     test("x = '\\uFFFD'.concat(a)", "x = `\u{FFFD}${a}`");
     // U+FFFD followed by surrogate-range hex in all-string concat: NOT a lone surrogate
     test("x = '\\uFFFD'.concat('dc00')", "x = '\\uFFFDdc00'");
+    // lone surrogates in a non-base string arg with expression args: bail out
+    test_same("x = 'a'.concat(b, '[\\uDC00]')");
 }
 
 #[test]
