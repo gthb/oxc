@@ -1027,9 +1027,10 @@ impl<'a> PeepholeOptimizations {
                         .evaluate_value_to_string(ctx)
                         .filter(|_| !arg.may_have_side_effects(ctx))
                         .map(|s| {
-                            let lone_surrogates = expr_has_lone_surrogates(arg, ctx);
                             let mut result = ctx.value_to_expr(span, ConstantValue::String(s));
-                            correct_lone_surrogates_flag(&mut result, lone_surrogates);
+                            correct_lone_surrogates_flag(&mut result, || {
+                                expr_has_lone_surrogates(arg, ctx)
+                            });
                             result
                         }),
                 }

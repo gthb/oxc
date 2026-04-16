@@ -32,9 +32,8 @@ impl<'a> PeepholeOptimizations {
         let span = ce.span;
         if let Some(constant_value) = ce.evaluate_value(ctx) {
             ctx.state.changed = true;
-            let lone_surrogates = expr_has_lone_surrogates(node, ctx);
             let mut result = ctx.value_to_expr(span, constant_value);
-            correct_lone_surrogates_flag(&mut result, lone_surrogates);
+            correct_lone_surrogates_flag(&mut result, || expr_has_lone_surrogates(node, ctx));
             *node = result;
             return;
         }

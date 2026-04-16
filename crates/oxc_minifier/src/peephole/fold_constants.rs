@@ -106,11 +106,18 @@ pub fn expr_has_lone_surrogates(expr: &Expression, ctx: &TraverseCtx) -> bool {
 /// false positives when U+FFFD naturally appears before surrogate-range hex
 /// chars. When the authoritative answer is available (from AST flags or the
 /// symbol table), call this to override the scan's false positive.
-pub fn correct_lone_surrogates_flag(result: &mut Expression, lone_surrogates: bool) {
+///
+/// `lone_surrogates` is a closure so the (potentially expensive)
+/// [`expr_has_lone_surrogates`] AST walk only runs in the rare case where
+/// the byte scan flagged the result.
+pub fn correct_lone_surrogates_flag(
+    result: &mut Expression,
+    lone_surrogates: impl FnOnce() -> bool,
+) {
     if let Expression::StringLiteral(lit) = result
         && lit.lone_surrogates
     {
-        lit.lone_surrogates = lone_surrogates;
+        lit.lone_surrogates = lone_surrogates();
     }
 }
 
@@ -459,10 +466,10 @@ impl<'a> PeepholeOptimizations {
         if !e.may_have_side_effects(ctx)
             && let Some(v) = e.evaluate_value(ctx)
         {
-            let lone_surrogates =
-                expr_has_lone_surrogates(&e.left, ctx) || expr_has_lone_surrogates(&e.right, ctx);
             let mut result = ctx.value_to_expr(e.span, v);
-            correct_lone_surrogates_flag(&mut result, lone_surrogates);
+            correct_lone_surrogates_flag(&mut result, || {
+                expr_has_lone_surrogates(&e.left, ctx) || expr_has_lone_surrogates(&e.right, ctx)
+            });
             return Some(result);
         }
         debug_assert_eq!(e.operator, BinaryOperator::Addition);

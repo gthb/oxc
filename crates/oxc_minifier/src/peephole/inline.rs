@@ -145,7 +145,7 @@ impl<'a> PeepholeOptimizations {
             }
         {
             let mut result = ctx.value_to_expr(expr.span(), cv.clone());
-            correct_lone_surrogates_flag(&mut result, symbol_value.lone_surrogates);
+            correct_lone_surrogates_flag(&mut result, || symbol_value.lone_surrogates);
             *expr = result;
             ctx.state.changed = true;
         }
