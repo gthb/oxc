@@ -31,7 +31,7 @@ pub fn has_lone_surrogates(s: &str) -> bool {
         return false;
     }
     let mut i = 0;
-    let end = bytes.len() - 7; // need 7 bytes from position i (indices i..i+6)
+    let end = bytes.len() - 7; // need 7 bytes from position i (indices i..=i+6)
     while i <= end {
         if bytes[i] == 0xEF
             && bytes[i + 1] == 0xBF
