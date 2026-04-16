@@ -1266,13 +1266,15 @@ impl<'a> PeepholeOptimizations {
     }
 
     pub fn substitute_template_literal(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        // Check before destructuring, since the destructure borrows `expr`.
-        let lone_surrogates = expr_has_lone_surrogates(expr, ctx);
         let Expression::TemplateLiteral(t) = expr else { return };
         let Some(val) = t.to_js_string(ctx) else { return };
+        let lone_surrogates = t.quasis.iter().any(|q| q.lone_surrogates)
+            || t.expressions.iter().any(|e| expr_has_lone_surrogates(e, ctx));
+        let span = t.span();
+        let value = ctx.ast.str_from_cow(&val);
         *expr = ctx.ast.expression_string_literal_with_lone_surrogates(
-            t.span(),
-            ctx.ast.str_from_cow(&val),
+            span,
+            value,
             None,
             lone_surrogates,
         );
