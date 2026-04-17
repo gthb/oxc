@@ -442,6 +442,54 @@ fn test_fold_string_trim() {
     test_same("x = 'abc'.trimEnd(1)");
 }
 
+/// Folds that consume individual JS code units (substring/slice/charAt/
+/// replace/toUpperCase) or re-encode the value (encodeURI*, decodeURI*)
+/// don't understand the `\uFFFDXXXX` lone-surrogate encoding that
+/// `StringLiteral::lone_surrogates: true` signals. Running them against
+/// the encoded form would either split the encoding, case-fold its hex
+/// digits out of validity, or (for toUpperCase / URL fns) diverge from
+/// runtime behavior — at best yielding wrong codegen, at worst panicking
+/// the codegen's surrogate-decoder on a partial sequence. The fold paths
+/// bail out in `oxc_ecmascript::constant_evaluation::call_expr`. Lock
+/// that bail-out in so a future "optimization" doesn't silently regress.
+#[test]
+fn test_lone_surrogate_bailouts() {
+    // substring / slice: JS char-unit ops would slice through the 5-char
+    // `\uFFFDd800` encoding.
+    test_same("x = '[\\uDC00]'.substring(0, 1)");
+    test_same("x = '[\\uDC00]'.substring(1)");
+    test_same("x = '[\\uDC00]'.slice(0, 1)");
+    test_same("x = '[\\uDC00]'.slice(1)");
+
+    // charAt: same reason.
+    test_same("x = '[\\uDC00]'.charAt(0)");
+    test_same("x = '\\uDC00'.charAt(0)");
+
+    // replace / replaceAll: any input using the encoding could cause the
+    // replacement boundaries to cut through a `\uFFFDXXXX` run.
+    test_same("x = '[\\uDC00]'.replace('[', '(')");
+    test_same("x = '[\\uDC00]'.replaceAll('[', '(')");
+    test_same("x = 'abc'.replace('\\uDC00', 'x')");
+    test_same("x = 'abc'.replace('b', '\\uDC00')");
+
+    // toUpperCase: the encoding's lowercase hex would become `D800`, which
+    // doesn't match the lowercase-only decoder in oxc_codegen.
+    test_same("x = '\\uDC00'.toUpperCase()");
+    test_same("x = '[\\uDC00]'.toUpperCase()");
+
+    // toLowerCase / trim preserve the encoding intact and DO still fold.
+    test("x = '\\uDC00'.toLowerCase()", "x = '\\udc00'");
+    test("x = '  \\uDC00  '.trim()", "x = '\\udc00'");
+
+    // URL encode/decode: `encodeURI('\uD800')` throws at runtime, so
+    // folding it against our encoded form would produce a string that
+    // doesn't match runtime behavior.
+    test_same("x = encodeURI('\\uDC00')");
+    test_same("x = encodeURIComponent('\\uDC00')");
+    test_same("x = decodeURI('\\uDC00')");
+    test_same("x = decodeURIComponent('\\uDC00')");
+}
+
 #[test]
 fn test_fold_math_functions_bug() {
     test_same("Math[0]()");
