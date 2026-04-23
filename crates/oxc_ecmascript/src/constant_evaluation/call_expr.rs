@@ -324,6 +324,10 @@ fn try_fold_string_replace<'a>(
             if value.may_have_side_effects(ctx) {
                 return None;
             }
+            // Catches string literals, templates with flagged quasis,
+            // and — via byte scan on the resolved `ConstantValue::String` —
+            // identifiers bound to lone-surrogate constants, which the
+            // `evaluate_value` call below would otherwise silently flatten.
             if expr_may_have_lone_surrogates(value, ctx) {
                 return None;
             }
@@ -335,6 +339,8 @@ fn try_fold_string_replace<'a>(
         Argument::SpreadElement(_) => return None,
         match_expression!(Argument) => {
             let value = replace_value.to_expression();
+            // Same story: `get_side_free_string_value` below would
+            // drop any `lone_surrogates` flag, so pre-filter.
             if expr_may_have_lone_surrogates(value, ctx) {
                 return None;
             }
