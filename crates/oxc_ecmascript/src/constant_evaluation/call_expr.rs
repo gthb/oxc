@@ -110,19 +110,26 @@ fn try_fold_string_casing<'a>(
         return None;
     }
 
-    // Bail if the source carries the lone-surrogate encoding — the
-    // folded result would be a bare `StringLiteral` with
-    // `lone_surrogates: false`, silently corrupting the value.
-    if expr_may_have_lone_surrogates(object, ctx) {
-        return None;
-    }
+    // Each branch bails if the source carries the lone-surrogate
+    // encoding: the folded result would otherwise be a bare
+    // `StringLiteral` with `lone_surrogates: false`, silently
+    // corrupting the value. The flag / byte scan lives alongside the
+    // value extraction to avoid a second `get_constant_value_for_reference_id`
+    // lookup for identifiers.
     let value = match object {
+        Expression::StringLiteral(s) if s.lone_surrogates => return None,
         Expression::StringLiteral(s) => Cow::Borrowed(s.value.as_str()),
-        Expression::Identifier(ident) => ident
-            .reference_id
-            .get()
-            .and_then(|reference_id| ctx.get_constant_value_for_reference_id(reference_id))
-            .and_then(ConstantValue::into_string)?,
+        Expression::Identifier(ident) => {
+            let cow = ident
+                .reference_id
+                .get()
+                .and_then(|reference_id| ctx.get_constant_value_for_reference_id(reference_id))
+                .and_then(ConstantValue::into_string)?;
+            if str_has_lone_surrogate_encoding(&cow) {
+                return None;
+            }
+            cow
+        }
         _ => return None,
     };
 
