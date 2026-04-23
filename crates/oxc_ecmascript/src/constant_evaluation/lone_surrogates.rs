@@ -1,27 +1,18 @@
-//! Detection helpers for bailing out of folds that would drop the
-//! `lone_surrogates` flag.
+//! Detection helpers for bailing out of folds that would drop the `lone_surrogates` flag.
 //!
-//! Some JS strings contain unpaired UTF-16 surrogates that are not
-//! representable in UTF-8. `oxc_ast` stores them in a special encoding:
-//! the string's bytes use `\u{FFFD}XXXX` (U+FFFD followed by four
-//! lowercase hex digits) as an escape sequence — surrogate code points
-//! as `\u{FFFD}d800..\u{FFFD}dfff`, and literal U+FFFD as
-//! `\u{FFFD}fffd`. The `StringLiteral::lone_surrogates` /
-//! `TemplateElement::lone_surrogates` flag tells codegen to decode the
-//! escape back into `\uXXXX` sequences; when the flag is clear, codegen
-//! emits the bytes as-is.
+//! `oxc_ast` stores strings with unpaired UTF-16 surrogates in a special encoding: each surrogate
+//! code point is spelled `\u{FFFD}XXXX` (U+FFFD followed by four lowercase hex digits), with
+//! `\u{FFFD}fffd` reserved as the self-escape for a real U+FFFD. The `StringLiteral` /
+//! `TemplateElement` `lone_surrogates` flag tells codegen to decode those escapes back into
+//! `\uXXXX`; when the flag is clear, codegen emits the bytes as-is.
 //!
-//! The flag and the bytes are equally load-bearing. Two strings with
-//! the same bytes but different flags are different strings at runtime.
-//! Folds that produce a new `ConstantValue::String` discard the flag
-//! (and the surrounding `value_to_expr` defaults the new literal's flag
-//! to `false`), so any fold consuming a `lone_surrogates: true` input
-//! would silently corrupt the value. The helpers here let callers
-//! detect that and bail out rather than fold.
+//! Two strings with the same bytes but different flags are different runtime values. Folds that
+//! produce a new `ConstantValue::String` drop the flag, and `value_to_expr` then builds a literal
+//! defaulting to `lone_surrogates: false` — so any fold consuming a `lone_surrogates: true` input
+//! would silently corrupt the value. The helpers here let callers detect that and bail.
 //!
-//! The detection is conservative — callers over-approximate rather than
-//! risk a missed bailout. A false positive only skips a fold that could
-//! have been performed; it never produces incorrect output.
+//! Detection is conservative: false positives only skip a fold that could have been performed,
+//! never produce wrong output.
 
 use oxc_ast::ast::*;
 use oxc_syntax::operator::BinaryOperator;
@@ -30,18 +21,14 @@ use crate::GlobalContext;
 
 use super::ConstantValue;
 
-/// Returns `true` if `s` contains the lone-surrogate encoding pattern
-/// `\u{FFFD}XXXX` where `XXXX` is a surrogate-range hex value
-/// (`d800`..=`dfff`) or the self-escape `fffd`.
+/// Returns `true` if `s` contains the lone-surrogate encoding pattern `\u{FFFD}XXXX` — surrogate
+/// range `d800`..=`dfff`, or the self-escape `fffd`.
 ///
-/// Scans the raw bytes without consulting any AST flag, so it also
-/// matches a genuine U+FFFD that happens to precede four matching hex
-/// characters. That false-positive case only causes callers to skip a
-/// fold — it cannot produce wrong output.
+/// Scans raw bytes without consulting any AST flag, so a genuine U+FFFD followed by four matching
+/// hex characters also matches. That false positive only skips a fold.
 pub fn str_has_lone_surrogate_encoding(s: &str) -> bool {
     let bytes = s.as_bytes();
-    // U+FFFD is `EF BF BD` in UTF-8; bail early if the leading byte is
-    // absent (the common case for ASCII-heavy code).
+    // U+FFFD is `EF BF BD` in UTF-8; short-circuit when absent (the common case).
     if !bytes.contains(&0xEF) {
         return false;
     }
@@ -60,13 +47,10 @@ fn is_lone_surrogate_suffix(b: &[u8]) -> bool {
         || b == b"fffd"
 }
 
-/// Returns `true` if any quasi or interpolation in `t` may carry the
-/// lone-surrogate encoding.
+/// Returns `true` if any quasi or interpolation in `t` may carry the lone-surrogate encoding.
 ///
-/// Split out from [`expr_may_have_lone_surrogates`]'s `TemplateLiteral`
-/// arm so minifier sites that hold a `&TemplateLiteral` directly (not
-/// wrapped in an `Expression`) can use the same check without an
-/// `Expression::TemplateLiteral(...)` round-trip.
+/// Split out from [`expr_may_have_lone_surrogates`]'s `TemplateLiteral` arm so sites that hold a
+/// `&TemplateLiteral` directly can reuse the check.
 pub fn template_may_have_lone_surrogates<'a>(
     t: &TemplateLiteral<'a>,
     ctx: &impl GlobalContext<'a>,
@@ -75,24 +59,17 @@ pub fn template_may_have_lone_surrogates<'a>(
         || t.expressions.iter().any(|e| expr_may_have_lone_surrogates(e, ctx))
 }
 
-/// Returns `true` if the expression, when stringified, may carry the
-/// lone-surrogate encoding.
+/// Returns `true` if the expression, when stringified, may carry the lone-surrogate encoding.
 ///
-/// Used at fold sites that would otherwise consume the expression's
-/// string value. When this returns `true`, the caller must skip the
-/// fold — otherwise the fold would produce a new string literal with
-/// `lone_surrogates: false`, silently corrupting the value.
+/// Fold sites call this before consuming an operand's string value; when it returns `true`, the
+/// caller must skip the fold or the result would be a new string literal with `lone_surrogates:
+/// false`, silently corrupting the value. Conservatively over-approximates — false positives only
+/// cost a missed fold.
 ///
-/// Conservatively over-approximates: for kinds it can't analyse
-/// precisely (e.g. an identifier whose initializer uses the encoding),
-/// it returns `true`. False positives only cause a missed fold.
-///
-/// Identifiers are resolved through `ctx.get_constant_value_for_reference_id`
-/// and the resulting `ConstantValue::String` bytes are byte-scanned. That
-/// loses the AST flag but is sound for bail-out purposes: if the source
-/// was a lone-surrogate literal, its bytes contain the encoding; if it
-/// wasn't but the bytes happen to match, the false positive only skips a
-/// fold.
+/// Identifiers are resolved through `ctx.get_constant_value_for_reference_id` and the resulting
+/// `ConstantValue::String` bytes are byte-scanned. That loses the AST flag but is sound for
+/// bail-out: a lone-surrogate literal's bytes always contain the encoding, and a byte-identical
+/// non-surrogate string only causes a missed fold.
 pub fn expr_may_have_lone_surrogates<'a>(
     expr: &Expression<'a>,
     ctx: &impl GlobalContext<'a>,
@@ -107,16 +84,10 @@ pub fn expr_may_have_lone_surrogates<'a>(
         Expression::ArrayExpression(arr) => arr
             .elements
             .iter()
-            // `as_expression` skips `SpreadElement` and `Elision`. That is
-            // sound here because `ArrayJoin::array_join` (the only path
-            // that stringifies an array for the folds we guard) returns
-            // `None` as soon as any element fails to stringify, and
-            // `SpreadElement::to_js_string` always fails — so an array
-            // containing a spread never produces a `ConstantValue::String`
-            // in the first place. Elisions stringify to `""` and can't
-            // contribute lone surrogates. If either of those invariants
-            // changes, this branch would need to recurse into the spread's
-            // argument.
+            // `as_expression` skips `SpreadElement` and `Elision`. Sound because
+            // `ArrayJoin::array_join` bails on any element whose `to_js_string` fails, and
+            // `SpreadElement::to_js_string` always fails — so an array with a spread never
+            // produces a `ConstantValue::String` for these folds. Elisions stringify to `""`.
             .any(|el| el.as_expression().is_some_and(|e| expr_may_have_lone_surrogates(e, ctx))),
         Expression::Identifier(ident) => ident
             .reference_id
@@ -138,23 +109,27 @@ pub fn expr_may_have_lone_surrogates<'a>(
             e.expressions.last().is_some_and(|e| expr_may_have_lone_surrogates(e, ctx))
         }
         Expression::ParenthesizedExpression(e) => expr_may_have_lone_surrogates(&e.expression, ctx),
-        // The catch-all covers every other kind, notably:
-        // - `UnaryExpression`: `void x` → `"undefined"` and `!x` →
-        //   `"true"`/`"false"` produce fixed ASCII regardless of the
-        //   operand, so a lone-surrogate operand can't flow through.
-        // - `CallExpression` / `NewExpression` / `TaggedTemplateExpression`:
-        //   side-effecting and either fold to a literal elsewhere
-        //   (caught by the literal arm above) or don't fold at all.
-        // - `MemberExpression` / `ChainExpression`: only `.length` folds
-        //   today, and that yields a number, so no string-valued result
-        //   can flow through.
-        // - `AssignmentExpression` / `UpdateExpression`: side effects,
-        //   so fold paths bail via `may_have_side_effects` first.
+        // The catch-all rests on two separate arguments, one per group of remaining kinds:
         //
-        // If a new `to_js_string` impl adds a string-producing kind
-        // that could carry lone surrogates, add a dedicated arm for it
-        // above — the catch-all is not a license to silently skip a
-        // string producer.
+        // (1) `UnaryExpression` (`typeof`/`void`/`!` etc.) yields fixed ASCII strings,
+        //     `MemberExpression` / `ChainExpression` only fold `.length` → number, and
+        //     `AssignmentExpression` / `UpdateExpression` are rejected upstream by
+        //     `may_have_side_effects`. None of these can surface a lone-surrogate string value
+        //     for a parent fold to consume.
+        //
+        // (2) `CallExpression` / `NewExpression` / `TaggedTemplateExpression` *can* produce a
+        //     string (via `CallExpression::evaluate_value_to` → `try_fold_known_global_methods`,
+        //     plus the `.concat` path in `replace_known_methods.rs`). We do not analyse them
+        //     here; instead, each string-producing fold carries its own lone-surrogate bailout
+        //     at the point it would emit a literal. Because children fold before parents, by
+        //     the time a parent checks this function on a call, either the call has already
+        //     been rewritten to a `StringLiteral` (caught by the first arm of this match) or
+        //     it didn't fold. Returning `false` here is therefore safe *as long as* every
+        //     string-producing fold preserves that invariant.
+        //
+        // When adding a new string-producing fold, either add its corresponding `Expression`
+        // kind as a dedicated arm above, or add an explicit `expr_may_have_lone_surrogates`
+        // check at the fold site before emitting a literal.
         _ => false,
     }
 }

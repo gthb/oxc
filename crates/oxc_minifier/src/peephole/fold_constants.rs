@@ -372,9 +372,7 @@ impl<'a> PeepholeOptimizations {
         if let Expression::BinaryExpression(left_binary_expr) = &mut e.left
             && left_binary_expr.right.value_type(ctx).is_string()
         {
-            // Skip this reshape when either piece might carry the
-            // lone-surrogate encoding: the combined literal would be
-            // emitted with `lone_surrogates: false`, corrupting it.
+            // A merged right-hand literal would be emitted without the flag.
             let skip_for_lone_surrogates =
                 expr_may_have_lone_surrogates(&left_binary_expr.right, ctx)
                     || expr_may_have_lone_surrogates(&e.right, ctx);
@@ -412,9 +410,8 @@ impl<'a> PeepholeOptimizations {
         parent_span: Span,
         ctx: &TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
-        // Template merges splice strings into quasi raw/cooked values.
-        // Template literals can't represent lone surrogates as escapes,
-        // so any lone-surrogate input makes the merged result invalid.
+        // Template quasis can't escape lone surrogates, so splicing either operand's value into
+        // a quasi would corrupt the merged string.
         if expr_may_have_lone_surrogates(left_expr, ctx)
             || expr_may_have_lone_surrogates(right_expr, ctx)
         {
@@ -742,11 +739,8 @@ impl<'a> PeepholeOptimizations {
     ///
     /// - `foo${1}bar${i}` => `foo1bar${i}`
     pub fn inline_template_literal(t: &mut TemplateLiteral<'a>, ctx: &mut TraverseCtx<'a>) {
-        // Inlining splices a foldable expression's stringified value
-        // into the neighbouring quasi's raw/cooked text. Template
-        // literals can't represent lone surrogates as escapes, so any
-        // lone-surrogate content — in an existing quasi or in a
-        // candidate expression — would corrupt the merged string.
+        // Inlining splices values into quasi raw/cooked text, which can't represent lone
+        // surrogates as escapes.
         if template_may_have_lone_surrogates(t, ctx) {
             return;
         }

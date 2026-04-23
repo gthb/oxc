@@ -29,10 +29,8 @@ pub fn is_less_than<'a>(
 
     // 3. If px is a String and py is a String, then
     if px.is_string() && py.is_string() {
-        // `to_js_string` returns the stored `value` bytes for string
-        // literals, so ordering them by UTF-16 units compares the
-        // encoded form rather than the runtime code-unit sequence —
-        // wrong for inputs where the `lone_surrogates` flag is set.
+        // `to_js_string` returns the stored bytes, so UTF-16 ordering compares the encoding
+        // rather than the runtime code-unit sequence when `lone_surrogates` is set.
         if expr_may_have_lone_surrogates(x, ctx) || expr_may_have_lone_surrogates(y, ctx) {
             return None;
         }

@@ -221,11 +221,8 @@ fn binary_operation_evaluate_value_to<'a>(
             if left_to_primitive.is_string() == Some(true)
                 || right_to_primitive.is_string() == Some(true)
             {
-                // A concatenated result materialized via `value_to_expr`
-                // would be a bare `StringLiteral` with
-                // `lone_surrogates: false`, losing the flag that
-                // distinguishes a real U+FFFD from an encoded surrogate.
-                // Bail out and let codegen emit the two operands as-is.
+                // A merged literal via `value_to_expr` would lose the flag distinguishing a real
+                // U+FFFD from an encoded surrogate. Leave the two operands for codegen.
                 if expr_may_have_lone_surrogates(left, ctx)
                     || expr_may_have_lone_surrogates(right, ctx)
                 {
@@ -549,11 +546,8 @@ fn evaluate_value_length<'a>(
     ctx: &impl ConstantEvaluationCtx<'a>,
 ) -> Option<ConstantValue<'a>> {
     if let Some(ConstantValue::String(s)) = object.evaluate_value(ctx) {
-        // `s` holds the lone-surrogate-encoded bytes for strings whose
-        // source flagged `lone_surrogates: true`. Counting its UTF-16
-        // units would report the length of the encoding, not the
-        // runtime string (each surrogate is 1 code unit but 5 chars
-        // here).
+        // Counting UTF-16 units of the encoded bytes reports the encoding's length (5 chars per
+        // surrogate), not the runtime string's.
         if expr_may_have_lone_surrogates(object, ctx) {
             return None;
         }

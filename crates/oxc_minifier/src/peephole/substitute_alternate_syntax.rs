@@ -1027,10 +1027,8 @@ impl<'a> PeepholeOptimizations {
                     // `String()` -> `''`
                     None => Some(ctx.ast.expression_string_literal(span, "", None)),
                     Some(arg) => {
-                        // Folding `String('\uDC00')` would route the
-                        // encoded bytes through `value_to_expr`, which
-                        // builds a `StringLiteral` defaulting to
-                        // `lone_surrogates: false`.
+                        // `String('\uDC00')` would route the encoded bytes through
+                        // `value_to_expr` without the flag.
                         if expr_may_have_lone_surrogates(arg, ctx) {
                             None
                         } else {
@@ -1273,8 +1271,7 @@ impl<'a> PeepholeOptimizations {
 
     pub fn substitute_template_literal(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let Expression::TemplateLiteral(t) = expr else { return };
-        // Folding `\`\uDC00\`` → `'\uDC00'` would drop the quasi's
-        // `lone_surrogates` flag on the new string literal.
+        // Collapsing to a string literal would drop the quasi's flag.
         if template_may_have_lone_surrogates(t, ctx) {
             return;
         }
@@ -1607,12 +1604,8 @@ impl<'a> PeepholeOptimizations {
             return;
         }
 
-        // Joining the element bytes into one `"str".split(",")` would
-        // produce a single `StringLiteral` with `lone_surrogates:
-        // false`, even though the concatenated bytes contain the
-        // encoding. Runtime would then evaluate `split` on a
-        // 5-chars-per-surrogate string and return mis-sliced code
-        // units instead of the original elements.
+        // Joining the bytes into one flagless literal and calling `split(',')` on the encoded
+        // form at runtime would return mis-sliced code units rather than the original elements.
         if array
             .elements
             .iter()

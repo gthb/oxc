@@ -437,18 +437,12 @@ fn test_fold_string_trim() {
     test_same("x = 'abc'.trimEnd(1)");
 }
 
-/// Folds that walk the string by JS code unit (`substring`/`slice`/
-/// `charAt`/`charCodeAt`/`indexOf`/`startsWith`/`replace*`/`toLowerCase`/
-/// `toUpperCase`/`trim*`) or re-encode its value (`encodeURI*`,
-/// `decodeURI*`, `String`, `toString()`) would produce a new string
-/// without the `lone_surrogates` flag and either run against the
-/// encoded form (returning fragments of escape bytes) or panic codegen
-/// on a partial sequence. Each fold bails out on a lone-surrogate
-/// input; locking that in.
+/// Every string-method fold (`substring`/`slice`/`charAt`/`charCodeAt`/`indexOf`/`startsWith`/
+/// `replace*`/`toLowerCase`/`toUpperCase`/`trim*`/`encodeURI*`/`decodeURI*`/`String`/`toString`/
+/// `concat`) must bail on lone-surrogate inputs; locking that in.
 #[test]
 fn test_lone_surrogate_bailouts() {
-    // Char-unit operations against the encoded form would cut through
-    // a `�XXXX` sequence.
+    // Code-unit indexing would cut through a `�XXXX` run.
     test_same("x = '[\\uDC00]'.substring(0, 1)");
     test_same("x = '[\\uDC00]'.substring(1)");
     test_same("x = '[\\uDC00]'.slice(0, 1)");
@@ -461,45 +455,35 @@ fn test_lone_surrogate_bailouts() {
     test_same("x = '\\uDC00'.startsWith('a')");
     test_same("x = 'abc'.startsWith('\\uDC00')");
 
-    // `replace`/`replaceAll`: any operand's encoding could split or
-    // splice escape bytes into the result.
+    // `replace`/`replaceAll`: any operand could split or splice escape bytes.
     test_same("x = '[\\uDC00]'.replace('[', '(')");
     test_same("x = '[\\uDC00]'.replaceAll('[', '(')");
     test_same("x = 'abc'.replace('\\uDC00', 'x')");
     test_same("x = 'abc'.replace('b', '\\uDC00')");
 
-    // Case-folding and trimming: even paths that would preserve the
-    // encoding (trim, toLowerCase) bail for uniformity — the fold
-    // produces a bare `StringLiteral` with `lone_surrogates: false`,
-    // which codegen would emit as raw bytes, not as `\uXXXX`.
+    // Case-folding and trimming bail for uniformity — the result would lack the flag.
     test_same("x = '\\uDC00'.toLowerCase()");
     test_same("x = '\\uDC00'.toUpperCase()");
     test_same("x = '[\\uDC00]'.toUpperCase()");
     test_same("x = '\\uDC00'.trim()");
     test_same("x = '  \\uDC00  '.trim()");
 
-    // URL encode/decode: `encodeURI('\uD800')` throws at runtime; our
-    // value is the encoded form, so running the `%`-encoder would
-    // diverge from runtime behaviour.
+    // `encodeURI('\uD800')` throws at runtime; folding the encoded form would diverge.
     test_same("x = encodeURI('\\uDC00')");
     test_same("x = encodeURIComponent('\\uDC00')");
     test_same("x = decodeURI('\\uDC00')");
     test_same("x = decodeURIComponent('\\uDC00')");
 
-    // `String()` and `.toString()` would route the encoded bytes
-    // through `value_to_expr`.
+    // `String()` / `.toString()` would route encoded bytes through `value_to_expr`.
     test_same("x = String('\\uDC00')");
     test_same("x = '\\uDC00'.toString()");
 
-    // `concat`: with all-string args, the result is one merged literal
-    // without the flag; with expression args, the template literal's
-    // quasis can't represent lone surrogates. Both bail.
+    // `.concat`: both the all-string merge and the template-literal rewrite bail.
     test_same("x = ''.concat('[\\uDC00]')");
     test_same("x = '[\\uDC00]'.concat(a)");
     test_same("x = 'a'.concat(b, '[\\uDC00]')");
 
-    // `�` not followed by matching hex is *not* the encoding —
-    // it's the real replacement character, and folds fine.
+    // Control cases: plain U+FFFD (not the encoding) still folds.
     test("x = '\\uFFFD'.toLowerCase()", "x = '\\uFFFD'");
     test("x = '\\uFFFD'.trim()", "x = '\\uFFFD'");
     test("x = ''.concat('\\uFFFD')", "x = '\\uFFFD'");

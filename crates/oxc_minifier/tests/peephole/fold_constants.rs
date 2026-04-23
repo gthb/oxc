@@ -1024,21 +1024,14 @@ fn test_fold_string_length() {
     // Test Unicode escapes are accounted for.
     fold("x = '123\\u01dc'.length", "x = 4");
 
-    // Lone-surrogate strings bail out: the `ConstantValue::String` holds
-    // the `\u{FFFD}XXXX` encoding (5 chars per surrogate), so counting
-    // its UTF-16 units would report the encoding's length rather than
-    // the runtime string's. (TODO: the runtime length is computable —
-    // each `\u{FFFD}XXXX` escape counts as 1 code unit — so a future
-    // pass could still fold these if the optimization matters.)
+    // Lone-surrogate strings bail out — UTF-16 units of the encoded bytes would report 5 per
+    // surrogate instead of 1. (TODO: the runtime length *is* computable; a future pass could
+    // still fold these.) `['length']` first rewrites to `.length`, then bails the same way.
     fold_same("x = '\\uDC00'.length");
     fold_same("x = '[\\uDC00]'.length");
-    // `['length']` folds to `.length` via a separate rewrite, then the
-    // length fold bails — so the computed form normalizes to the same
-    // unfolded `.length` shape.
     fold("x = '\\uDC00'['length']", "x = '\\uDC00'.length");
 
-    // `\u{FFFD}` + non-surrogate hex is a real replacement character,
-    // not the encoding — still folds (6 chars = 6 UTF-16 units).
+    // `\u{FFFD}` + non-surrogate hex is a real replacement character, not the encoding.
     fold("x = '\\uFFFD0000'.length", "x = 5");
 }
 
@@ -1207,117 +1200,73 @@ fn test_inline_values_in_template_literal() {
     fold_same("foo`foo${1}bar`");
 }
 
-/// String folds that would otherwise merge bytes and emit a new
-/// `StringLiteral` must skip when any input carries the lone-surrogate
-/// encoding. Without the bail-out the folded literal would default to
-/// `lone_surrogates: false`, so codegen would either emit the escape
-/// bytes literally (corrupting the value) or — in the adversarial case
-/// `"�dc00" + "\uDC00"` — wrongly decode the first operand's real
-/// U+FFFD as a surrogate escape. Lone surrogates are rare in practice;
-/// leaving these expressions unfolded trades a negligible optimization
-/// loss for correctness.
+/// String folds that merge bytes into a new `StringLiteral` must skip when any input carries the
+/// lone-surrogate encoding — the merged literal would default to `lone_surrogates: false`, so
+/// codegen would emit the escape bytes literally, or (adversarial case `"�dc00" + "\uDC00"`)
+/// misread the real U+FFFD as a surrogate escape.
 #[test]
 fn test_lone_surrogate_bailouts() {
-    // Two helper forms in use below:
-    //   - `test_same(src)` / `test(src, expected)` run the minifier on
-    //     an `x = …` assignment; the assignment keeps the RHS alive
-    //     against DCE.
-    //   - `fold(src, expected)` / `fold_same(src)` wrap the source in
-    //     `NOOP(…)` for expressions that would otherwise be dropped as
-    //     unused (e.g. the `'�' + 'x'` control cases at the
-    //     bottom of this test).
-    // Both forms run full minify → codegen, so the comparisons are
-    // equivalent up to the wrapping.
-
-    // The original bug from https://github.com/oxc-project/oxc/issues/15524
+    // https://github.com/oxc-project/oxc/issues/15524
     test_same("console.log(':' + `[\\uDC00-\\uDFFF]`)");
 
-    // String + string concat: any operand with lone surrogates bails.
+    // String + string concat.
     test_same("x = '[\\uDC00]' + '[\\uDFFF]'");
     test_same("x = 'a' + '[\\uDC00]'");
     test_same("x = '[\\uDC00]' + 'a'");
 
-    // The reviewer's adversarial case: left has the same internal bytes
-    // (`�` + `dc00` text) as a lone-surrogate encoding, but with
-    // `lone_surrogates: false`. Concatenating would merge them into a
-    // single `lone_surrogates`-less literal whose first `�dc00`
-    // would then be misread as the escape. The AST flag check catches it.
+    // Adversarial: left has real-U+FFFD-followed-by-ASCII bytes identical to the encoding of
+    // the right's lone low surrogate. A flagless merge would misread the result as an escape.
     test_same("x = '\\uFFFDdc00' + '\\uDC00'");
 
-    // Triple concat: any position containing a lone surrogate bails.
+    // Triple concat and the `a + 'b' + 'c' → a + 'bc'` reshape.
     test_same("x = 'a' + '[\\uDC00]' + 'b'");
     test_same("x = '[\\uDC00]' + 'a' + '[\\uDFFF]'");
-
-    // `a + 'b' + 'c' → a + 'bc'` reshape bails on either right-side piece.
     test_same("x = a + '[\\uDC00]' + 'b'");
     test_same("x = a + 'b' + '[\\uDC00]'");
 
-    // Template merges, in every direction.
+    // Template merges, both directions and both kinds.
     test_same("x = `[\\uDC00]` + ':'");
     test_same("x = ':' + `[\\uDC00]`");
     test_same("x = `[\\uDC00]` + `[\\uDFFF]`");
     test_same("x = `a${b}[\\uDC00]` + `[\\uDFFF]${c}d`");
 
-    // `substitute_template_literal`: a single-quasi template with lone
-    // surrogates stays a template rather than collapsing into a string
-    // literal that would default to `lone_surrogates: false`.
+    // Template → string-literal collapse stays a template.
     test_same("x = `[\\uDC00]`");
     test_same("x = `a[\\uDC00]b`");
 
-    // `inline_template_literal` bails when any quasi or foldable
-    // expression contains the encoding.
+    // Template inlining bails when any quasi or foldable expression carries the encoding.
     test_same("x = `foo${1}[\\uDC00]`");
     test_same("x = `foo${'[\\uDC00]'}bar`");
 
-    // Identifiers resolving to a lone-surrogate constant: multi-use
-    // bindings keep the identifier around (the inline path bails when
-    // the resolved `ConstantValue::String` byte-scan matches, which
-    // covers the byte-identical-to-encoding case an AST flag check
-    // would miss).
+    // Multi-use identifier bindings: the inline path's byte-scan on the resolved constant value
+    // catches the case an AST-flag check would miss. Template-initialized form also exercises
+    // `substitute_template_literal`'s bail-out leaving the init as a template for codegen.
     test_same("const a = '\\uDC00'; log(a, a)");
-    // Same check via a template-literal initializer: `init_symbol_value`
-    // stores `ConstantValue::String` of the template's encoded cooked
-    // bytes, and the inline byte-scan catches it. (Also exercises
-    // `substitute_template_literal`'s bail-out leaving the init as a
-    // template for codegen.)
     test_same("const a = `\\uDC00`; log(a, a)");
 
-    // U+FFFD on its own is a real character, not the encoding — these
-    // must still fold.
+    // Control cases: plain U+FFFD (not the encoding) still folds.
     fold("'\\uFFFD' + 'x'", "'\\uFFFDx'");
     fold("'\\uFFFD' + '0000'", "'\\uFFFD0000'");
-    // Even the suffixes `dc00`/`dfff`/`fffd` are fine when they come
-    // from real text, not the encoding.
     fold("'\\uFFFD' + 'dc00'", "'\\uFFFDdc00'");
     fold("'\\uFFFD' + 'fffd'", "'\\uFFFDfffd'");
 
-    // Non-literal subexpressions (logical/ternary/sequence) fold in
-    // exit order and yield a plain lone-surrogate StringLiteral before
-    // the parent Addition sees them; the Addition itself then bails,
-    // leaving the `+ literal` intact with its flag preserved.
+    // Non-literal subexpressions fold in exit order to a plain lone-surrogate literal; the
+    // parent Addition then bails, leaving the literal with its flag preserved.
     test("x = 'a' + (true ? '\\uDC00' : '')", "x = 'a' + '\\uDC00'");
     test("x = 'a' + (0, '\\uDC00')", "x = 'a' + '\\uDC00'");
     test("x = 'a' + ('' || '\\uDC00')", "x = 'a' + '\\uDC00'");
 }
 
-/// Equality and ordering comparisons between strings fold by byte
-/// comparison of the stored `value` field. When either operand uses the
-/// lone-surrogate encoding, the bytes no longer correspond to the
-/// runtime code-unit sequence, so the byte compare gives the wrong
-/// answer. The adversarial case is a `lone_surrogates: false` literal
-/// whose bytes happen to match a `lone_surrogates: true` literal's
-/// encoded form — same bytes, different runtime strings. Bail out
-/// whenever either side might carry the encoding.
+/// String equality and ordering fold by byte comparison on the stored `value`. When either side
+/// carries the encoding those bytes don't correspond to the runtime code-unit sequence, so the
+/// compare lies — most sharply when a `lone_surrogates: false` literal has the same bytes as the
+/// encoded form of a `lone_surrogates: true` literal.
 #[test]
 fn test_lone_surrogate_comparison_bailouts() {
-    // Adversarial case: left is a real `�` followed by the ASCII
-    // text `dc00` (5 code units at runtime); right is a lone low
-    // surrogate (1 code unit at runtime). Same stored bytes, different
-    // runtime values. Each of the following has a different truth
-    // value at runtime than a byte compare would yield — so none of
-    // them fold to a boolean. (`===`/`!==` still normalize to `==`/`!=`
-    // when both types are known string — that is a separate rewrite
-    // and doesn't change the comparison's value.)
+    // Adversarial case: left is a real `�` + ASCII `dc00` (5 code units at runtime); right is a
+    // lone low surrogate (1 code unit). Same stored bytes, different runtime values. (`===`/`!==`
+    // still normalize to `==`/`!=` when both types are string — a separate rewrite that doesn't
+    // change the comparison's value.)
     fold("'\\uFFFDdc00' === '\\uDC00'", "'\\uFFFDdc00' == '\\uDC00'"); // runtime: false;  byte compare: true
     fold("'\\uFFFDdc00' !== '\\uDC00'", "'\\uFFFDdc00' != '\\uDC00'"); // runtime: true;   byte compare: false
     fold_same("'\\uFFFDdc00' == '\\uDC00'"); // runtime: false;  byte compare: true
@@ -1325,20 +1274,16 @@ fn test_lone_surrogate_comparison_bailouts() {
     fold_same("'\\uFFFDdc00' > '\\uDC00'"); //  runtime: true;   byte compare: false
     fold_same("'\\uFFFDdc00' <= '\\uDC00'"); // runtime: false;  byte compare: true
 
-    // Even when either side carries the encoding, any comparison
-    // involving it bails — we don't inspect whether the byte compare
-    // would coincidentally agree with the runtime answer.
+    // Any comparison involving a surrogate-flagged operand bails, without checking whether the
+    // byte compare would coincidentally agree.
     fold_same("'\\uFFFDdc00' < '\\uDC00'");
     fold_same("'\\uFFFDdc00' >= '\\uDC00'");
     fold("'\\uDC00' === '\\uDC00'", "'\\uDC00' == '\\uDC00'");
     fold_same("'\\uDC00' < '\\uDC00'");
-
-    // Reversed operand order exercises the same code path for symmetry.
     fold("'\\uDC00' === '\\uFFFDdc00'", "'\\uDC00' == '\\uFFFDdc00'");
     fold_same("'\\uDC00' > '\\uFFFDdc00'");
 
-    // Control cases: plain U+FFFD (not the encoding) still folds
-    // normally — these are real text comparisons.
+    // Control cases: plain U+FFFD (not the encoding) still folds.
     fold("'\\uFFFD' === '\\uFFFD'", "!0");
     fold("'\\uFFFD' !== 'x'", "!0");
     fold("'\\uFFFD' > 'z'", "!0");

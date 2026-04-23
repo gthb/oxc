@@ -103,12 +103,9 @@ pub(super) fn strict_equality_comparison<'a>(
                 Some(lnum == rnum)
             }
             ValueType::String => {
-                // The stored `value` bytes coincide for a real U+FFFD
-                // followed by four ASCII hex characters and the
-                // lone-surrogate encoding of the same hex. Two strings
-                // with identical bytes but different `lone_surrogates`
-                // flags are different runtime values, so a byte compare
-                // here would give the wrong answer.
+                // A real U+FFFD + four ASCII hex chars has the same bytes as the lone-surrogate
+                // encoding of the same hex, but they're different runtime values — so a byte
+                // compare here would lie when one side carries the flag and the other doesn't.
                 if expr_may_have_lone_surrogates(left_expr, ctx)
                     || expr_may_have_lone_surrogates(right_expr, ctx)
                 {

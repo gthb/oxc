@@ -295,10 +295,8 @@ fn test_string_array_splitting() {
     // all possible delimiters used, leave it alone
     test_same_with_longer_args("'.', ',', '(', ')', ' '");
 
-    // Lone surrogates anywhere in the element set: joining the bytes
-    // would produce one `StringLiteral` with `lone_surrogates: false`,
-    // and runtime `.split(',')` against the encoded form would return
-    // mis-sliced code units instead of the original elements. Bail.
+    // Any lone-surrogate element bails: the merged literal would be flagless, and `.split(',')`
+    // at runtime would mis-slice the encoded bytes.
     test_same_with_longer_args("'[\\uDC00]','2','3','4','5','6'");
 
     test_options(

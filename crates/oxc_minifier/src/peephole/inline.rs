@@ -137,11 +137,8 @@ impl<'a> PeepholeOptimizations {
             return;
         }
         let Some(cv) = &symbol_value.initialized_constant else { return };
-        // An initializer like `const x = '\uDC00'` stores its
-        // lone-surrogate encoding in the `ConstantValue::String` bytes
-        // but not the flag. Materializing it via `value_to_expr` would
-        // yield a new `StringLiteral` with `lone_surrogates: false`,
-        // silently corrupting the value at the use site.
+        // `ConstantValue::String` holds the encoded bytes but not the flag, so materializing
+        // a lone-surrogate initializer via `value_to_expr` would emit a flagless literal.
         if let ConstantValue::String(s) = cv
             && str_has_lone_surrogate_encoding(s)
         {
