@@ -677,11 +677,18 @@ fn get_side_free_uri_input<'a>(
         return None;
     }
     let value = expr.get_side_free_string_value(ctx)?;
-    // Guard against an identifier whose resolved constant bytes match
-    // the encoding without us catching it via the AST check above.
-    if str_has_lone_surrogate_encoding(&value) {
-        return None;
-    }
+    // `expr_may_have_lone_surrogates` already byte-scans identifier-
+    // resolved constants and recursively covers every expression kind
+    // with a `to_js_string` impl, so the resulting string value can't
+    // carry the encoding here. Keep the scan as a debug assertion so a
+    // future `to_js_string` impl that isn't mirrored in the helper
+    // fails loudly in tests rather than silently producing a flagless
+    // literal.
+    debug_assert!(
+        !str_has_lone_surrogate_encoding(&value),
+        "expr_may_have_lone_surrogates missed a case; value bytes: {:?}",
+        value.as_bytes()
+    );
     Some(value)
 }
 
