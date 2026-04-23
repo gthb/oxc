@@ -1265,7 +1265,7 @@ fn test_lone_surrogate_bailouts() {
     // would miss).
     test_same("const a = '\\uDC00'; log(a, a)");
 
-    // U+FFFD (U+FFFD) is a real character, not the encoding — these
+    // U+FFFD on its own is a real character, not the encoding — these
     // must still fold.
     fold("'\\uFFFD' + 'x'", "'\\uFFFDx'");
     fold("'\\uFFFD' + '0000'", "'\\uFFFD0000'");
