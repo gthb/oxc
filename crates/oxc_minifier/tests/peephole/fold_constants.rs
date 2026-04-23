@@ -1300,6 +1300,50 @@ fn test_lone_surrogate_bailouts() {
     test("x = 'a' + ('' || '\\uDC00')", "x = 'a' + '\\uDC00'");
 }
 
+/// Equality and ordering comparisons between strings fold by byte
+/// comparison of the stored `value` field. When either operand uses the
+/// lone-surrogate encoding, the bytes no longer correspond to the
+/// runtime code-unit sequence, so the byte compare gives the wrong
+/// answer. The adversarial case is a `lone_surrogates: false` literal
+/// whose bytes happen to match a `lone_surrogates: true` literal's
+/// encoded form — same bytes, different runtime strings. Bail out
+/// whenever either side might carry the encoding.
+#[test]
+fn test_lone_surrogate_comparison_bailouts() {
+    // Adversarial case: left is a real `�` followed by the ASCII
+    // text `dc00` (5 code units at runtime); right is a lone low
+    // surrogate (1 code unit at runtime). Same stored bytes, different
+    // runtime values. Each of the following has a different truth
+    // value at runtime than a byte compare would yield — so none of
+    // them fold to a boolean. (`===`/`!==` still normalize to `==`/`!=`
+    // when both types are known string — that is a separate rewrite
+    // and doesn't change the comparison's value.)
+    fold("'\\uFFFDdc00' === '\\uDC00'", "'\\uFFFDdc00' == '\\uDC00'"); // runtime: false;  byte compare: true
+    fold("'\\uFFFDdc00' !== '\\uDC00'", "'\\uFFFDdc00' != '\\uDC00'"); // runtime: true;   byte compare: false
+    fold_same("'\\uFFFDdc00' == '\\uDC00'"); // runtime: false;  byte compare: true
+    fold_same("'\\uFFFDdc00' != '\\uDC00'"); // runtime: true;   byte compare: false
+    fold_same("'\\uFFFDdc00' > '\\uDC00'"); //  runtime: true;   byte compare: false
+    fold_same("'\\uFFFDdc00' <= '\\uDC00'"); // runtime: false;  byte compare: true
+
+    // Even when either side carries the encoding, any comparison
+    // involving it bails — we don't inspect whether the byte compare
+    // would coincidentally agree with the runtime answer.
+    fold_same("'\\uFFFDdc00' < '\\uDC00'");
+    fold_same("'\\uFFFDdc00' >= '\\uDC00'");
+    fold("'\\uDC00' === '\\uDC00'", "'\\uDC00' == '\\uDC00'");
+    fold_same("'\\uDC00' < '\\uDC00'");
+
+    // Reversed operand order exercises the same code path for symmetry.
+    fold("'\\uDC00' === '\\uFFFDdc00'", "'\\uDC00' == '\\uFFFDdc00'");
+    fold_same("'\\uDC00' > '\\uFFFDdc00'");
+
+    // Control cases: plain U+FFFD (not the encoding) still folds
+    // normally — these are real text comparisons.
+    fold("'\\uFFFD' === '\\uFFFD'", "!0");
+    fold("'\\uFFFD' !== 'x'", "!0");
+    fold("'\\uFFFD' > 'z'", "!0");
+}
+
 mod bigint {
     use super::{
         MAX_SAFE_FLOAT, MAX_SAFE_INT, NEG_MAX_SAFE_FLOAT, NEG_MAX_SAFE_INT, fold, fold_same,

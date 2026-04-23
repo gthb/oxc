@@ -8,6 +8,7 @@ use crate::{
     ToBigInt, ToJsString,
     constant_evaluation::{
         ConstantEvaluation, ConstantEvaluationCtx, ConstantValue, DetermineValueType,
+        expr_may_have_lone_surrogates,
     },
 };
 
@@ -28,6 +29,13 @@ pub fn is_less_than<'a>(
 
     // 3. If px is a String and py is a String, then
     if px.is_string() && py.is_string() {
+        // `to_js_string` returns the stored `value` bytes for string
+        // literals, so ordering them by UTF-16 units compares the
+        // encoded form rather than the runtime code-unit sequence —
+        // wrong for inputs where the `lone_surrogates` flag is set.
+        if expr_may_have_lone_surrogates(x, ctx) || expr_may_have_lone_surrogates(y, ctx) {
+            return None;
+        }
         let left_string = x.to_js_string(ctx)?;
         let right_string = y.to_js_string(ctx)?;
         return Some(ConstantValue::Boolean(
