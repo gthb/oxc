@@ -145,9 +145,9 @@ pub fn expr_may_have_lone_surrogates<'a>(
         // - `CallExpression` / `NewExpression` / `TaggedTemplateExpression`:
         //   side-effecting and either fold to a literal elsewhere
         //   (caught by the literal arm above) or don't fold at all.
-        // - `MemberExpression` / `ChainExpression`: string-typed member
-        //   access (only `.length` today) produces a number, not a
-        //   string.
+        // - `MemberExpression` / `ChainExpression`: only `.length` folds
+        //   today, and that yields a number, so no string-valued result
+        //   can flow through.
         // - `AssignmentExpression` / `UpdateExpression`: side effects,
         //   so fold paths bail via `may_have_side_effects` first.
         //
