@@ -142,3 +142,68 @@ pub fn expr_may_have_lone_surrogates<'a>(
         _ => false,
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::str_has_lone_surrogate_encoding;
+
+    #[test]
+    fn empty_and_short_inputs() {
+        assert!(!str_has_lone_surrogate_encoding(""));
+        assert!(!str_has_lone_surrogate_encoding("abc"));
+        // 6 bytes: one short of the 7-byte window.
+        assert!(!str_has_lone_surrogate_encoding("\u{FFFD}dc0"));
+    }
+
+    #[test]
+    fn no_u_fffd_short_circuits() {
+        assert!(!str_has_lone_surrogate_encoding("plain ascii text"));
+        assert!(!str_has_lone_surrogate_encoding(&"a".repeat(1024)));
+    }
+
+    #[test]
+    fn surrogate_range_boundaries() {
+        // Low and high surrogate boundaries match.
+        assert!(str_has_lone_surrogate_encoding("\u{FFFD}d800"));
+        assert!(str_has_lone_surrogate_encoding("\u{FFFD}dbff"));
+        assert!(str_has_lone_surrogate_encoding("\u{FFFD}dc00"));
+        assert!(str_has_lone_surrogate_encoding("\u{FFFD}dfff"));
+        // Just outside the surrogate range.
+        assert!(!str_has_lone_surrogate_encoding("\u{FFFD}d7ff"));
+        assert!(!str_has_lone_surrogate_encoding("\u{FFFD}e000"));
+    }
+
+    #[test]
+    fn self_escape_for_literal_u_fffd() {
+        assert!(str_has_lone_surrogate_encoding("\u{FFFD}fffd"));
+    }
+
+    #[test]
+    fn uppercase_hex_is_not_the_encoding() {
+        // The encoding uses lowercase hex; `�D800` is real U+FFFD
+        // followed by the ASCII text "D800".
+        assert!(!str_has_lone_surrogate_encoding("\u{FFFD}D800"));
+        assert!(!str_has_lone_surrogate_encoding("\u{FFFD}FFFD"));
+    }
+
+    #[test]
+    fn non_hex_suffix_is_rejected() {
+        // `�dz00` — "dz00" isn't a valid hex run, and isn't
+        // "fffd", so no match.
+        assert!(!str_has_lone_surrogate_encoding("\u{FFFD}dz00"));
+        // `�d80g` — trailing non-hex.
+        assert!(!str_has_lone_surrogate_encoding("\u{FFFD}d80g"));
+    }
+
+    #[test]
+    fn matches_anywhere_in_string() {
+        assert!(str_has_lone_surrogate_encoding("prefix\u{FFFD}d800suffix"));
+        assert!(str_has_lone_surrogate_encoding("a\u{FFFD}dc00b\u{FFFD}dfffc"));
+    }
+
+    #[test]
+    fn lone_u_fffd_alone_is_not_the_encoding() {
+        assert!(!str_has_lone_surrogate_encoding("\u{FFFD}"));
+        assert!(!str_has_lone_surrogate_encoding("hello \u{FFFD} world"));
+    }
+}
