@@ -95,6 +95,16 @@ pub fn expr_may_have_lone_surrogates<'a>(
         Expression::ArrayExpression(arr) => arr
             .elements
             .iter()
+            // `as_expression` skips `SpreadElement` and `Elision`. That is
+            // sound here because `ArrayJoin::array_join` (the only path
+            // that stringifies an array for the folds we guard) returns
+            // `None` as soon as any element fails to stringify, and
+            // `SpreadElement::to_js_string` always fails — so an array
+            // containing a spread never produces a `ConstantValue::String`
+            // in the first place. Elisions stringify to `""` and can't
+            // contribute lone surrogates. If either of those invariants
+            // changes, this branch would need to recurse into the spread's
+            // argument.
             .any(|el| el.as_expression().is_some_and(|e| expr_may_have_lone_surrogates(e, ctx))),
         Expression::Identifier(ident) => ident
             .reference_id
