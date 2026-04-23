@@ -6,6 +6,7 @@ use oxc_ast::{NONE, ast::*};
 use oxc_compat::ESFeature;
 use oxc_ecmascript::constant_evaluation::{
     ConstantEvaluation, ConstantValue, DetermineValueType, expr_may_have_lone_surrogates,
+    template_may_have_lone_surrogates,
 };
 use oxc_ecmascript::side_effects::MayHaveSideEffectsContext;
 use oxc_ecmascript::{ToJsString, ToNumber, side_effects::MayHaveSideEffects};
@@ -1274,9 +1275,7 @@ impl<'a> PeepholeOptimizations {
         let Expression::TemplateLiteral(t) = expr else { return };
         // Folding `\`\uDC00\`` → `'\uDC00'` would drop the quasi's
         // `lone_surrogates` flag on the new string literal.
-        if t.quasis.iter().any(|q| q.lone_surrogates)
-            || t.expressions.iter().any(|e| expr_may_have_lone_surrogates(e, ctx))
-        {
+        if template_may_have_lone_surrogates(t, ctx) {
             return;
         }
         let Some(val) = t.to_js_string(ctx) else { return };

@@ -4,7 +4,7 @@ use oxc_ecmascript::{
     GlobalContext, ToJsString,
     constant_evaluation::{
         ConstantEvaluation, ConstantValue, DetermineValueType, ValueType,
-        expr_may_have_lone_surrogates,
+        expr_may_have_lone_surrogates, template_may_have_lone_surrogates,
     },
     side_effects::MayHaveSideEffects,
 };
@@ -747,9 +747,7 @@ impl<'a> PeepholeOptimizations {
         // literals can't represent lone surrogates as escapes, so any
         // lone-surrogate content — in an existing quasi or in a
         // candidate expression — would corrupt the merged string.
-        if t.quasis.iter().any(|q| q.lone_surrogates)
-            || t.expressions.iter().any(|e| expr_may_have_lone_surrogates(e, ctx))
-        {
+        if template_may_have_lone_surrogates(t, ctx) {
             return;
         }
         let has_expr_to_inline = t

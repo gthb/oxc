@@ -60,6 +60,21 @@ fn is_lone_surrogate_suffix(b: &[u8]) -> bool {
         || b == b"fffd"
 }
 
+/// Returns `true` if any quasi or interpolation in `t` may carry the
+/// lone-surrogate encoding.
+///
+/// Split out from [`expr_may_have_lone_surrogates`]'s `TemplateLiteral`
+/// arm so minifier sites that hold a `&TemplateLiteral` directly (not
+/// wrapped in an `Expression`) can use the same check without an
+/// `Expression::TemplateLiteral(...)` round-trip.
+pub fn template_may_have_lone_surrogates<'a>(
+    t: &TemplateLiteral<'a>,
+    ctx: &impl GlobalContext<'a>,
+) -> bool {
+    t.quasis.iter().any(|q| q.lone_surrogates)
+        || t.expressions.iter().any(|e| expr_may_have_lone_surrogates(e, ctx))
+}
+
 /// Returns `true` if the expression, when stringified, may carry the
 /// lone-surrogate encoding.
 ///
@@ -84,10 +99,7 @@ pub fn expr_may_have_lone_surrogates<'a>(
 ) -> bool {
     match expr {
         Expression::StringLiteral(s) => s.lone_surrogates,
-        Expression::TemplateLiteral(t) => {
-            t.quasis.iter().any(|q| q.lone_surrogates)
-                || t.expressions.iter().any(|e| expr_may_have_lone_surrogates(e, ctx))
-        }
+        Expression::TemplateLiteral(t) => template_may_have_lone_surrogates(t, ctx),
         Expression::BinaryExpression(e) if e.operator == BinaryOperator::Addition => {
             expr_may_have_lone_surrogates(&e.left, ctx)
                 || expr_may_have_lone_surrogates(&e.right, ctx)
