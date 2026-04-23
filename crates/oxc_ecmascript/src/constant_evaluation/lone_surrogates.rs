@@ -126,11 +126,6 @@ pub fn expr_may_have_lone_surrogates<'a>(
                 ConstantValue::String(s) => str_has_lone_surrogate_encoding(&s),
                 _ => false,
             }),
-        // Every `UnaryExpression` kind that `to_js_string` handles
-        // (`void x` → `"undefined"`, `!x` → `"true"`/`"false"`) produces
-        // a fixed ASCII string regardless of the operand, so the
-        // operand's contents can't flow into a lone-surrogate result.
-        Expression::UnaryExpression(_) => false,
         Expression::LogicalExpression(e) => {
             expr_may_have_lone_surrogates(&e.left, ctx)
                 || expr_may_have_lone_surrogates(&e.right, ctx)
@@ -143,6 +138,23 @@ pub fn expr_may_have_lone_surrogates<'a>(
             e.expressions.last().is_some_and(|e| expr_may_have_lone_surrogates(e, ctx))
         }
         Expression::ParenthesizedExpression(e) => expr_may_have_lone_surrogates(&e.expression, ctx),
+        // The catch-all covers every other kind, notably:
+        // - `UnaryExpression`: `void x` → `"undefined"` and `!x` →
+        //   `"true"`/`"false"` produce fixed ASCII regardless of the
+        //   operand, so a lone-surrogate operand can't flow through.
+        // - `CallExpression` / `NewExpression` / `TaggedTemplateExpression`:
+        //   side-effecting and either fold to a literal elsewhere
+        //   (caught by the literal arm above) or don't fold at all.
+        // - `MemberExpression` / `ChainExpression`: string-typed member
+        //   access (only `.length` today) produces a number, not a
+        //   string.
+        // - `AssignmentExpression` / `UpdateExpression`: side effects,
+        //   so fold paths bail via `may_have_side_effects` first.
+        //
+        // If a new `to_js_string` impl adds a string-producing kind
+        // that could carry lone surrogates, add a dedicated arm for it
+        // above — the catch-all is not a license to silently skip a
+        // string producer.
         _ => false,
     }
 }
