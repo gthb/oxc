@@ -126,7 +126,11 @@ pub fn expr_may_have_lone_surrogates<'a>(
                 ConstantValue::String(s) => str_has_lone_surrogate_encoding(&s),
                 _ => false,
             }),
-        Expression::UnaryExpression(e) => expr_may_have_lone_surrogates(&e.argument, ctx),
+        // Every `UnaryExpression` kind that `to_js_string` handles
+        // (`void x` → `"undefined"`, `!x` → `"true"`/`"false"`) produces
+        // a fixed ASCII string regardless of the operand, so the
+        // operand's contents can't flow into a lone-surrogate result.
+        Expression::UnaryExpression(_) => false,
         Expression::LogicalExpression(e) => {
             expr_may_have_lone_surrogates(&e.left, ctx)
                 || expr_may_have_lone_surrogates(&e.right, ctx)
