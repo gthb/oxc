@@ -2,12 +2,14 @@ mod call_expr;
 mod equality_comparison;
 mod is_int32_or_uint32;
 mod is_literal_value;
+mod lone_surrogates;
 mod url_encoding;
 mod value;
 mod value_type;
 
 pub use is_int32_or_uint32::IsInt32OrUint32;
 pub use is_literal_value::IsLiteralValue;
+pub use lone_surrogates::{expr_may_have_lone_surrogates, str_has_lone_surrogate_encoding};
 pub use value::ConstantValue;
 pub use value_type::{DetermineValueType, ValueType};
 
@@ -216,6 +218,16 @@ fn binary_operation_evaluate_value_to<'a>(
             if left_to_primitive.is_string() == Some(true)
                 || right_to_primitive.is_string() == Some(true)
             {
+                // A concatenated result materialized via `value_to_expr`
+                // would be a bare `StringLiteral` with
+                // `lone_surrogates: false`, losing the flag that
+                // distinguishes a real U+FFFD from an encoded surrogate.
+                // Bail out and let codegen emit the two operands as-is.
+                if expr_may_have_lone_surrogates(left, ctx)
+                    || expr_may_have_lone_surrogates(right, ctx)
+                {
+                    return None;
+                }
                 let lval = left.evaluate_value_to_string(ctx)?;
                 let rval = right.evaluate_value_to_string(ctx)?;
                 return Some(ConstantValue::String(lval + rval));
@@ -534,6 +546,14 @@ fn evaluate_value_length<'a>(
     ctx: &impl ConstantEvaluationCtx<'a>,
 ) -> Option<ConstantValue<'a>> {
     if let Some(ConstantValue::String(s)) = object.evaluate_value(ctx) {
+        // `s` holds the lone-surrogate-encoded bytes for strings whose
+        // source flagged `lone_surrogates: true`. Counting its UTF-16
+        // units would report the length of the encoding, not the
+        // runtime string (each surrogate is 1 code unit but 5 chars
+        // here).
+        if expr_may_have_lone_surrogates(object, ctx) {
+            return None;
+        }
         Some(ConstantValue::Number(s.encode_utf16().count().to_f64().unwrap()))
     } else if let Expression::ArrayExpression(arr) = object {
         if arr.elements.iter().any(|e| matches!(e, ArrayExpressionElement::SpreadElement(_))) {
