@@ -1613,10 +1613,11 @@ impl<'a> PeepholeOptimizations {
         // encoding. Runtime would then evaluate `split` on a
         // 5-chars-per-surrogate string and return mis-sliced code
         // units instead of the original elements.
-        if array.elements.iter().any(|element| {
-            let Expression::StringLiteral(str) = element.to_expression() else { unreachable!() };
-            str.lone_surrogates
-        }) {
+        if array
+            .elements
+            .iter()
+            .any(|el| el.as_expression().is_some_and(|e| expr_may_have_lone_surrogates(e, ctx)))
+        {
             return;
         }
 
