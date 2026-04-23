@@ -1023,6 +1023,23 @@ fn test_fold_string_length() {
 
     // Test Unicode escapes are accounted for.
     fold("x = '123\\u01dc'.length", "x = 4");
+
+    // Lone-surrogate strings bail out: the `ConstantValue::String` holds
+    // the `\u{FFFD}XXXX` encoding (5 chars per surrogate), so counting
+    // its UTF-16 units would report the encoding's length rather than
+    // the runtime string's. (TODO: the runtime length is computable —
+    // each `\u{FFFD}XXXX` escape counts as 1 code unit — so a future
+    // pass could still fold these if the optimization matters.)
+    fold_same("x = '\\uDC00'.length");
+    fold_same("x = '[\\uDC00]'.length");
+    // `['length']` folds to `.length` via a separate rewrite, then the
+    // length fold bails — so the computed form normalizes to the same
+    // unfolded `.length` shape.
+    fold("x = '\\uDC00'['length']", "x = '\\uDC00'.length");
+
+    // `\u{FFFD}` + non-surrogate hex is a real replacement character,
+    // not the encoding — still folds (6 chars = 6 UTF-16 units).
+    fold("x = '\\uFFFD0000'.length", "x = 5");
 }
 
 #[test]
