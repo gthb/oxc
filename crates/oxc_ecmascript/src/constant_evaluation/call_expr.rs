@@ -620,7 +620,7 @@ fn try_fold_encode_uri<'a>(
     }
     let arg = args.first()?;
     let expr = arg.as_expression()?;
-    let string_value = side_free_non_lone_surrogate_string(expr, ctx)?;
+    let string_value = get_side_free_uri_input(expr, ctx)?;
 
     // SAFETY: should_encode only returns false for ascii chars
     let encoded = unsafe {
@@ -649,7 +649,7 @@ fn try_fold_encode_uri_component<'a>(
     }
     let arg = args.first()?;
     let expr = arg.as_expression()?;
-    let string_value = side_free_non_lone_surrogate_string(expr, ctx)?;
+    let string_value = get_side_free_uri_input(expr, ctx)?;
 
     // SAFETY: should_encode only returns false for ascii chars
     let encoded = unsafe {
@@ -662,14 +662,14 @@ fn try_fold_encode_uri_component<'a>(
     Some(ConstantValue::String(encoded))
 }
 
-/// Return `expr`'s value as a side-free string, but only when it does
-/// not use the lone-surrogate encoding.
+/// Extract an `encodeURI*`/`decodeURI*` input as a side-free string,
+/// rejecting values that carry the lone-surrogate encoding.
 ///
 /// `encodeURI('\uD800')` throws a `URIError` at runtime. Our value for
 /// that input is the `�d800` encoded form — passing it through the
 /// `%`-encoder would yield `%EF%BF%BDd800`, which doesn't match the
 /// runtime's exception behaviour. Bail rather than fold.
-fn side_free_non_lone_surrogate_string<'a>(
+fn get_side_free_uri_input<'a>(
     expr: &Expression<'a>,
     ctx: &impl ConstantEvaluationCtx<'a>,
 ) -> Option<Cow<'a, str>> {
@@ -697,7 +697,7 @@ fn try_fold_decode_uri<'a>(
     }
     let arg = args.first()?;
     let expr = arg.as_expression()?;
-    let string_value = side_free_non_lone_surrogate_string(expr, ctx)?;
+    let string_value = get_side_free_uri_input(expr, ctx)?;
 
     let decoded = decode_uri_chars(
         string_value,
@@ -719,7 +719,7 @@ fn try_fold_decode_uri_component<'a>(
     }
     let arg = args.first()?;
     let expr = arg.as_expression()?;
-    let string_value = side_free_non_lone_surrogate_string(expr, ctx)?;
+    let string_value = get_side_free_uri_input(expr, ctx)?;
 
     // decodeURIComponent decodes all percent-encoded sequences
     let decoded = decode_uri_chars(
