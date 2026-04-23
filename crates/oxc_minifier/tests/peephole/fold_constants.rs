@@ -1275,6 +1275,12 @@ fn test_lone_surrogate_bailouts() {
     // covers the byte-identical-to-encoding case an AST flag check
     // would miss).
     test_same("const a = '\\uDC00'; log(a, a)");
+    // Same check via a template-literal initializer: `init_symbol_value`
+    // stores `ConstantValue::String` of the template's encoded cooked
+    // bytes, and the inline byte-scan catches it. (Also exercises
+    // `substitute_template_literal`'s bail-out leaving the init as a
+    // template for codegen.)
+    test_same("const a = `\\uDC00`; log(a, a)");
 
     // U+FFFD on its own is a real character, not the encoding — these
     // must still fold.
