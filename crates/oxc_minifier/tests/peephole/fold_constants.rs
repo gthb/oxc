@@ -1218,6 +1218,17 @@ fn test_inline_values_in_template_literal() {
 /// loss for correctness.
 #[test]
 fn test_lone_surrogate_bailouts() {
+    // Two helper forms in use below:
+    //   - `test_same(src)` / `test(src, expected)` run the minifier on
+    //     an `x = …` assignment; the assignment keeps the RHS alive
+    //     against DCE.
+    //   - `fold(src, expected)` / `fold_same(src)` wrap the source in
+    //     `NOOP(…)` for expressions that would otherwise be dropped as
+    //     unused (e.g. the `'�' + 'x'` control cases at the
+    //     bottom of this test).
+    // Both forms run full minify → codegen, so the comparisons are
+    // equivalent up to the wrapping.
+
     // The original bug from https://github.com/oxc-project/oxc/issues/15524
     test_same("console.log(':' + `[\\uDC00-\\uDFFF]`)");
 
