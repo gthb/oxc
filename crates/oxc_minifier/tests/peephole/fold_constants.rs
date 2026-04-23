@@ -1190,6 +1190,82 @@ fn test_inline_values_in_template_literal() {
     fold_same("foo`foo${1}bar`");
 }
 
+/// String folds that would otherwise merge bytes and emit a new
+/// `StringLiteral` must skip when any input carries the lone-surrogate
+/// encoding. Without the bail-out the folded literal would default to
+/// `lone_surrogates: false`, so codegen would either emit the escape
+/// bytes literally (corrupting the value) or — in the adversarial case
+/// `"�dc00" + "\uDC00"` — wrongly decode the first operand's real
+/// U+FFFD as a surrogate escape. Lone surrogates are rare in practice;
+/// leaving these expressions unfolded trades a negligible optimization
+/// loss for correctness.
+#[test]
+fn test_lone_surrogate_bailouts() {
+    // The original bug from https://github.com/oxc-project/oxc/issues/15524
+    test_same("console.log(':' + `[\\uDC00-\\uDFFF]`)");
+
+    // String + string concat: any operand with lone surrogates bails.
+    test_same("x = '[\\uDC00]' + '[\\uDFFF]'");
+    test_same("x = 'a' + '[\\uDC00]'");
+    test_same("x = '[\\uDC00]' + 'a'");
+
+    // The reviewer's adversarial case: left has the same internal bytes
+    // (`�` + `dc00` text) as a lone-surrogate encoding, but with
+    // `lone_surrogates: false`. Concatenating would merge them into a
+    // single `lone_surrogates`-less literal whose first `�dc00`
+    // would then be misread as the escape. The AST flag check catches it.
+    test_same("x = '\\uFFFDdc00' + '\\uDC00'");
+
+    // Triple concat: any position containing a lone surrogate bails.
+    test_same("x = 'a' + '[\\uDC00]' + 'b'");
+    test_same("x = '[\\uDC00]' + 'a' + '[\\uDFFF]'");
+
+    // `a + 'b' + 'c' → a + 'bc'` reshape bails on either right-side piece.
+    test_same("x = a + '[\\uDC00]' + 'b'");
+    test_same("x = a + 'b' + '[\\uDC00]'");
+
+    // Template merges, in every direction.
+    test_same("x = `[\\uDC00]` + ':'");
+    test_same("x = ':' + `[\\uDC00]`");
+    test_same("x = `[\\uDC00]` + `[\\uDFFF]`");
+    test_same("x = `a${b}[\\uDC00]` + `[\\uDFFF]${c}d`");
+
+    // `substitute_template_literal`: a single-quasi template with lone
+    // surrogates stays a template rather than collapsing into a string
+    // literal that would default to `lone_surrogates: false`.
+    test_same("x = `[\\uDC00]`");
+    test_same("x = `a[\\uDC00]b`");
+
+    // `inline_template_literal` bails when any quasi or foldable
+    // expression contains the encoding.
+    test_same("x = `foo${1}[\\uDC00]`");
+    test_same("x = `foo${'[\\uDC00]'}bar`");
+
+    // Identifiers resolving to a lone-surrogate constant: multi-use
+    // bindings keep the identifier around (the inline path bails when
+    // the resolved `ConstantValue::String` byte-scan matches, which
+    // covers the byte-identical-to-encoding case an AST flag check
+    // would miss).
+    test_same("const a = '\\uDC00'; log(a, a)");
+
+    // U+FFFD (U+FFFD) is a real character, not the encoding — these
+    // must still fold.
+    fold("'\\uFFFD' + 'x'", "'\\uFFFDx'");
+    fold("'\\uFFFD' + '0000'", "'\\uFFFD0000'");
+    // Even the suffixes `dc00`/`dfff`/`fffd` are fine when they come
+    // from real text, not the encoding.
+    fold("'\\uFFFD' + 'dc00'", "'\\uFFFDdc00'");
+    fold("'\\uFFFD' + 'fffd'", "'\\uFFFDfffd'");
+
+    // Non-literal subexpressions (logical/ternary/sequence) fold in
+    // exit order and yield a plain lone-surrogate StringLiteral before
+    // the parent Addition sees them; the Addition itself then bails,
+    // leaving the `+ literal` intact with its flag preserved.
+    test("x = 'a' + (true ? '\\uDC00' : '')", "x = 'a' + '\\uDC00'");
+    test("x = 'a' + (0, '\\uDC00')", "x = 'a' + '\\uDC00'");
+    test("x = 'a' + ('' || '\\uDC00')", "x = 'a' + '\\uDC00'");
+}
+
 mod bigint {
     use super::{
         MAX_SAFE_FLOAT, MAX_SAFE_INT, NEG_MAX_SAFE_FLOAT, NEG_MAX_SAFE_INT, fold, fold_same,
