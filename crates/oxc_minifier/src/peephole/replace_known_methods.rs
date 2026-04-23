@@ -279,6 +279,23 @@ impl<'a> PeepholeOptimizations {
                     args.iter().filter(|arg| !matches!(arg, Argument::StringLiteral(_))).count();
                 let string_count = args.len() - expression_count;
 
+                // Lone-surrogate content can't ride through this fold:
+                //   - with only string args, the result is one merged
+                //     `StringLiteral` whose flag would default to false;
+                //   - with expression args, the result is a template
+                //     literal whose quasis can't escape lone surrogates.
+                // Bail out whenever the base or any string arg carries
+                // the encoding. Non-string args stay as `${}`
+                // expressions and don't enter the quasis, so they
+                // don't force a bailout here.
+                if base_str.lone_surrogates
+                    || args
+                        .iter()
+                        .any(|arg| matches!(arg, Argument::StringLiteral(s) if s.lone_surrogates))
+                {
+                    return None;
+                }
+
                 // whether it is shorter to use `String::concat`
                 if ".concat()".len() + args.len() + "''".len() * string_count
                     < "${}".len() * expression_count

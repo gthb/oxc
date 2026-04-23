@@ -4,7 +4,9 @@ use crate::generated::ancestor::Ancestor;
 use oxc_allocator::{CloneIn, TakeIn, Vec};
 use oxc_ast::{NONE, ast::*};
 use oxc_compat::ESFeature;
-use oxc_ecmascript::constant_evaluation::{ConstantEvaluation, ConstantValue, DetermineValueType};
+use oxc_ecmascript::constant_evaluation::{
+    ConstantEvaluation, ConstantValue, DetermineValueType, expr_may_have_lone_surrogates,
+};
 use oxc_ecmascript::side_effects::MayHaveSideEffectsContext;
 use oxc_ecmascript::{ToJsString, ToNumber, side_effects::MayHaveSideEffects};
 use oxc_semantic::ReferenceFlags;
@@ -1023,10 +1025,19 @@ impl<'a> PeepholeOptimizations {
                 match arg {
                     // `String()` -> `''`
                     None => Some(ctx.ast.expression_string_literal(span, "", None)),
-                    Some(arg) => arg
-                        .evaluate_value_to_string(ctx)
-                        .filter(|_| !arg.may_have_side_effects(ctx))
-                        .map(|s| ctx.value_to_expr(e.span, ConstantValue::String(s))),
+                    Some(arg) => {
+                        // Folding `String('\uDC00')` would route the
+                        // encoded bytes through `value_to_expr`, which
+                        // builds a `StringLiteral` defaulting to
+                        // `lone_surrogates: false`.
+                        if expr_may_have_lone_surrogates(arg, ctx) {
+                            None
+                        } else {
+                            arg.evaluate_value_to_string(ctx)
+                                .filter(|_| !arg.may_have_side_effects(ctx))
+                                .map(|s| ctx.value_to_expr(e.span, ConstantValue::String(s)))
+                        }
+                    }
                 }
             }
             "Number" => Some(ctx.ast.expression_numeric_literal(
@@ -1261,6 +1272,13 @@ impl<'a> PeepholeOptimizations {
 
     pub fn substitute_template_literal(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let Expression::TemplateLiteral(t) = expr else { return };
+        // Folding `\`\uDC00\`` → `'\uDC00'` would drop the quasi's
+        // `lone_surrogates` flag on the new string literal.
+        if t.quasis.iter().any(|q| q.lone_surrogates)
+            || t.expressions.iter().any(|e| expr_may_have_lone_surrogates(e, ctx))
+        {
+            return;
+        }
         let Some(val) = t.to_js_string(ctx) else { return };
         *expr = ctx.ast.expression_string_literal(t.span(), ctx.ast.str_from_cow(&val), None);
         ctx.state.changed = true;
@@ -1587,6 +1605,19 @@ impl<'a> PeepholeOptimizations {
             element.as_expression().is_some_and(|expr| matches!(expr, Expression::StringLiteral(_)))
         });
         if !is_all_string {
+            return;
+        }
+
+        // Joining the element bytes into one `"str".split(",")` would
+        // produce a single `StringLiteral` with `lone_surrogates:
+        // false`, even though the concatenated bytes contain the
+        // encoding. Runtime would then evaluate `split` on a
+        // 5-chars-per-surrogate string and return mis-sliced code
+        // units instead of the original elements.
+        if array.elements.iter().any(|element| {
+            let Expression::StringLiteral(str) = element.to_expression() else { unreachable!() };
+            str.lone_surrogates
+        }) {
             return;
         }
 

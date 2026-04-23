@@ -1,6 +1,8 @@
 use crate::generated::ancestor::Ancestor;
 use oxc_ast::ast::*;
-use oxc_ecmascript::constant_evaluation::{ConstantEvaluation, ConstantValue};
+use oxc_ecmascript::constant_evaluation::{
+    ConstantEvaluation, ConstantValue, str_has_lone_surrogate_encoding,
+};
 use oxc_span::GetSpan;
 
 use crate::TraverseCtx;
@@ -135,6 +137,16 @@ impl<'a> PeepholeOptimizations {
             return;
         }
         let Some(cv) = &symbol_value.initialized_constant else { return };
+        // An initializer like `const x = '\uDC00'` stores its
+        // lone-surrogate encoding in the `ConstantValue::String` bytes
+        // but not the flag. Materializing it via `value_to_expr` would
+        // yield a new `StringLiteral` with `lone_surrogates: false`,
+        // silently corrupting the value at the use site.
+        if let ConstantValue::String(s) = cv
+            && str_has_lone_surrogate_encoding(s)
+        {
+            return;
+        }
         if symbol_value.read_references_count == 1
             || match cv {
                 ConstantValue::Number(n) => n.fract() == 0.0 && *n >= -99.0 && *n <= 999.0,
