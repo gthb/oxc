@@ -23,7 +23,7 @@ use std::borrow::Cow;
 use oxc_ast::ast::*;
 use oxc_syntax::operator::BinaryOperator;
 
-use crate::GlobalContext;
+use crate::{GlobalContext, side_effects::MayHaveSideEffects};
 
 use super::{ConstantEvaluation, ConstantEvaluationCtx, ConstantValue};
 
@@ -108,12 +108,14 @@ pub fn expr_may_have_lone_surrogates<'a>(
                 || expr_may_have_lone_surrogates(&e.right, ctx)
         }
         Expression::ArrayExpression(arr) => array_may_have_lone_surrogates(arr, ctx),
-        // TODO: when the caller follows this up with `get_side_free_string_value` /
-        // `evaluate_value` on the same identifier, the resolution happens twice — once here
-        // and once at the fold site. `try_fold_string_casing` inlines its own resolution to
-        // avoid that; every other fold site pays the double lookup. A helper that returns
-        // `Option<Cow<str>>` directly from this check (instead of just `bool`) could thread
-        // the resolved value through and kill the second lookup everywhere.
+        // The Identifier arm pays a `get_constant_value_for_reference_id` lookup; fold sites that
+        // pair a gate check with `get_side_free_string_value` / `evaluate_value_to_string` on the
+        // same identifier then pay a second one. `get_side_free_string_value_without_lone_surrogates`
+        // collapses the two into one lookup for its callers. `try_fold_string_casing` inlines its
+        // own resolution; the remaining standalone call sites in `equality_comparison`,
+        // `is_less_than`, binary-`+` in `mod.rs`, the `a + 'b' + 'c'` reshape, and `String()` in
+        // `substitute_alternate_syntax` still pay the double lookup — each uses a different
+        // string-fetching method, so a single shared helper doesn't fit them all.
         Expression::Identifier(ident) => ident
             .reference_id
             .get()
@@ -162,10 +164,25 @@ pub fn expr_may_have_lone_surrogates<'a>(
 /// at every fold site that reads an operand's string and emits a new `StringLiteral` from the
 /// bytes. Collapsing it into one call keeps the invariant ("consume only flag-safe bytes") in
 /// one place and avoids drift between sites.
+///
+/// For a constant-bound `Identifier`, resolves the binding once rather than looking it up twice
+/// (in `expr_may_have_lone_surrogates` and again in `get_side_free_string_value`). Globals like
+/// `undefined`/`Infinity`/`NaN` — which `get_side_free_string_value` stringifies via
+/// `ToJsString` without a constant lookup — go through the generic fall-through below.
 pub fn get_side_free_string_value_without_lone_surrogates<'a>(
     expr: &Expression<'a>,
     ctx: &impl ConstantEvaluationCtx<'a>,
 ) -> Option<Cow<'a, str>> {
+    if let Expression::Identifier(ident) = expr
+        && let Some(rid) = ident.reference_id.get()
+        && let Some(cv) = ctx.get_constant_value_for_reference_id(rid)
+    {
+        if expr.may_have_side_effects(ctx) {
+            return None;
+        }
+        let s = cv.into_string()?;
+        return (!str_has_lone_surrogate_encoding(&s)).then_some(s);
+    }
     if expr_may_have_lone_surrogates(expr, ctx) {
         return None;
     }
