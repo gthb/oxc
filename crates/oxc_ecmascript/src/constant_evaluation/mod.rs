@@ -561,7 +561,16 @@ fn evaluate_value_length<'a>(
         && s.lone_surrogates
     {
         let stored = s.value.encode_utf16().count();
-        let runtime = stored - 4 * count_lone_surrogate_runs(&s.value);
+        let runs = count_lone_surrogate_runs(&s.value);
+        // A well-formed flagged literal (parser-produced) satisfies `stored >= 5 * runs >= 4 * runs`,
+        // so the subtraction is exact. `saturating_sub` defends against a synthetic AST where the
+        // flag is set without a matching encoded run: better to miss a fold than to wrap.
+        debug_assert!(
+            stored >= 4 * runs,
+            "flagged literal without matching encoding: {:?}",
+            s.value
+        );
+        let runtime = stored.saturating_sub(4 * runs);
         return Some(ConstantValue::Number(runtime.to_f64().unwrap()));
     }
     if let Some(ConstantValue::String(s)) = object.evaluate_value(ctx) {
