@@ -103,10 +103,19 @@ pub fn template_may_have_lone_surrogates<'a>(
 
 /// Returns `true` if any element in `arr` may carry the lone-surrogate encoding.
 ///
-/// `as_expression` skips `SpreadElement` and `Elision`. Sound for the array-join / array-split
-/// folds that call this: `ArrayJoin::array_join` bails on any element whose `to_js_string` fails,
-/// and `SpreadElement::to_js_string` always fails — so an array with a spread never produces a
-/// `ConstantValue::String` for these folds. Elisions stringify to `""`.
+/// `as_expression` skips `SpreadElement` and `Elision`. Sound for every current caller because
+/// each one establishes, by its own precondition, that spreads can't reach a string-producing
+/// fold:
+///
+/// - [`expr_may_have_lone_surrogates`]'s `ArrayExpression` arm reflects `ArrayJoin::array_join`,
+///   which bails on any element whose `to_js_string` fails; `SpreadElement::to_js_string` always
+///   fails, so an array with a spread never produces a `ConstantValue::String` — we can't
+///   mislead a parent that wouldn't itself be misled.
+/// - The minifier's `.split(',')` rewrite in `substitute_array_expression` gates on
+///   `is_all_string` (every element is a `StringLiteral`), ruling out spreads before this check.
+///
+/// Elisions stringify to `""`, so skipping them is also sound. If a future caller doesn't
+/// satisfy one of these preconditions, it has to justify spread-skip on its own terms.
 ///
 /// Split out from [`expr_may_have_lone_surrogates`]'s `ArrayExpression` arm so sites that hold an
 /// `&ArrayExpression` directly can reuse the check.
