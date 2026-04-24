@@ -487,6 +487,13 @@ fn test_lone_surrogate_bailouts() {
     test("x = '\\uFFFD'.toLowerCase()", "x = '\\uFFFD'");
     test("x = '\\uFFFD'.trim()", "x = '\\uFFFD'");
     test("x = ''.concat('\\uFFFD')", "x = '\\uFFFD'");
+
+    // Real U+FFFD followed by ASCII `dc00` has the same bytes as the lone-surrogate encoding
+    // of `\uDC00`, but at runtime it's a 5-code-unit string; `encodeURI` %-encodes the U+FFFD
+    // and leaves the ASCII alone. The fold must handle this without a byte-scan tripping up on
+    // the ambiguous bytes. (`\u{FFFD}` self-escape is `�fffd`, so `'�fffd'` is
+    // excluded from this class — that one is genuinely indistinguishable from the encoding.)
+    test("x = encodeURI('\\uFFFDdc00')", "x = '%EF%BF%BDdc00'");
 }
 
 #[test]

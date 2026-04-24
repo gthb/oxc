@@ -664,15 +664,7 @@ fn get_side_free_uri_input<'a>(
     if expr_may_have_lone_surrogates(expr, ctx) {
         return None;
     }
-    let value = expr.get_side_free_string_value(ctx)?;
-    // Tripwire: a future `to_js_string` impl that isn't mirrored in `expr_may_have_lone_surrogates`
-    // would silently produce a flagless literal here.
-    debug_assert!(
-        !str_has_lone_surrogate_encoding(&value),
-        "expr_may_have_lone_surrogates missed a case; value bytes: {:?}",
-        value.as_bytes()
-    );
-    Some(value)
+    expr.get_side_free_string_value(ctx)
 }
 
 fn try_fold_decode_uri<'a>(
