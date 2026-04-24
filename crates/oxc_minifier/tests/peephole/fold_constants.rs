@@ -1024,12 +1024,21 @@ fn test_fold_string_length() {
     // Test Unicode escapes are accounted for.
     fold("x = '123\\u01dc'.length", "x = 4");
 
-    // Lone-surrogate strings bail out — UTF-16 units of the encoded bytes would report 5 per
-    // surrogate instead of 1. (TODO: the runtime length *is* computable; a future pass could
-    // still fold these.) `['length']` first rewrites to `.length`, then bails the same way.
-    fold_same("x = '\\uDC00'.length");
-    fold_same("x = '[\\uDC00]'.length");
-    fold("x = '\\uDC00'['length']", "x = '\\uDC00'.length");
+    // Lone-surrogate literals fold by subtracting 4 per encoded `\u{FFFD}XXXX` run from the
+    // stored UTF-16 length — each run is one runtime code unit (a surrogate, or U+FFFD itself
+    // via the `fffd` self-escape). `['length']` first rewrites to `.length`, then runs the
+    // same fold.
+    fold("x = '\\uDC00'.length", "x = 1");
+    fold("x = '[\\uDC00]'.length", "x = 3");
+    fold("x = '\\uDC00\\uDC00'.length", "x = 2");
+    fold("x = '\\uFFFD\\uDC00'.length", "x = 2");
+    fold("x = '\\uDC00'['length']", "x = 1");
+
+    // Identifier- and concat-bound flagged strings still bail: the flag doesn't survive the
+    // `ConstantValue::String` boundary, and a byte-scan can't tell an encoded run from a real
+    // U+FFFD followed by four hex characters. Pinning the current conservative miss.
+    test_same("const a = '\\uDC00'; x = a.length, y = a");
+    test_same("x = ('\\uDC00' + 'a').length");
 
     // `\u{FFFD}` + non-surrogate hex is a real replacement character, not the encoding.
     fold("x = '\\uFFFD0000'.length", "x = 5");

@@ -51,6 +51,33 @@ pub fn str_has_lone_surrogate_encoding(s: &str) -> bool {
     bytes.windows(7).any(|w| w[..3] == [0xEF, 0xBF, 0xBD] && is_lone_surrogate_suffix(&w[3..]))
 }
 
+/// Counts non-overlapping `\u{FFFD}XXXX` encoded runs in `s`.
+///
+/// Each run represents a single UTF-16 code unit at runtime — a lone surrogate, or U+FFFD itself
+/// via the `fffd` self-escape — while occupying 5 stored code units. For a flagged string the
+/// runtime length is therefore `s.encode_utf16().count() - 4 * count_lone_surrogate_runs(s)`.
+///
+/// The scan is purely on bytes, so in an unflagged string with coincidentally matching bytes (a
+/// real U+FFFD followed by four hex characters) this also counts a run; callers must have
+/// established the literal is flagged before using the count for a length calculation.
+pub fn count_lone_surrogate_runs(s: &str) -> usize {
+    let bytes = s.as_bytes();
+    if !bytes.contains(&0xEF) {
+        return 0;
+    }
+    let mut count = 0;
+    let mut i = 0;
+    while i + 7 <= bytes.len() {
+        if bytes[i..i + 3] == [0xEF, 0xBF, 0xBD] && is_lone_surrogate_suffix(&bytes[i + 3..i + 7]) {
+            count += 1;
+            i += 7;
+        } else {
+            i += 1;
+        }
+    }
+    count
+}
+
 fn is_lone_surrogate_suffix(b: &[u8]) -> bool {
     debug_assert_eq!(b.len(), 4);
     // Surrogate range d800–dfff, lowercase hex.
@@ -200,7 +227,7 @@ pub fn get_side_free_string_value_without_lone_surrogates<'a>(
 
 #[cfg(test)]
 mod tests {
-    use super::str_has_lone_surrogate_encoding;
+    use super::{count_lone_surrogate_runs, str_has_lone_surrogate_encoding};
 
     #[test]
     fn empty_and_short_inputs() {
@@ -260,5 +287,18 @@ mod tests {
     fn lone_u_fffd_alone_is_not_the_encoding() {
         assert!(!str_has_lone_surrogate_encoding("\u{FFFD}"));
         assert!(!str_has_lone_surrogate_encoding("hello \u{FFFD} world"));
+    }
+
+    #[test]
+    fn counts_non_overlapping_runs() {
+        assert_eq!(count_lone_surrogate_runs(""), 0);
+        assert_eq!(count_lone_surrogate_runs("plain"), 0);
+        assert_eq!(count_lone_surrogate_runs("\u{FFFD}d800"), 1);
+        assert_eq!(count_lone_surrogate_runs("\u{FFFD}d800\u{FFFD}dc00"), 2);
+        // Self-escape counts as a run (one U+FFFD at runtime).
+        assert_eq!(count_lone_surrogate_runs("\u{FFFD}fffd\u{FFFD}d800"), 2);
+        // Non-matching U+FFFD occurrences aren't counted.
+        assert_eq!(count_lone_surrogate_runs("\u{FFFD}\u{FFFD}d800"), 1);
+        assert_eq!(count_lone_surrogate_runs("a\u{FFFD}dc00b\u{FFFD}dfffc"), 2);
     }
 }
