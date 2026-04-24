@@ -134,27 +134,23 @@ pub fn expr_may_have_lone_surrogates<'a>(
             e.expressions.last().is_some_and(|e| expr_may_have_lone_surrogates(e, ctx))
         }
         Expression::ParenthesizedExpression(e) => expr_may_have_lone_surrogates(&e.expression, ctx),
-        // The catch-all rests on two separate arguments, one per group of remaining kinds:
+        // Catch-all: two groups of remaining kinds, same result.
         //
-        // (1) `UnaryExpression` (`typeof`/`void`/`!` etc.) yields fixed ASCII strings,
-        //     `MemberExpression` / `ChainExpression` only fold `.length` → number, and
-        //     `AssignmentExpression` / `UpdateExpression` are rejected upstream by
-        //     `may_have_side_effects`. None of these can surface a lone-surrogate string value
-        //     for a parent fold to consume.
+        // (1) Kinds that can't surface a lone-surrogate string for a parent to consume:
+        //     `UnaryExpression` (`typeof`/`void`/`!`) yields fixed ASCII; `MemberExpression` /
+        //     `ChainExpression` only fold `.length` → number; `AssignmentExpression` /
+        //     `UpdateExpression` are gated out upstream by `may_have_side_effects`.
         //
         // (2) `CallExpression` / `NewExpression` / `TaggedTemplateExpression` *can* produce a
-        //     string (via `CallExpression::evaluate_value_to` → `try_fold_known_global_methods`,
-        //     plus the `.concat` path in `replace_known_methods.rs`). We do not analyse them
-        //     here; instead, each string-producing fold carries its own lone-surrogate bailout
-        //     at the point it would emit a literal. Because children fold before parents, by
-        //     the time a parent checks this function on a call, either the call has already
-        //     been rewritten to a `StringLiteral` (caught by the first arm of this match) or
-        //     it didn't fold. Returning `false` here is therefore safe *as long as* every
-        //     string-producing fold preserves that invariant.
+        //     string (via `try_fold_known_global_methods` and the `.concat` path in
+        //     `replace_known_methods`). We don't analyse them; each string-producing fold
+        //     bails itself. Bottom-up evaluation then guarantees a parent sees either an
+        //     already-rewritten `StringLiteral` (caught by the first arm above) or a
+        //     still-un-folded call — returning `false` is safe while that invariant holds.
         //
-        // When adding a new string-producing fold, either add its corresponding `Expression`
-        // kind as a dedicated arm above, or add an explicit `expr_may_have_lone_surrogates`
-        // check at the fold site before emitting a literal.
+        // When adding a new string-producing fold: either add a dedicated arm above for its
+        // `Expression` kind, or guard the fold site with `expr_may_have_lone_surrogates`
+        // before emitting a literal.
         _ => false,
     }
 }
