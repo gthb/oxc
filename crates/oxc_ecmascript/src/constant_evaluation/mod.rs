@@ -10,8 +10,9 @@ mod value_type;
 pub use is_int32_or_uint32::IsInt32OrUint32;
 pub use is_literal_value::IsLiteralValue;
 pub use lone_surrogates::{
-    array_may_have_lone_surrogates, expr_may_have_lone_surrogates, get_side_free_string_value_safe,
-    str_has_lone_surrogate_encoding, template_may_have_lone_surrogates,
+    array_may_have_lone_surrogates, expr_may_have_lone_surrogates,
+    get_side_free_string_value_without_lone_surrogates, str_has_lone_surrogate_encoding,
+    template_may_have_lone_surrogates,
 };
 pub use value::ConstantValue;
 pub use value_type::{DetermineValueType, ValueType};

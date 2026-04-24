@@ -162,7 +162,7 @@ pub fn expr_may_have_lone_surrogates<'a>(
 /// at every fold site that reads an operand's string and emits a new `StringLiteral` from the
 /// bytes. Collapsing it into one call keeps the invariant ("consume only flag-safe bytes") in
 /// one place and avoids drift between sites.
-pub fn get_side_free_string_value_safe<'a>(
+pub fn get_side_free_string_value_without_lone_surrogates<'a>(
     expr: &Expression<'a>,
     ctx: &impl ConstantEvaluationCtx<'a>,
 ) -> Option<Cow<'a, str>> {
