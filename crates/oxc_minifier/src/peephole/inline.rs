@@ -138,7 +138,9 @@ impl<'a> PeepholeOptimizations {
         }
         let Some(cv) = &symbol_value.initialized_constant else { return };
         // `ConstantValue::String` holds the encoded bytes but not the flag, so materializing
-        // a lone-surrogate initializer via `value_to_expr` would emit a flagless literal.
+        // a lone-surrogate initializer via `value_to_expr` would emit a flagless literal. Only
+        // the single-use branch below can reach a flagged string: the multi-reference branch is
+        // gated on `s.len() <= 3`, well under the 7-byte minimum encoded form.
         if let ConstantValue::String(s) = cv
             && str_has_lone_surrogate_encoding(s)
         {
