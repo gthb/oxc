@@ -1238,8 +1238,17 @@ fn test_lone_surrogate_bailouts() {
     test_same("x = `foo${1}[\\uDC00]`");
     test_same("x = `foo${'[\\uDC00]'}bar`");
 
-    // Multi-use identifier bindings: the inline path's byte-scan on the resolved constant value
-    // catches the case an AST-flag check would miss. Template-initialized form also exercises
+    // Single-use identifier bindings exercise `inline.rs`'s byte-scan guard. Without it, the
+    // initializer gets materialized at the reference site via `value_to_expr` as a flagless
+    // literal, i.e. `log('�dc00')` (real-U+FFFD + ASCII, a 5-code-unit runtime string
+    // instead of the 1-unit lone surrogate). With the guard, an identifier-substitution path
+    // preserves the flag and the output is `log('\uDC00')`. (The multi-reference analogue
+    // won't hit the inline path at all — the only string case that inlines at multi-ref is
+    // `s.len() <= 3`, and the shortest encoded lone surrogate is 7 bytes.)
+    test("const a = '\\uDC00'; log(a)", "log('\\uDC00')");
+    test("const a = `\\uDC00`; log(a)", "log(`\\uDC00`)");
+
+    // Multi-use identifier bindings. Template-initialized form exercises
     // `substitute_template_literal`'s bail-out leaving the init as a template for codegen.
     test_same("const a = '\\uDC00'; log(a, a)");
     test_same("const a = `\\uDC00`; log(a, a)");
