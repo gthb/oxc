@@ -87,7 +87,9 @@ pub fn array_may_have_lone_surrogates<'a>(
 /// Identifiers are resolved through `ctx.get_constant_value_for_reference_id` and the resulting
 /// `ConstantValue::String` bytes are byte-scanned. That loses the AST flag but is sound for
 /// bail-out: a lone-surrogate literal's bytes always contain the encoding, and a byte-identical
-/// non-surrogate string only causes a missed fold.
+/// non-surrogate string only causes a missed fold. One source of such byte-identical constants
+/// is a prior concat like `'�' + 'dc00'` — neither operand is flagged, the concat folds
+/// legitimately, and the resulting `ConstantValue::String` bytes match the encoding pattern.
 pub fn expr_may_have_lone_surrogates<'a>(
     expr: &Expression<'a>,
     ctx: &impl GlobalContext<'a>,
