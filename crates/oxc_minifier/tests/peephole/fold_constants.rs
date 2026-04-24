@@ -1253,6 +1253,17 @@ fn test_lone_surrogate_bailouts() {
     test_same("const a = '\\uDC00'; log(a, a)");
     test_same("const a = `\\uDC00`; log(a, a)");
 
+    // Flagged-via-identifier operands at specific fold sites. The trailing `a` pins the
+    // binding against the single-reference inline path (strings only multi-ref-inline when
+    // `s.len() <= 3`, well below the 7-byte encoded lone surrogate), so `a` stays as an
+    // Identifier at the fold site and exercises the Identifier arm of the bail-out.
+    //
+    // `try_fold_string_casing`'s own inlined byte-scan on the resolved constant.
+    test_same("const a = '\\uDC00'; log(a.toLowerCase(), a)");
+    // `.replace()` fold calls `expr_may_have_lone_surrogates` on the replacement arg, hitting
+    // the Identifier arm's byte-scan.
+    test_same("const a = '\\uDC00'; log('foo'.replace('f', a), a)");
+
     // Control cases: plain U+FFFD (not the encoding) still folds.
     fold("'\\uFFFD' + 'x'", "'\\uFFFDx'");
     fold("'\\uFFFD' + '0000'", "'\\uFFFD0000'");
