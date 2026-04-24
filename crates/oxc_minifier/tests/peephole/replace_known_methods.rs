@@ -483,6 +483,13 @@ fn test_lone_surrogate_bailouts() {
     test_same("x = '[\\uDC00]'.concat(a)");
     test_same("x = 'a'.concat(b, '[\\uDC00]')");
 
+    // Identifier arg resolving to a lone-surrogate constant survives the concat → template rewrite
+    // as `${a}`; downstream template-level folds then bail via template_may_have_lone_surrogates.
+    test(
+        "const a = '\\uDC00'; x = ''.concat(a, b); y = a",
+        "const a = '\\uDC00'; x = `${a}${b}`, y = a",
+    );
+
     // Control cases: plain U+FFFD (not the encoding) still folds.
     test("x = '\\uFFFD'.toLowerCase()", "x = '\\uFFFD'");
     test("x = '\\uFFFD'.trim()", "x = '\\uFFFD'");
