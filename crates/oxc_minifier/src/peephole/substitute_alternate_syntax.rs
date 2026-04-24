@@ -1605,7 +1605,8 @@ impl<'a> PeepholeOptimizations {
         }
 
         // Joining the bytes into one flagless literal and calling `split(',')` on the encoded
-        // form at runtime would return mis-sliced code units rather than the original elements.
+        // form at runtime would slice into the encoded runs and return fragments of the escape
+        // bytes rather than the original elements.
         if array_may_have_lone_surrogates(array, ctx) {
             return;
         }

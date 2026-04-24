@@ -296,7 +296,7 @@ fn test_string_array_splitting() {
     test_same_with_longer_args("'.', ',', '(', ')', ' '");
 
     // Any lone-surrogate element bails: the merged literal would be flagless, and `.split(',')`
-    // at runtime would mis-slice the encoded bytes.
+    // at runtime would slice into the encoded bytes instead of returning the original elements.
     test_same_with_longer_args("'[\\uDC00]','2','3','4','5','6'");
 
     test_options(
