@@ -410,6 +410,16 @@ impl<'a> PeepholeOptimizations {
         parent_span: Span,
         ctx: &TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
+        // Remove useless `+ ""` (e.g. `typeof foo + ""` -> `typeof foo`). Safe for lone-surrogate
+        // operands: the surviving operand is moved via `take_in`, preserving its flag.
+        if Self::evaluates_to_empty_string(left_expr) && right_expr.value_type(ctx).is_string() {
+            return Some(right_expr.take_in(ctx.ast));
+        } else if Self::evaluates_to_empty_string(right_expr)
+            && left_expr.value_type(ctx).is_string()
+        {
+            return Some(left_expr.take_in(ctx.ast));
+        }
+
         // Template quasis can't escape lone surrogates, so splicing either operand's value into
         // a quasi would corrupt the merged string.
         if expr_may_have_lone_surrogates(left_expr, ctx)
@@ -480,15 +490,6 @@ impl<'a> PeepholeOptimizations {
                 first_quasi.value.cooked = new_cooked;
                 return Some(right_expr.take_in(ctx.ast));
             }
-        }
-
-        // remove useless `+ ""` (e.g. `typeof foo + ""` -> `typeof foo`)
-        if Self::evaluates_to_empty_string(left_expr) && right_expr.value_type(ctx).is_string() {
-            return Some(right_expr.take_in(ctx.ast));
-        } else if Self::evaluates_to_empty_string(right_expr)
-            && left_expr.value_type(ctx).is_string()
-        {
-            return Some(left_expr.take_in(ctx.ast));
         }
 
         None

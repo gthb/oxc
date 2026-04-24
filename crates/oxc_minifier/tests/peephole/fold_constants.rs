@@ -1289,6 +1289,13 @@ fn test_lone_surrogate_bailouts() {
     test("x = 'a' + (true ? '\\uDC00' : '')", "x = 'a' + '\\uDC00'");
     test("x = 'a' + (0, '\\uDC00')", "x = 'a' + '\\uDC00'");
     test("x = 'a' + ('' || '\\uDC00')", "x = 'a' + '\\uDC00'");
+
+    // `"" + x → x` and `x + "" → x` (with `x` string-typed) remain safe to fold even when `x`
+    // carries the encoding: `take_in` moves the operand verbatim so its flag rides along.
+    test("x = '' + '\\uDC00'", "x = '\\uDC00'");
+    test("x = '\\uDC00' + ''", "x = '\\uDC00'");
+    test("x = [] + '\\uDC00'", "x = '\\uDC00'");
+    test("x = '\\uDC00' + []", "x = '\\uDC00'");
 }
 
 /// String equality and ordering fold by byte comparison on the stored `value`. When either side
