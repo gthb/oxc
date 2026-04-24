@@ -28,6 +28,21 @@ use super::{
     str_has_lone_surrogate_encoding,
 };
 
+/// Unwrap `expr` to its `StringLiteral` only when it doesn't carry the lone-surrogate encoding.
+///
+/// String-method folds that read the literal's bytes (index, slice, compare, emit) would read
+/// escape bytes rather than runtime code units when the flag is set, and any literal they
+/// produce would drop the flag via `value_to_expr`. Each caller's comment explains the
+/// site-specific bail reason; this helper just collapses the repeated pattern.
+fn string_literal_without_lone_surrogates<'a, 'b>(
+    expr: &'b Expression<'a>,
+) -> Option<&'b StringLiteral<'a>> {
+    match expr {
+        Expression::StringLiteral(s) if !s.lone_surrogates => Some(s),
+        _ => None,
+    }
+}
+
 fn try_fold_global_functions<'a>(
     ident: &IdentifierReference<'a>,
     arguments: &Vec<'a, Argument<'a>>,
@@ -150,11 +165,8 @@ fn try_fold_string_index_of<'a>(
     if args.len() >= 3 {
         return None;
     }
-    let Expression::StringLiteral(s) = object else { return None };
     // `indexOf`/`lastIndexOf` index by JS code unit, not bytes of the encoded form.
-    if s.lone_surrogates {
-        return None;
-    }
+    let s = string_literal_without_lone_surrogates(object)?;
     let search_value = match args.first() {
         Some(Argument::SpreadElement(_)) => return None,
         Some(arg @ match_expression!(Argument)) => {
@@ -192,12 +204,9 @@ fn try_fold_string_substring_or_slice<'a>(
     if args.len() > 2 {
         return None;
     }
-    let Expression::StringLiteral(s) = object else { return None };
     // Slicing by JS code unit against the encoding (5 chars per surrogate) would split a
     // `�XXXX` run, yielding bytes codegen can't re-encode.
-    if s.lone_surrogates {
-        return None;
-    }
+    let s = string_literal_without_lone_surrogates(object)?;
     let start_idx = match args.first() {
         Some(Argument::SpreadElement(_)) => return None,
         Some(arg @ match_expression!(Argument)) => {
@@ -234,12 +243,9 @@ fn try_fold_string_char_at<'a>(
     if args.len() > 1 {
         return None;
     }
-    let Expression::StringLiteral(s) = object else { return None };
     // `charAt` indexes by JS code unit; against the 5-chars-per-surrogate encoding it would return
     // a fragment of the escape (e.g. `�`) rather than the single code unit the source represents.
-    if s.lone_surrogates {
-        return None;
-    }
+    let s = string_literal_without_lone_surrogates(object)?;
     let char_at_index = match args.first() {
         Some(Argument::SpreadElement(_)) => return None,
         Some(arg @ match_expression!(Argument)) => {
@@ -261,12 +267,9 @@ fn try_fold_string_char_code_at<'a>(
     object: &Expression<'a>,
     ctx: &impl ConstantEvaluationCtx<'a>,
 ) -> Option<ConstantValue<'a>> {
-    let Expression::StringLiteral(s) = object else { return None };
     // Indexing into the encoded form would return the code of an escape char, not the runtime
     // code unit.
-    if s.lone_surrogates {
-        return None;
-    }
+    let s = string_literal_without_lone_surrogates(object)?;
     let char_at_index = match args.first() {
         Some(Argument::SpreadElement(_)) => return None,
         Some(arg @ match_expression!(Argument)) => {
@@ -288,11 +291,11 @@ fn try_fold_starts_with<'a>(
         return None;
     }
     let Argument::StringLiteral(arg) = args.first().unwrap() else { return None };
-    let Expression::StringLiteral(s) = object else { return None };
     // Either side carrying the encoding would make this a compare of escape bytes.
-    if s.lone_surrogates || arg.lone_surrogates {
+    if arg.lone_surrogates {
         return None;
     }
+    let s = string_literal_without_lone_surrogates(object)?;
     Some(ConstantValue::Boolean(s.value.starts_with(arg.value.as_str())))
 }
 
@@ -305,12 +308,9 @@ fn try_fold_string_replace<'a>(
     if args.len() != 2 {
         return None;
     }
-    let Expression::StringLiteral(s) = object else { return None };
     // Any operand carrying the encoding could split a `�XXXX` run or splice escape bytes into
     // a result that gets emitted without the flag.
-    if s.lone_surrogates {
-        return None;
-    }
+    let s = string_literal_without_lone_surrogates(object)?;
     let search_value = args.first().unwrap();
     let search_value = match search_value {
         Argument::SpreadElement(_) => return None,
