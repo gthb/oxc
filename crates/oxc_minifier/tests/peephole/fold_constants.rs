@@ -1263,10 +1263,20 @@ fn test_lone_surrogate_bailouts() {
     // `.replace()` fold calls `expr_may_have_lone_surrogates` on the replacement arg, hitting
     // the Identifier arm's byte-scan.
     test_same("const a = '\\uDC00'; log('foo'.replace('f', a), a)");
+    // Same guard, search-arg position (distinct call site). Adversarial receiver: bytes of
+    // `'�dc00'` are real-U+FFFD + ASCII at runtime (5 code units, no match for a lone
+    // surrogate) but match the encoded form of `a`. Without the guard the fold locates
+    // `a` by byte equality and replaces, emitting `log('x', ...)`.
+    test_same("const a = '\\uDC00'; log('\\uFFFDdc00'.replace(a, 'x'), a)");
     // The `a + 'b' + 'c' → a + 'bc'` reshape with a flagged-via-identifier trailing operand:
     // `(a + 'b') + c` checks `expr_may_have_lone_surrogates(c)` through the Identifier arm
     // before merging `'b'` and `c` into a flagless literal.
     test_same("const c = '\\uDC00'; log(a + 'b' + c, c)");
+    // Move-then-fold-bail: the single-use inliner in `minimize_statements.rs` substitutes
+    // `a`'s init verbatim via `take_in`, producing `log('\uDC00' + 'b')` with the flag
+    // intact; the next iteration's `+` fold then bails on its StringLiteral arm. Pins down
+    // that the move preserves `lone_surrogates` so the downstream guard still sees the flag.
+    test("const a = '\\uDC00'; log(a + 'b')", "log('\\uDC00' + 'b')");
 
     // Control cases: plain U+FFFD (not the encoding) still folds.
     fold("'\\uFFFD' + 'x'", "'\\uFFFDx'");
