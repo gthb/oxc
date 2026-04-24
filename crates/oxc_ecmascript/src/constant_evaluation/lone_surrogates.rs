@@ -17,6 +17,15 @@
 //!
 //! Detection is conservative: false positives only skip a fold that could have been performed,
 //! never produce wrong output.
+//!
+//! Invariant (load-bearing for the `_ => false` arm of [`expr_may_have_lone_surrogates`]): every
+//! fold that produces a `ConstantValue::String` from possibly-flagged bytes either rewrites the
+//! result into a `StringLiteral` / `TemplateLiteral` in place (which the typed arms above catch)
+//! or bails itself. Under bottom-up evaluation, a parent that inspects a `CallExpression` /
+//! `NewExpression` / `TaggedTemplateExpression` subexpression therefore sees either an
+//! already-rewritten literal or a still-unfolded call — never a raw flagless string value. When
+//! adding a new string-producing fold, either add a typed arm here for the kind it produces, or
+//! gate the fold site with [`expr_may_have_lone_surrogates`] before emitting a literal.
 
 use std::borrow::Cow;
 
