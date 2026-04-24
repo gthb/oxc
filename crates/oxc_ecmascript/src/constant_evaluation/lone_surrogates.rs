@@ -196,24 +196,65 @@ pub fn expr_may_have_lone_surrogates<'a>(
             e.expressions.last().is_some_and(|e| expr_may_have_lone_surrogates(e, ctx))
         }
         Expression::ParenthesizedExpression(e) => expr_may_have_lone_surrogates(&e.expression, ctx),
-        // Catch-all: two groups of remaining kinds, same result.
+
+        // `Call` / `New` / `TaggedTemplate` *can* fold to a string (via `try_fold_known_global_methods`
+        // and the `.concat` path in `replace_known_methods`), but every string-producing fold
+        // self-bails on flagged inputs. Under bottom-up evaluation, a parent therefore sees either
+        // an already-rewritten `StringLiteral` (caught by the first arm above) or a still-unfolded
+        // call whose `evaluate_value` will return `None` at the same bail — in neither case does a
+        // flagged string reach the parent through this arm.
         //
-        // (1) Kinds that can't surface a lone-surrogate string for a parent to consume:
-        //     `UnaryExpression` (`typeof`/`void`/`!`) yields fixed ASCII; `MemberExpression` /
-        //     `ChainExpression` only fold `.length` → number; `AssignmentExpression` /
-        //     `UpdateExpression` are gated out upstream by `may_have_side_effects`.
+        // Invariant, load-bearing: when adding a new string-producing fold, either add a dedicated
+        // arm above for its `Expression` kind, or guard the fold site with
+        // `expr_may_have_lone_surrogates` before emitting a literal.
+        Expression::CallExpression(_)
+        | Expression::NewExpression(_)
+        | Expression::TaggedTemplateExpression(_) => false,
+
+        // Everything else can't surface a flagged string here:
+        // - Non-string producers: numeric/boolean/null/bigint/regexp literals; object/function/class
+        //   expressions; `MetaProperty`, `Super`, `ThisExpression`, `PrivateInExpression`.
+        // - `BinaryExpression` non-Addition folds to number/boolean/bigint.
+        // - `UnaryExpression` (`typeof`/`void`/`!`/...) yields fixed ASCII or number.
+        // - Member/chain expressions only fold `.length` → number.
+        // - Side-effecting kinds (`Assignment`, `Update`, `Await`, `Yield`, `Import`) are gated out
+        //   upstream by `may_have_side_effects` before any fold emit.
+        // - JSX / TS / V8 intrinsics don't participate in constant-string folding.
         //
-        // (2) `CallExpression` / `NewExpression` / `TaggedTemplateExpression` *can* produce a
-        //     string (via `try_fold_known_global_methods` and the `.concat` path in
-        //     `replace_known_methods`). We don't analyse them; each string-producing fold
-        //     bails itself. Bottom-up evaluation then guarantees a parent sees either an
-        //     already-rewritten `StringLiteral` (caught by the first arm above) or a
-        //     still-un-folded call — returning `false` is safe while that invariant holds.
-        //
-        // When adding a new string-producing fold: either add a dedicated arm above for its
-        // `Expression` kind, or guard the fold site with `expr_may_have_lone_surrogates`
-        // before emitting a literal.
-        _ => false,
+        // Listed exhaustively (rather than `_ => false`) so a future `Expression` variant yields a
+        // compile error here, forcing an explicit decision.
+        Expression::BooleanLiteral(_)
+        | Expression::NullLiteral(_)
+        | Expression::NumericLiteral(_)
+        | Expression::BigIntLiteral(_)
+        | Expression::RegExpLiteral(_)
+        | Expression::MetaProperty(_)
+        | Expression::Super(_)
+        | Expression::ArrowFunctionExpression(_)
+        | Expression::AssignmentExpression(_)
+        | Expression::AwaitExpression(_)
+        | Expression::BinaryExpression(_)
+        | Expression::ChainExpression(_)
+        | Expression::ClassExpression(_)
+        | Expression::FunctionExpression(_)
+        | Expression::ImportExpression(_)
+        | Expression::ObjectExpression(_)
+        | Expression::ThisExpression(_)
+        | Expression::UnaryExpression(_)
+        | Expression::UpdateExpression(_)
+        | Expression::YieldExpression(_)
+        | Expression::PrivateInExpression(_)
+        | Expression::JSXElement(_)
+        | Expression::JSXFragment(_)
+        | Expression::TSAsExpression(_)
+        | Expression::TSSatisfiesExpression(_)
+        | Expression::TSTypeAssertion(_)
+        | Expression::TSNonNullExpression(_)
+        | Expression::TSInstantiationExpression(_)
+        | Expression::V8IntrinsicExpression(_)
+        | Expression::ComputedMemberExpression(_)
+        | Expression::StaticMemberExpression(_)
+        | Expression::PrivateFieldExpression(_) => false,
     }
 }
 
