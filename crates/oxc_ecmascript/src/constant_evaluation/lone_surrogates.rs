@@ -197,33 +197,32 @@ pub fn expr_may_have_lone_surrogates<'a>(
         }
         Expression::ParenthesizedExpression(e) => expr_may_have_lone_surrogates(&e.expression, ctx),
 
-        // `Call` / `New` / `TaggedTemplate` *can* fold to a string (via `try_fold_known_global_methods`
-        // and the `.concat` path in `replace_known_methods`), but every string-producing fold
-        // self-bails on flagged inputs. Under bottom-up evaluation, a parent therefore sees either
-        // an already-rewritten `StringLiteral` (caught by the first arm above) or a still-unfolded
-        // call whose `evaluate_value` will return `None` at the same bail — in neither case does a
-        // flagged string reach the parent through this arm.
+        // All remaining kinds return `false`. Two groups, same result:
         //
-        // Invariant, load-bearing: when adding a new string-producing fold, either add a dedicated
-        // arm above for its `Expression` kind, or guard the fold site with
-        // `expr_may_have_lone_surrogates` before emitting a literal.
-        Expression::CallExpression(_)
-        | Expression::NewExpression(_)
-        | Expression::TaggedTemplateExpression(_) => false,
-
-        // Everything else can't surface a flagged string here:
-        // - Non-string producers: numeric/boolean/null/bigint/regexp literals; object/function/class
-        //   expressions; `MetaProperty`, `Super`, `ThisExpression`, `PrivateInExpression`.
-        // - `BinaryExpression` non-Addition folds to number/boolean/bigint.
-        // - `UnaryExpression` (`typeof`/`void`/`!`/...) yields fixed ASCII or number.
-        // - Member/chain expressions only fold `.length` → number.
-        // - Side-effecting kinds (`Assignment`, `Update`, `Await`, `Yield`, `Import`) are gated out
-        //   upstream by `may_have_side_effects` before any fold emit.
-        // - JSX / TS / V8 intrinsics don't participate in constant-string folding.
+        // (1) `Call` / `New` / `TaggedTemplate` *can* fold to a string (via
+        //     `try_fold_known_global_methods` and the `.concat` path in `replace_known_methods`).
+        //     Load-bearing invariant: every string-producing fold self-bails on flagged inputs, so
+        //     under bottom-up evaluation a parent sees either an already-rewritten `StringLiteral`
+        //     (caught by the first arm above) or a still-unfolded call whose `evaluate_value` will
+        //     return `None` at the same bail — flagged bytes never reach the parent through this
+        //     arm. When adding a new string-producing fold, either add a dedicated arm above for
+        //     its `Expression` kind, or guard the fold site with `expr_may_have_lone_surrogates`
+        //     before emitting a literal.
+        //
+        // (2) Kinds that can't surface a flagged string here at all: numeric/boolean/null/bigint
+        //     /regexp literals; object/function/class expressions; `MetaProperty`, `Super`,
+        //     `ThisExpression`, `PrivateInExpression`; non-Addition `BinaryExpression` (number/
+        //     boolean/bigint); `UnaryExpression` (`typeof`/`void`/`!`/…, fixed ASCII or number);
+        //     member/chain expressions (only fold `.length` → number); side-effecting kinds
+        //     (`Assignment`, `Update`, `Await`, `Yield`, `Import`) gated out upstream by
+        //     `may_have_side_effects`; JSX / TS / V8 intrinsics (not folded to strings).
         //
         // Listed exhaustively (rather than `_ => false`) so a future `Expression` variant yields a
         // compile error here, forcing an explicit decision.
-        Expression::BooleanLiteral(_)
+        Expression::CallExpression(_)
+        | Expression::NewExpression(_)
+        | Expression::TaggedTemplateExpression(_)
+        | Expression::BooleanLiteral(_)
         | Expression::NullLiteral(_)
         | Expression::NumericLiteral(_)
         | Expression::BigIntLiteral(_)
