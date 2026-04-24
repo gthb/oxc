@@ -102,6 +102,12 @@ pub fn expr_may_have_lone_surrogates<'a>(
                 || expr_may_have_lone_surrogates(&e.right, ctx)
         }
         Expression::ArrayExpression(arr) => array_may_have_lone_surrogates(arr, ctx),
+        // TODO: when the caller follows this up with `get_side_free_string_value` /
+        // `evaluate_value` on the same identifier, the resolution happens twice — once here
+        // and once at the fold site. `try_fold_string_casing` inlines its own resolution to
+        // avoid that; every other fold site pays the double lookup. A helper that returns
+        // `Option<Cow<str>>` directly from this check (instead of just `bool`) could thread
+        // the resolved value through and kill the second lookup everywhere.
         Expression::Identifier(ident) => ident
             .reference_id
             .get()
