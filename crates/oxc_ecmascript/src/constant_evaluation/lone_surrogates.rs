@@ -14,12 +14,14 @@
 //! Detection is conservative: false positives only skip a fold that could have been performed,
 //! never produce wrong output.
 
+use std::borrow::Cow;
+
 use oxc_ast::ast::*;
 use oxc_syntax::operator::BinaryOperator;
 
 use crate::GlobalContext;
 
-use super::ConstantValue;
+use super::{ConstantEvaluation, ConstantEvaluationCtx, ConstantValue};
 
 /// Returns `true` if `s` contains the lone-surrogate encoding pattern `\u{FFFD}XXXX` — surrogate
 /// range `d800`..=`dfff`, or the self-escape `fffd`.
@@ -151,6 +153,23 @@ pub fn expr_may_have_lone_surrogates<'a>(
         // check at the fold site before emitting a literal.
         _ => false,
     }
+}
+
+/// Extract `expr`'s side-free string value, unless [`expr_may_have_lone_surrogates`] says the
+/// bytes might carry the encoding.
+///
+/// The bail pattern — check the flag/byte-scan, then pull `get_side_free_string_value` — recurs
+/// at every fold site that reads an operand's string and emits a new `StringLiteral` from the
+/// bytes. Collapsing it into one call keeps the invariant ("consume only flag-safe bytes") in
+/// one place and avoids drift between sites.
+pub fn get_side_free_string_value_safe<'a>(
+    expr: &Expression<'a>,
+    ctx: &impl ConstantEvaluationCtx<'a>,
+) -> Option<Cow<'a, str>> {
+    if expr_may_have_lone_surrogates(expr, ctx) {
+        return None;
+    }
+    expr.get_side_free_string_value(ctx)
 }
 
 #[cfg(test)]

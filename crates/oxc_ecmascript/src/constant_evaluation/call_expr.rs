@@ -25,7 +25,7 @@ use crate::{
 
 use super::{
     ConstantEvaluation, ConstantEvaluationCtx, ConstantValue, expr_may_have_lone_surrogates,
-    str_has_lone_surrogate_encoding,
+    get_side_free_string_value_safe, str_has_lone_surrogate_encoding,
 };
 
 /// Unwrap `expr` to its `StringLiteral` only when it doesn't carry the lone-surrogate encoding.
@@ -170,11 +170,7 @@ fn try_fold_string_index_of<'a>(
     let search_value = match args.first() {
         Some(Argument::SpreadElement(_)) => return None,
         Some(arg @ match_expression!(Argument)) => {
-            let expr = arg.to_expression();
-            if expr_may_have_lone_surrogates(expr, ctx) {
-                return None;
-            }
-            Some(expr.get_side_free_string_value(ctx)?)
+            Some(get_side_free_string_value_safe(arg.to_expression(), ctx)?)
         }
         None => None,
     };
@@ -331,11 +327,7 @@ fn try_fold_string_replace<'a>(
     let replace_value = match replace_value {
         Argument::SpreadElement(_) => return None,
         match_expression!(Argument) => {
-            let value = replace_value.to_expression();
-            if expr_may_have_lone_surrogates(value, ctx) {
-                return None;
-            }
-            value.get_side_free_string_value(ctx)?
+            get_side_free_string_value_safe(replace_value.to_expression(), ctx)?
         }
     };
     if replace_value.contains('$') {
@@ -610,7 +602,10 @@ fn try_fold_encode_uri<'a>(
     }
     let arg = args.first()?;
     let expr = arg.as_expression()?;
-    let string_value = get_side_free_uri_input(expr, ctx)?;
+    // `encodeURI('\uD800')` throws `URIError` at runtime; our stored value is the encoded form,
+    // which the `%`-encoder would happily turn into `%EF%BF%BDd800`. Bail via the safe helper
+    // rather than diverge. The same reasoning applies to the other three URI folds below.
+    let string_value = get_side_free_string_value_safe(expr, ctx)?;
 
     // SAFETY: should_encode only returns false for ascii chars
     let encoded = unsafe {
@@ -639,7 +634,7 @@ fn try_fold_encode_uri_component<'a>(
     }
     let arg = args.first()?;
     let expr = arg.as_expression()?;
-    let string_value = get_side_free_uri_input(expr, ctx)?;
+    let string_value = get_side_free_string_value_safe(expr, ctx)?;
 
     // SAFETY: should_encode only returns false for ascii chars
     let encoded = unsafe {
@@ -650,21 +645,6 @@ fn try_fold_encode_uri_component<'a>(
         )
     };
     Some(ConstantValue::String(encoded))
-}
-
-/// Extract an `encodeURI*`/`decodeURI*` input as a side-free string, rejecting values that carry
-/// the lone-surrogate encoding.
-///
-/// `encodeURI('\uD800')` throws a `URIError` at runtime; our value for that input is the encoded
-/// form, which the `%`-encoder would happily turn into `%EF%BF%BDd800`. Bail rather than diverge.
-fn get_side_free_uri_input<'a>(
-    expr: &Expression<'a>,
-    ctx: &impl ConstantEvaluationCtx<'a>,
-) -> Option<Cow<'a, str>> {
-    if expr_may_have_lone_surrogates(expr, ctx) {
-        return None;
-    }
-    expr.get_side_free_string_value(ctx)
 }
 
 fn try_fold_decode_uri<'a>(
@@ -679,7 +659,7 @@ fn try_fold_decode_uri<'a>(
     }
     let arg = args.first()?;
     let expr = arg.as_expression()?;
-    let string_value = get_side_free_uri_input(expr, ctx)?;
+    let string_value = get_side_free_string_value_safe(expr, ctx)?;
 
     let decoded = decode_uri_chars(
         string_value,
@@ -701,7 +681,7 @@ fn try_fold_decode_uri_component<'a>(
     }
     let arg = args.first()?;
     let expr = arg.as_expression()?;
-    let string_value = get_side_free_uri_input(expr, ctx)?;
+    let string_value = get_side_free_string_value_safe(expr, ctx)?;
 
     // decodeURIComponent decodes all percent-encoded sequences
     let decoded = decode_uri_chars(
