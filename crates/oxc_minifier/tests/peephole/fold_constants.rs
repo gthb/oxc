@@ -1339,6 +1339,17 @@ fn test_lone_surrogate_comparison_bailouts() {
     fold("'\\uDC00' === '\\uFFFDdc00'", "'\\uDC00' == '\\uFFFDdc00'");
     fold_same("'\\uDC00' > '\\uFFFDdc00'");
 
+    // Abstract equality (`==`/`!=`) on same-type strings routes through
+    // `strict_equality_comparison` just like `===`/`!==`, so the guard fires identically.
+    // Both-flagged with the same bytes is a conservative miss — runtime-equal, but we bail
+    // rather than return a byte-compare result that would happen to coincide.
+    fold_same("'\\uDC00' == '\\uDC00'");
+    fold_same("'\\uDC00' != '\\uDC00'");
+    // Both-unflagged with bytes that match the encoding pattern: neither side has the flag, so
+    // the byte compare *is* the runtime compare and folding is safe.
+    fold("'\\uFFFDdc00' == '\\uFFFDdc00'", "!0");
+    fold("'\\uFFFDdc00' != '\\uFFFDdc00'", "!1");
+
     // Control cases: plain U+FFFD (not the encoding) still folds.
     fold("'\\uFFFD' === '\\uFFFD'", "!0");
     fold("'\\uFFFD' !== 'x'", "!0");
