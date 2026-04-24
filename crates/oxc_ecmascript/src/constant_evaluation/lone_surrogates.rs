@@ -6,6 +6,10 @@
 //! `TemplateElement` `lone_surrogates` flag tells codegen to decode those escapes back into
 //! `\uXXXX`; when the flag is clear, codegen emits the bytes as-is.
 //!
+//! The encoding is produced by `oxc_parser::lexer::unicode` (string literals) and
+//! `oxc_parser::lexer::template` (template elements) at the point they first see a lone
+//! surrogate; both write `\u{FFFD}{code_point:04x}` and set `lone_surrogates: true` on the token.
+//!
 //! Two strings with the same bytes but different flags are different runtime values. Folds that
 //! produce a new `ConstantValue::String` drop the flag, and `value_to_expr` then builds a literal
 //! defaulting to `lone_surrogates: false` — so any fold consuming a `lone_surrogates: true` input
