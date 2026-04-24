@@ -10,9 +10,9 @@ mod value_type;
 pub use is_int32_or_uint32::IsInt32OrUint32;
 pub use is_literal_value::IsLiteralValue;
 pub use lone_surrogates::{
-    array_may_have_lone_surrogates, count_lone_surrogate_runs, expr_may_have_lone_surrogates,
-    get_side_free_string_value_without_lone_surrogates, str_has_lone_surrogate_encoding,
-    template_may_have_lone_surrogates,
+    array_may_have_lone_surrogates, expr_may_have_lone_surrogates,
+    flagged_str_runtime_utf16_length, get_side_free_string_value_without_lone_surrogates,
+    str_has_lone_surrogate_encoding, template_may_have_lone_surrogates,
 };
 pub use value::ConstantValue;
 pub use value_type::{DetermineValueType, ValueType};
@@ -560,17 +560,7 @@ fn evaluate_value_length<'a>(
     if let Expression::StringLiteral(s) = object
         && s.lone_surrogates
     {
-        let stored = s.value.encode_utf16().count();
-        let runs = count_lone_surrogate_runs(&s.value);
-        // A well-formed flagged literal (parser-produced) satisfies `stored >= 5 * runs >= 4 * runs`,
-        // so the subtraction is exact. `saturating_sub` defends against a synthetic AST where the
-        // flag is set without a matching encoded run: better to miss a fold than to wrap.
-        debug_assert!(
-            stored >= 4 * runs,
-            "flagged literal without matching encoding: {:?}",
-            s.value
-        );
-        let runtime = stored.saturating_sub(4 * runs);
+        let runtime = flagged_str_runtime_utf16_length(&s.value);
         return Some(ConstantValue::Number(runtime.to_f64().unwrap()));
     }
     if let Some(ConstantValue::String(s)) = object.evaluate_value(ctx) {

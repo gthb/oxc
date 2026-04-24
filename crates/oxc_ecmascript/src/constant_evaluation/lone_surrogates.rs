@@ -51,31 +51,46 @@ pub fn str_has_lone_surrogate_encoding(s: &str) -> bool {
     bytes.windows(7).any(|w| w[..3] == [0xEF, 0xBF, 0xBD] && is_lone_surrogate_suffix(&w[3..]))
 }
 
-/// Counts non-overlapping `\u{FFFD}XXXX` encoded runs in `s`.
+/// Returns the runtime UTF-16 length of a flagged string.
 ///
-/// Each run represents a single UTF-16 code unit at runtime — a lone surrogate, or U+FFFD itself
-/// via the `fffd` self-escape — while occupying 5 stored code units. For a flagged string the
-/// runtime length is therefore `s.encode_utf16().count() - 4 * count_lone_surrogate_runs(s)`.
+/// A single byte-level walk: each `\u{FFFD}XXXX` encoded run (7 bytes / 5 stored UTF-16 code
+/// units) contributes 1 runtime code unit — either a lone surrogate, or U+FFFD itself via the
+/// `fffd` self-escape — and any other codepoint contributes its normal UTF-16 length. Fuses
+/// what used to be a two-pass `encode_utf16().count() - 4 * run_count`.
 ///
-/// The scan is purely on bytes, so in an unflagged string with coincidentally matching bytes (a
-/// real U+FFFD followed by four hex characters) this also counts a run; callers must have
-/// established the literal is flagged before using the count for a length calculation.
-pub fn count_lone_surrogate_runs(s: &str) -> usize {
+/// Only meaningful when the caller has already established `lone_surrogates: true`: the scan
+/// can't distinguish an encoded run from a coincidentally-matching U+FFFD followed by four hex
+/// characters, so on an unflagged string this would under-count.
+pub fn flagged_str_runtime_utf16_length(s: &str) -> usize {
     let bytes = s.as_bytes();
-    if !bytes.contains(&0xEF) {
-        return 0;
-    }
-    let mut count = 0;
+    let mut len = 0;
     let mut i = 0;
-    while i + 7 <= bytes.len() {
-        if bytes[i..i + 3] == [0xEF, 0xBF, 0xBD] && is_lone_surrogate_suffix(&bytes[i + 3..i + 7]) {
-            count += 1;
+    while i < bytes.len() {
+        let b = bytes[i];
+        // Encoded run: U+FFFD (EF BF BD) + 4 ASCII hex digits = 7 bytes, 1 runtime UTF-16 unit.
+        if b == 0xEF
+            && i + 7 <= bytes.len()
+            && bytes[i + 1] == 0xBF
+            && bytes[i + 2] == 0xBD
+            && is_lone_surrogate_suffix(&bytes[i + 3..i + 7])
+        {
+            len += 1;
             i += 7;
-        } else {
-            i += 1;
+            continue;
         }
+        // Otherwise advance by one UTF-8 codepoint and add its UTF-16 length. `&str` guarantees
+        // valid UTF-8, so `b` is always a lead byte here.
+        let (step, units) = match b {
+            0x00..=0x7F => (1, 1), // ASCII
+            0xC2..=0xDF => (2, 1), // 2-byte sequence (U+0080..=U+07FF)
+            0xE0..=0xEF => (3, 1), // 3-byte sequence (U+0800..=U+FFFF, BMP)
+            0xF0..=0xF4 => (4, 2), // 4-byte sequence (supplementary → UTF-16 surrogate pair)
+            _ => unreachable!("invalid UTF-8 lead byte {b:#x}"),
+        };
+        len += units;
+        i += step;
     }
-    count
+    len
 }
 
 fn is_lone_surrogate_suffix(b: &[u8]) -> bool {
@@ -239,7 +254,7 @@ pub fn get_side_free_string_value_without_lone_surrogates<'a>(
 
 #[cfg(test)]
 mod tests {
-    use super::{count_lone_surrogate_runs, str_has_lone_surrogate_encoding};
+    use super::{flagged_str_runtime_utf16_length, str_has_lone_surrogate_encoding};
 
     #[test]
     fn empty_and_short_inputs() {
@@ -302,15 +317,31 @@ mod tests {
     }
 
     #[test]
-    fn counts_non_overlapping_runs() {
-        assert_eq!(count_lone_surrogate_runs(""), 0);
-        assert_eq!(count_lone_surrogate_runs("plain"), 0);
-        assert_eq!(count_lone_surrogate_runs("\u{FFFD}d800"), 1);
-        assert_eq!(count_lone_surrogate_runs("\u{FFFD}d800\u{FFFD}dc00"), 2);
+    fn runtime_length_empty_and_ascii() {
+        assert_eq!(flagged_str_runtime_utf16_length(""), 0);
+        assert_eq!(flagged_str_runtime_utf16_length("plain"), 5);
+    }
+
+    #[test]
+    fn runtime_length_counts_encoded_runs_as_one() {
+        // One encoded lone surrogate: 5 stored UTF-16 units → 1 runtime unit.
+        assert_eq!(flagged_str_runtime_utf16_length("\u{FFFD}d800"), 1);
+        // Two back-to-back runs.
+        assert_eq!(flagged_str_runtime_utf16_length("\u{FFFD}d800\u{FFFD}dc00"), 2);
         // Self-escape counts as a run (one U+FFFD at runtime).
-        assert_eq!(count_lone_surrogate_runs("\u{FFFD}fffd\u{FFFD}d800"), 2);
-        // Non-matching U+FFFD occurrences aren't counted.
-        assert_eq!(count_lone_surrogate_runs("\u{FFFD}\u{FFFD}d800"), 1);
-        assert_eq!(count_lone_surrogate_runs("a\u{FFFD}dc00b\u{FFFD}dfffc"), 2);
+        assert_eq!(flagged_str_runtime_utf16_length("\u{FFFD}fffd\u{FFFD}d800"), 2);
+    }
+
+    #[test]
+    fn runtime_length_mixes_encoded_and_plain_codepoints() {
+        // ASCII around a run: 'a' + run + 'b' + run + 'c' = 5 runtime units.
+        assert_eq!(flagged_str_runtime_utf16_length("a\u{FFFD}dc00b\u{FFFD}dfffc"), 5);
+        // Non-matching U+FFFD followed by a matching run: 1 (plain U+FFFD) + 1 (run) = 2.
+        assert_eq!(flagged_str_runtime_utf16_length("\u{FFFD}\u{FFFD}d800"), 2);
+        // A non-hex suffix defeats the run match, so each of the 5 stored chars counts normally
+        // (U+FFFD + 4 ASCII = 5 UTF-16 units).
+        assert_eq!(flagged_str_runtime_utf16_length("\u{FFFD}d7ff"), 5);
+        // Supplementary-plane codepoint (U+1F600 😀) encodes as a UTF-16 surrogate pair → 2 units.
+        assert_eq!(flagged_str_runtime_utf16_length("a\u{1F600}b"), 4);
     }
 }
