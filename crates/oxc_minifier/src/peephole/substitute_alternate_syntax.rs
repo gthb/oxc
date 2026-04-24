@@ -5,8 +5,8 @@ use oxc_allocator::{CloneIn, TakeIn, Vec};
 use oxc_ast::{NONE, ast::*};
 use oxc_compat::ESFeature;
 use oxc_ecmascript::constant_evaluation::{
-    ConstantEvaluation, ConstantValue, DetermineValueType, expr_may_have_lone_surrogates,
-    template_may_have_lone_surrogates,
+    ConstantEvaluation, ConstantValue, DetermineValueType, array_may_have_lone_surrogates,
+    expr_may_have_lone_surrogates, template_may_have_lone_surrogates,
 };
 use oxc_ecmascript::side_effects::MayHaveSideEffectsContext;
 use oxc_ecmascript::{ToJsString, ToNumber, side_effects::MayHaveSideEffects};
@@ -1606,11 +1606,7 @@ impl<'a> PeepholeOptimizations {
 
         // Joining the bytes into one flagless literal and calling `split(',')` on the encoded
         // form at runtime would return mis-sliced code units rather than the original elements.
-        if array
-            .elements
-            .iter()
-            .any(|el| el.as_expression().is_some_and(|e| expr_may_have_lone_surrogates(e, ctx)))
-        {
+        if array_may_have_lone_surrogates(array, ctx) {
             return;
         }
 

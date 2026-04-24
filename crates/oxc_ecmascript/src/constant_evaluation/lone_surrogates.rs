@@ -59,6 +59,24 @@ pub fn template_may_have_lone_surrogates<'a>(
         || t.expressions.iter().any(|e| expr_may_have_lone_surrogates(e, ctx))
 }
 
+/// Returns `true` if any element in `arr` may carry the lone-surrogate encoding.
+///
+/// `as_expression` skips `SpreadElement` and `Elision`. Sound for the array-join / array-split
+/// folds that call this: `ArrayJoin::array_join` bails on any element whose `to_js_string` fails,
+/// and `SpreadElement::to_js_string` always fails — so an array with a spread never produces a
+/// `ConstantValue::String` for these folds. Elisions stringify to `""`.
+///
+/// Split out from [`expr_may_have_lone_surrogates`]'s `ArrayExpression` arm so sites that hold an
+/// `&ArrayExpression` directly can reuse the check.
+pub fn array_may_have_lone_surrogates<'a>(
+    arr: &ArrayExpression<'a>,
+    ctx: &impl GlobalContext<'a>,
+) -> bool {
+    arr.elements
+        .iter()
+        .any(|el| el.as_expression().is_some_and(|e| expr_may_have_lone_surrogates(e, ctx)))
+}
+
 /// Returns `true` if the expression, when stringified, may carry the lone-surrogate encoding.
 ///
 /// Fold sites call this before consuming an operand's string value; when it returns `true`, the
@@ -81,14 +99,7 @@ pub fn expr_may_have_lone_surrogates<'a>(
             expr_may_have_lone_surrogates(&e.left, ctx)
                 || expr_may_have_lone_surrogates(&e.right, ctx)
         }
-        Expression::ArrayExpression(arr) => arr
-            .elements
-            .iter()
-            // `as_expression` skips `SpreadElement` and `Elision`. Sound because
-            // `ArrayJoin::array_join` bails on any element whose `to_js_string` fails, and
-            // `SpreadElement::to_js_string` always fails — so an array with a spread never
-            // produces a `ConstantValue::String` for these folds. Elisions stringify to `""`.
-            .any(|el| el.as_expression().is_some_and(|e| expr_may_have_lone_surrogates(e, ctx))),
+        Expression::ArrayExpression(arr) => array_may_have_lone_surrogates(arr, ctx),
         Expression::Identifier(ident) => ident
             .reference_id
             .get()
