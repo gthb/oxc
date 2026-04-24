@@ -1145,6 +1145,12 @@ fn test_number_constructor() {
     fold("Number('a')", "NaN");
     fold("Number('1')", "1");
     test_same("var Number; NOOP(Number(1))");
+    // `Number('\uDC00')` routes through `evaluate_value_to_number` and folds to `NaN` —
+    // the `+'\uDC00'` else-branch in `fold_call_expression` is unreachable for string
+    // literals (they always produce `Some(f64)`), but is kept as defensive coverage.
+    // Pinning this direction here; the defensive branch's flag-preservation is
+    // visually audited only.
+    fold("Number('\\uDC00')", "NaN");
 }
 
 #[test]

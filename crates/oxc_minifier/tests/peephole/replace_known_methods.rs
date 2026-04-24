@@ -494,6 +494,20 @@ fn test_lone_surrogate_bailouts() {
     // the ambiguous bytes. (`\u{FFFD}` self-escape is `�fffd`, so `'�fffd'` is
     // excluded from this class — that one is genuinely indistinguishable from the encoding.)
     test("x = encodeURI('\\uFFFDdc00')", "x = '%EF%BF%BDdc00'");
+
+    // `parseFloat` / `parseInt` need no dedicated bail: they produce `Number`, and the non-
+    // numeric prefix handling behaves the same on the runtime string and on the stored
+    // encoded bytes (neither `\uDC00` nor `�dc00` starts with a numeric prefix). Pin
+    // that convergence so a future "conservative bail on any lone-surrogate input" doesn't
+    // regress a legitimate fold.
+    test("x = parseFloat('\\uDC00')", "x = NaN");
+    test("x = parseInt('\\uDC00')", "x = NaN");
+    test("x = parseInt('\\uDC00', 16)", "x = NaN");
+    // Numeric prefix before a lone surrogate still folds, on both the flagged operand and
+    // its real-U+FFFD byte-twin.
+    test("x = parseFloat('42\\uDC00')", "x = 42");
+    test("x = parseInt('a\\uDC00', 16)", "x = 10");
+    test("x = parseFloat('42\\uFFFDdc00')", "x = 42");
 }
 
 #[test]
