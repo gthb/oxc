@@ -72,6 +72,12 @@ pub trait ConstantEvaluation<'a>: MayHaveSideEffects<'a> {
     }
 
     /// Evaluate the expression to a constant value and convert it to a string.
+    ///
+    /// The returned `Cow` is the stored byte form and does not carry the `lone_surrogates` flag.
+    /// Any caller that would produce a `StringLiteral` (directly or via `value_to_expr`) from the
+    /// result must first reject flagged operands with [`expr_may_have_lone_surrogates`], or the
+    /// emitted literal will default to `lone_surrogates: false` and silently corrupt the runtime
+    /// value. See `crates/oxc_ecmascript/src/constant_evaluation/lone_surrogates.rs`.
     fn evaluate_value_to_string(
         &self,
         ctx: &impl ConstantEvaluationCtx<'a>,
