@@ -1263,6 +1263,10 @@ fn test_lone_surrogate_bailouts() {
     // `.replace()` fold calls `expr_may_have_lone_surrogates` on the replacement arg, hitting
     // the Identifier arm's byte-scan.
     test_same("const a = '\\uDC00'; log('foo'.replace('f', a), a)");
+    // The `a + 'b' + 'c' → a + 'bc'` reshape with a flagged-via-identifier trailing operand:
+    // `(a + 'b') + c` checks `expr_may_have_lone_surrogates(c)` through the Identifier arm
+    // before merging `'b'` and `c` into a flagless literal.
+    test_same("const c = '\\uDC00'; log(a + 'b' + c, c)");
 
     // Control cases: plain U+FFFD (not the encoding) still folds.
     fold("'\\uFFFD' + 'x'", "'\\uFFFDx'");
