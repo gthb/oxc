@@ -494,6 +494,11 @@ fn test_lone_surrogate_bailouts() {
     // `String()` / `.toString()` would route encoded bytes through `value_to_expr`.
     test_same("x = String('\\uDC00')");
     test_same("x = '\\uDC00'.toString()");
+    // `String(identifier)` / `identifier.toString()` exercise the Identifier arm of
+    // `expr_may_have_lone_surrogates`'s byte-scan. Trailing `y = a` keeps `a` out of the
+    // single-reference inliner so the fold site actually sees an Identifier.
+    test_same("const a = '\\uDC00'; x = String(a), y = a");
+    test_same("const a = '\\uDC00'; x = a.toString(), y = a");
 
     // `.concat`: both the all-string merge and the template-literal rewrite bail.
     test_same("x = ''.concat('[\\uDC00]')");
