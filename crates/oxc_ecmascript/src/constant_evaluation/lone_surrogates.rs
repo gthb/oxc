@@ -32,7 +32,7 @@ use std::borrow::Cow;
 use oxc_ast::ast::*;
 use oxc_syntax::operator::BinaryOperator;
 
-use crate::{GlobalContext, side_effects::MayHaveSideEffects};
+use crate::{GlobalContext, ToJsString, side_effects::MayHaveSideEffects};
 
 use super::{ConstantEvaluation, ConstantEvaluationCtx, ConstantValue};
 
@@ -216,7 +216,10 @@ pub fn get_side_free_string_value_without_lone_surrogates<'a>(
         if expr.may_have_side_effects(ctx) {
             return None;
         }
-        let s = cv.into_string()?;
+        // `to_js_string` — not `into_string` — so non-`String` constants (`Number`, `Boolean`,
+        // `BigInt`, `Null`, `Undefined`) stringify through `ToJsString` the same way the generic
+        // fall-through would via `evaluate_value_to_string`. `into_string` would drop the fold.
+        let s = cv.to_js_string(ctx)?;
         return (!str_has_lone_surrogate_encoding(&s)).then_some(s);
     }
     if expr_may_have_lone_surrogates(expr, ctx) {

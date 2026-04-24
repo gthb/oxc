@@ -33,6 +33,15 @@ fn test_string_index_of() {
     test("x = 'abcnulldef'.indexOf(null)", "x = 3");
     test("x = 'abctruedef'.indexOf(true)", "x = 3");
 
+    // Identifier bound to a non-string constant stringifies the same as the literal does.
+    // Using a large integer keeps `n` out of the multi-ref integer inliner (`-99..=999`) so the
+    // fold site sees an Identifier rather than a pre-inlined numeric literal; once the fold
+    // consumes that reference, the trailing `y = n` single-ref-inlines to `y = 12345`.
+    test(
+        "const n = 12345; x = 'abc12345def'.indexOf(n), y = n",
+        "const n = 12345; x = 3, y = 12345",
+    );
+
     test_same("x = 1 .indexOf('bcd');");
     test_same("x = NaN.indexOf('bcd')");
     test("x = undefined.indexOf('bcd')", "x = (void 0).indexOf('bcd')");
@@ -161,6 +170,14 @@ fn test_fold_string_replace() {
     test_same("'PreXyzPost'.replace('Xyz', '$\\'')"); // would fold to  'PrePostPost'
     test_same("'PreXyzPostXyz'.replace('Xyz', '$\\'')"); // would fold to 'PrePostXyzPostXyz'
     test_same("'123'.replace('2', '$`')"); // would fold to '113'
+
+    // Identifier bound to a non-string constant stringifies for the replace arg. A large
+    // integer keeps `n` out of the multi-ref integer inliner (`-99..=999`) so the fold site
+    // sees an Identifier; the trailing `y = n` single-ref-inlines after the fold.
+    test(
+        "const n = 12345; x = 'xtail'.replace('x', n), y = n",
+        "const n = 12345; x = '12345tail', y = 12345",
+    );
 }
 
 #[test]
@@ -1190,6 +1207,11 @@ fn test_fold_encode_uri() {
 
     test_same("x = encodeURI('a', 'b')");
     test_same("x = encodeURI(x)");
+
+    // Identifier bound to a non-string constant stringifies for the encoder input. A large
+    // integer keeps `n` out of the multi-ref integer inliner (`-99..=999`) so the fold site
+    // sees an Identifier; the trailing `y = n` single-ref-inlines after the fold.
+    test("const n = 12345; x = encodeURI(n), y = n", "const n = 12345; x = '12345', y = 12345");
 }
 
 #[test]
