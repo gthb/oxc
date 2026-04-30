@@ -63,7 +63,7 @@ mod lint_runner;
 
 pub use crate::config::plugins::normalize_plugin_name;
 pub use crate::disable_directives::{
-    DisableDirectives, DisableRuleComment, RuleCommentRule, RuleCommentType,
+    DirectivePrefix, DisableDirectives, DisableRuleComment, RuleCommentRule, RuleCommentType,
     create_unused_directives_diagnostics,
 };
 pub use crate::{
@@ -151,6 +151,10 @@ impl Linter {
 
     pub(crate) fn options(&self) -> &LintOptions {
         &self.options
+    }
+
+    pub(crate) fn respect_eslint_disable_directives(&self) -> bool {
+        self.config.respect_eslint_disable_directives()
     }
 
     /// Returns the number of rules that will are being used, unless there
@@ -442,14 +446,13 @@ impl Linter {
         // So instead we get a pointer to `Program`.
         // The pointer is obtained initially from `&Program` in `Semantic`, but that pointer
         // has no provenance for mutation, so can't be converted to `&mut Program`.
-        // So create a new pointer to `Program` which inherits `data_end_ptr`'s provenance,
-        // which does allow mutation.
+        // So create a new pointer to `Program` which inherits `cursor_ptr`'s provenance, which does allow mutation.
         //
         // We then drop `Semantic`, after which no references to any AST nodes remain.
-        // We can then safety convert the pointer to `&mut Program`.
+        // We can then safely convert the pointer to `&mut Program`.
         //
-        // `Program` was created in `allocator`, and that allocator is a `FixedSizeAllocator`,
-        // so only has 1 chunk. So `data_end_ptr` and `Program` are within the same allocation.
+        // `Program` was created in `allocator`, and `Program` is the last thing to be allocated, so is in current chunk.
+        // So `cursor_ptr` and `Program` are within the same allocation.
         // All callers of `Linter::run` obtain `allocator` and `Semantic` from `ModuleContent`,
         // which ensure they are in same allocation.
         // However, we have no static guarantee of this, so strictly speaking it's unsound.
@@ -458,11 +461,13 @@ impl Linter {
         let ctx_host = Rc::get_mut(ctx_host).unwrap();
         let semantic = mem::take(ctx_host.semantic_mut());
         let program_addr = NonNull::from(semantic.nodes().program()).addr();
-        let mut program_ptr =
-            allocator.data_end_ptr().cast::<Program<'a>>().with_addr(program_addr);
+        // Check `Program` is in `Allocator`'s current chunk
+        debug_assert!(program_addr >= allocator.cursor_ptr().addr());
+        debug_assert!(program_addr < allocator.data_end_ptr().addr());
+        let mut program_ptr = allocator.cursor_ptr().cast::<Program<'a>>().with_addr(program_addr);
         drop(semantic);
         // SAFETY: Now that we've dropped `Semantic`, no references to any AST nodes remain,
-        // so can get a mutable reference to `Program` without aliasing violations.
+        // so can get a mutable reference to `Program` without aliasing violations
         let program = unsafe { program_ptr.as_mut() };
 
         // If `js_allocator_pool` is provided, use clone-into-fixed-allocator approach
@@ -590,6 +595,7 @@ impl Linter {
     ///
     /// This is the common code path shared by both `run_external_rules` and
     /// `clone_into_fixed_size_allocator_and_run_external_rules`.
+    #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
     fn convert_and_call_external_linter(
         &self,
         external_rules: &[(ExternalRuleId, ExternalOptionsId, AllowWarnDeny)],
@@ -660,10 +666,21 @@ impl Linter {
             tokens_offset,
             tokens_len,
         );
-        let metadata_ptr = allocator.end_ptr().cast::<RawTransferMetadata>();
-        // SAFETY: `Allocator` was created by `FixedSizeAllocator` which reserved space after `end_ptr`
-        // for a `RawTransferMetadata`. `end_ptr` is aligned for `RawTransferMetadata`.
-        unsafe { metadata_ptr.write(metadata) };
+        // `RawTransferMetadata` sits immediately before `FixedSizeAllocatorMetadata` in the chunk.
+        // SAFETY: `Allocator` was created by `FixedSizeAllocator`, so the chunk has a valid
+        // `FixedSizeAllocatorMetadata` and a `RawTransferMetadata`-sized region right before it.
+        // The position is aligned for `RawTransferMetadata`.
+        unsafe {
+            let metadata_ptr = allocator
+                .fixed_size_metadata_ptr()
+                .cast::<u8>()
+                .sub(size_of::<RawTransferMetadata>())
+                .cast::<RawTransferMetadata>();
+            debug_assert!(
+                metadata_ptr.addr().get().is_multiple_of(align_of::<RawTransferMetadata>())
+            );
+            metadata_ptr.write(metadata);
+        }
 
         let path = path.to_string_lossy();
         let path = path.as_ref();

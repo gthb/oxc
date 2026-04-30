@@ -1,7 +1,10 @@
-use crate::quickcheck;
+use std::{mem, ptr::NonNull};
+
 use ::quickcheck::{Arbitrary, Gen};
+
 use oxc_allocator::arena::Arena;
-use std::mem;
+
+use crate::quickcheck;
 
 #[derive(Clone, Debug, PartialEq)]
 struct BigValue {
@@ -229,10 +232,10 @@ quickcheck! {
     fn all_allocations_in_a_chunk(values: Vec<BigValue>) -> () {
         let b = Arena::new();
         let allocated: Vec<&BigValue> = values.into_iter().map(|val| b.alloc(val) as &_).collect();
-        let chunks: Vec<(*mut u8, usize)> = unsafe { b.iter_allocated_chunks_raw() }.collect();
+        let chunks: Vec<(NonNull<u8>, usize)> = unsafe { b.iter_allocated_chunks_raw() }.collect();
         for alloc in allocated.into_iter() {
             assert!(chunks.iter().any(|&(ptr, size)| {
-                let ptr = ptr as usize;
+                let ptr = ptr.addr().get();
                 let chunk = (ptr, ptr + size);
                 contains(chunk, range(alloc))
             }));
@@ -244,57 +247,56 @@ quickcheck! {
         for val in values {
             b.alloc(val);
         }
-        let raw_chunks: Vec<(_, _)> = unsafe { b.iter_allocated_chunks_raw() }.collect();
+        let raw_chunks: Vec<(NonNull<u8>, usize)> = unsafe { b.iter_allocated_chunks_raw() }.collect();
         let chunks: Vec<&[_]> = b.iter_allocated_chunks().collect();
         assert_eq!(raw_chunks.len(), chunks.len());
         for ((ptr, size), chunk) in raw_chunks.into_iter().zip(chunks) {
-            assert_eq!(ptr as *const _, chunk.as_ptr() as *const _);
+            assert_eq!(ptr.as_ptr().cast_const(), chunk.as_ptr().cast::<u8>());
             assert_eq!(size, chunk.len());
         }
     }
 
-    // MIRI exits with failure when we try to allocate more memory than its
-    // sandbox has, rather than returning null from the allocation
-    // function. This test runs afoul of that bug.
-    #[cfg(not(miri))]
-    fn limit_is_never_exceeded(limit: usize) -> bool {
-        let arena = Arena::new();
-
-        arena.set_allocation_limit(Some(limit));
-
-        // The exact numbers here on how much to allocate are a bit murky but we
-        // have two main goals.
-        //
-        // - Attempt to allocate over the allocation limit imposed
-        // - Allocate in increments small enough that at least a few allocations succeed
-        let layout = std::alloc::Layout::array::<u8>(limit / 16).unwrap();
-        for _ in 0..32 {
-            let _ = arena.try_alloc_layout(layout);
-        }
-
-        arena.allocated_bytes() <= limit
-    }
-
-    fn allocated_bytes_including_metadata(allocs: Vec<usize>) -> () {
+    fn allocated_bytes_tracking(allocs: Vec<usize>) -> () {
         let b = Arena::new();
         let mut slice_bytes = 0;
-        let allocs_len = allocs.len();
         for len in allocs {
             const MAX_LEN: usize = 512;
             let len = len % MAX_LEN;
             b.alloc_slice_fill_copy(len, 0);
             slice_bytes += len;
             let allocated_bytes = b.allocated_bytes();
-            let allocated_bytes_including_metadata = b.allocated_bytes_including_metadata();
             if slice_bytes == 0 {
                 assert_eq!(allocated_bytes, 0);
-                assert_eq!(allocated_bytes_including_metadata, 0);
             } else {
                 assert!(allocated_bytes >= slice_bytes);
-                assert!(allocated_bytes_including_metadata > allocated_bytes);
-                assert!(allocated_bytes_including_metadata < allocated_bytes + allocs_len * 100);
             }
         }
     }
 
+    fn used_bytes_tracking(allocs: Vec<usize>) -> () {
+        let mut b = Arena::new();
+        let mut slice_bytes = 0;
+        for len in allocs {
+            const MAX_LEN: usize = 512;
+            let len = len % MAX_LEN;
+            b.alloc_slice_fill_copy(len, 0u8);
+            slice_bytes += len;
+
+            // `Arena<1>` with `align == 1` allocations: cursor advances by exactly `len` per call,
+            // so total used bytes equal the sum of requested sizes
+            let used_bytes = b.used_bytes();
+            assert_eq!(used_bytes, slice_bytes);
+
+            // `used_bytes <= allocated_bytes` (capacity >= used)
+            assert!(used_bytes <= b.allocated_bytes());
+
+            // `used_bytes` agrees with summing each chunk's used portion via `iter_allocated_chunks`
+            let from_iter = b.iter_allocated_chunks().map(<[_]>::len).sum();
+            assert_eq!(used_bytes, from_iter);
+        }
+
+        // After `reset`, the surviving chunk's cursor is back at its end - 0 bytes used
+        b.reset();
+        assert_eq!(b.used_bytes(), 0);
+    }
 }
