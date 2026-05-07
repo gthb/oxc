@@ -1111,10 +1111,6 @@ impl<'a> PeepholeOptimizations {
                 ctx.state.changed = true;
             }
             "Array" => {
-                if args.iter().any(Argument::is_spread) {
-                    return;
-                }
-
                 // `new Array` -> `[]`
                 if args.is_empty() {
                     *expr = ctx.ast.expression_array(*span, ctx.ast.vec());
@@ -1168,10 +1164,33 @@ impl<'a> PeepholeOptimizations {
                         ctx.state.changed = true;
                     }
                 } else {
-                    // `new Array(1, 2, 3)` -> `[1, 2, 3]`
+                    // `Array` has special length-constructor behavior only when it receives
+                    // exactly one argument. See
+                    // <https://tc39.es/ecma262/#sec-array-constructor-array>. If a call contains
+                    // spread arguments, we can still fold it to an array literal once we have two
+                    // non-spread arguments, because the final argument count is guaranteed to be
+                    // at least 2 regardless of how many values the spreads produce. With fewer
+                    // than two non-spread arguments, a spread may produce 0 values and expose the
+                    // single-argument special case, e.g. `Array(foo, ...[])`.
+                    let mut has_spread = false;
+                    let mut non_spread_count = 0;
+                    for arg in args.iter() {
+                        if arg.is_spread() {
+                            has_spread = true;
+                        } else {
+                            non_spread_count += 1;
+                        }
+                        if has_spread && non_spread_count >= 2 {
+                            break;
+                        }
+                    }
+                    if has_spread && non_spread_count < 2 {
+                        return;
+                    }
+
+                    // `new Array(1, 2, ...xs)` -> `[1, 2, ...xs]`
                     let elements = ctx.ast.vec_from_iter(
                         args.iter_mut()
-                            .filter_map(|arg| arg.as_expression_mut())
                             .map(|arg| ArrayExpressionElement::from(arg.take_in(ctx.ast))),
                     );
                     *expr = ctx.ast.expression_array(*span, elements);
