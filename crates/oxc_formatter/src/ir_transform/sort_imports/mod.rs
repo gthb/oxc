@@ -47,18 +47,10 @@ pub fn sort_imports_chunk(formatter: &mut Formatter<'_, '_>, chunk_start: usize)
     let options = formatter.options().sort_imports.as_ref().unwrap();
 
     let sorted_elements = SortImportsTransform::transform(elements, options, formatter.allocator());
+    debug_assert!(matches!(sorted_elements.last(), Some(FormatElement::Line(LineMode::Hard))));
 
-    if let Some(sorted_elements) = sorted_elements {
-        debug_assert!(matches!(sorted_elements.last(), Some(FormatElement::Line(LineMode::Hard))));
-        let sorted_elements = &sorted_elements[..sorted_elements.len() - 1];
-        formatter.replace_end(chunk_start, sorted_elements);
-    } else {
-        // `transform` returns `None` only for the legacy whole-document empty-file case,
-        // which can't fire for a streaming chunk (chunks always contain at least one import's content).
-        // Defensive: undo the synthesized terminator so the buffer matches its pre-flush state.
-        debug_assert!(false, "unreachable");
-        formatter.replace_end(formatter.elements().len() - 1, &[]);
-    }
+    let sorted_elements = &sorted_elements[..sorted_elements.len() - 1];
+    formatter.replace_end(chunk_start, sorted_elements);
 }
 
 /// An IR transform that sorts import statements according to specified options.
@@ -79,12 +71,7 @@ impl SortImportsTransform {
         elements: &[FormatElement<'a>],
         options: &SortImportsOptions,
         allocator: &'a Allocator,
-    ) -> Option<ArenaVec<'a, FormatElement<'a>>> {
-        // Early return for empty files
-        if elements.len() == 1 && matches!(elements[0], FormatElement::Line(LineMode::Hard)) {
-            return None;
-        }
-
+    ) -> ArenaVec<'a, FormatElement<'a>> {
         // Parse string based groups into our internal representation for performance
         let group_matcher = GroupMatcher::new(&options.groups, &options.custom_groups);
         let prev_elements: &[FormatElement<'a>] = elements;
@@ -387,7 +374,7 @@ impl SortImportsTransform {
             }
         }
 
-        Some(next_elements)
+        next_elements
     }
 }
 
