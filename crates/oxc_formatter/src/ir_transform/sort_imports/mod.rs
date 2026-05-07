@@ -194,15 +194,16 @@ fn transform<'a>(
     // Next, partition `SourceLine`s into `PartitionedChunk`s.
     //
     // Chunking is done by detecting boundaries.
-    // By default, only non-import lines are considered boundaries.
-    // And depending on options, empty lines and comment-only lines can also be boundaries.
+    // By default, no boundary exists within an import run, so the whole chunk is sorted as one unit.
+    // Depending on options, empty lines (`partition_by_newline`) and comment-only lines
+    // (`partition_by_comment`) can also be boundaries.
     //
     // Within each chunk, we will sort import lines.
-    // e.g.
+    // e.g. with `partition_by_newline: true`:
     // ```text
     // import C from "c"; // chunk1
     // import B from "b"; // chunk1
-    // const THIS_IS_BOUNDARY = true;
+    //
     // import Z from "z"; // chunk2
     // import A from "a"; // chunk2
     // ```
@@ -210,7 +211,7 @@ fn transform<'a>(
     // ```text
     // import B from "b"; // chunk1
     // import C from "c"; // chunk1
-    // const THIS_IS_BOUNDARY = true;
+    //
     // import A from "a"; // chunk2
     // import Z from "z"; // chunk2
     // ```
@@ -343,14 +344,16 @@ fn transform<'a>(
                 // And output chunk's trailing lines
                 //
                 // Special care is needed for the last empty line.
-                // We should preserve it only if the next chunk is a boundary.
-                // e.g.
+                // We should preserve it only if the next chunk is a boundary
+                // (i.e. a `partition_by_comment` comment-only line).
+                // e.g. with `partition_by_comment: true`:
                 // ```text
                 // import A from "a"; // chunk1
                 // import B from "b"; // chunk1
                 // // This empty line should be preserved because the next chunk is a boundary.
                 //
-                // const BOUNDARY = true; // chunk2
+                // // BOUNDARY-COMMENT
+                // import C from "c"; // chunk2
                 // ```
                 // But in this case, we should not preserve it.
                 // ```text
