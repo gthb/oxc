@@ -27,7 +27,7 @@ use crate::core::{ConfigResolver, FormatStrategy, classify_file_kind, config_dis
 /// Directories containing a config file form a scope boundary.
 /// There is no inheritance between parent and child scopes.
 ///
-/// When `--config` is explicitly given, nested detection is disabled entirely.
+/// When `--config` or `--disable-nested-config` is explicitly given, nested detection is disabled entirely.
 ///
 /// # Walk phases
 /// - Phase 1: Classify CLI positional PATHs into directory targets, file targets, and globs
@@ -41,8 +41,8 @@ use crate::core::{ConfigResolver, FormatStrategy, classify_file_kind, config_dis
 ///     - Cost: O(entries), but avoids per-directory config-file metadata probes; skipped when `--config` is given
 ///   - 3-2. Load child scopes: load all discovered configs into a scope map
 ///   - 3-3. Build ancestor set (only when any scope has `ignorePatterns`):
-///     - Records which directories have a config descendant, so `filter_entry()`
-///       can safely skip `ignorePatterns` matches without hiding nested configs
+///     - Records which directories have a config descendant,
+///       so `filter_entry()` can safely skip `ignorePatterns` matches without hiding nested configs
 ///   - 3-4. Parallel walk: a single `WalkBuilder` walk processes all files
 ///
 /// # Ignore model
@@ -134,7 +134,7 @@ impl ScopedWalker {
             ignore_paths,
         )?);
 
-        let mut any_config = root_config_resolver.config_dir().is_some();
+        let mut any_config_used = root_config_resolver.config_dir().is_some();
 
         // Phase 1: Classify targets into directories (walk) and files (direct)
         let (walk_targets, file_targets) = {
@@ -203,7 +203,7 @@ impl ScopedWalker {
 
                     match &scope_cache[parent] {
                         Some(resolver) => {
-                            any_config = true;
+                            any_config_used = true;
                             Arc::clone(resolver)
                         }
                         None => Arc::clone(&root_config_resolver),
@@ -273,11 +273,11 @@ impl ScopedWalker {
                 js_config_loader,
             )?;
             if has_children {
-                any_config = true;
+                any_config_used = true;
             }
 
-            // Build ancestor set for directory-level ignorePatterns skipping,
-            // only when any scope (root or child) has ignorePatterns.
+            // Build ancestor set for directory-level `ignorePatterns` skipping,
+            // only when any scope (root or child) has `ignorePatterns`.
             let ancestors = if root_config_resolver.has_ignore_patterns()
                 || map.values().any(|r| r.has_ignore_patterns())
             {
@@ -304,7 +304,7 @@ impl ScopedWalker {
             tx_error,
         );
 
-        Ok(any_config)
+        Ok(any_config_used)
     }
 }
 
@@ -371,6 +371,8 @@ impl GlobMatcher {
     }
 }
 
+// ---
+
 /// Pre-scan directories within walk targets to discover nested config file locations.
 ///
 /// A separate pass is required because the flat single-walk needs all configs
@@ -384,9 +386,9 @@ impl GlobMatcher {
 /// 1. Load child scope configs (`resolve_child_scope_configs()`)
 /// 2. Build an ancestor set for `filter_entry()` directory skipping
 ///
-/// Uses a parallel walk and only performs metadata checks for entries whose file
-/// names match supported config files. This avoids probing every directory for
-/// every possible config filename.
+/// Uses a parallel walk and only performs metadata checks for entries
+/// whose file names match supported config files.
+/// This avoids probing every directory for every possible config filename.
 #[instrument(level = "debug", name = "oxfmt::walk::prescan_config_locations", skip_all)]
 fn prescan_config_locations(
     target_paths: &[PathBuf],
@@ -409,22 +411,20 @@ fn prescan_config_locations(
         let Some(file_type) = entry.file_type() else {
             return false;
         };
-
         if file_type.is_dir() {
             return !is_walk_excluded_dir(entry, &matchers, with_node_modules);
         }
-
-        // Do not apply file-level global ignores here. The previous directory
-        // probe checked config files by path, so file-level ignore patterns did
-        // not hide nested configs. Only keep config-looking file entries so the
-        // visitor can confirm they are files (including symlinks to files).
+        // Do not apply file-level global ignores here.
+        // The previous directory probe checked config files by path,
+        // so file-level ignore patterns did not hide nested configs.
+        // Only keep config-looking file entries
+        // so the visitor can confirm they are files (including symlinks to files).
         discovery.discover_config_file(entry.path()).is_some()
     });
 
     let (sender, receiver) = mpsc::channel::<Vec<PathBuf>>();
     let mut visitor = ConfigPrescanVisitorBuilder { sender };
     configure_oxfmt_walk_builder(&mut builder, has_vcs_boundary)
-        .threads(rayon::current_num_threads())
         .build_parallel()
         .visit(&mut visitor);
     drop(visitor);
@@ -484,6 +484,8 @@ impl ignore::ParallelVisitor for ConfigPrescanVisitor {
         }
     }
 }
+
+// ---
 
 /// Load all child scope configs discovered by pre-scan.
 ///
@@ -621,12 +623,7 @@ fn walk_and_stream(
         directly_processed: Arc::clone(directly_processed),
     };
 
-    let num_of_threads = rayon::current_num_threads();
-    configure_oxfmt_walk_builder(&mut inner, has_vcs_boundary)
-        // Use the same thread count as rayon (controlled by `--threads`)
-        .threads(num_of_threads)
-        .build_parallel()
-        .visit(&mut builder);
+    configure_oxfmt_walk_builder(&mut inner, has_vcs_boundary).build_parallel().visit(&mut builder);
 }
 
 /// Wrap [`oxc_config::configure_walk_builder`] with Oxfmt-specific options.
@@ -641,6 +638,8 @@ fn configure_oxfmt_walk_builder(
         // Do not follow symlinks like Prettier does.
         // See https://github.com/prettier/prettier/pull/14627
         .follow_links(false)
+        // Use the same thread count as rayon (controlled by `--threads`)
+        .threads(rayon::current_num_threads())
 }
 
 struct WalkVisitorBuilder {
