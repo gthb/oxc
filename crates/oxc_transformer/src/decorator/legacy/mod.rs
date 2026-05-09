@@ -45,9 +45,12 @@
 
 mod metadata;
 
+use std::borrow::Cow;
 use std::mem;
 
-use oxc_allocator::{Address, CloneIn, GetAddress, TakeIn, UnstableAddress, Vec as ArenaVec};
+use oxc_allocator::{
+    Address, Box as ArenaBox, CloneIn, GetAddress, TakeIn, UnstableAddress, Vec as ArenaVec,
+};
 use oxc_ast::{NONE, ast::*};
 use oxc_ast_visit::{Visit, VisitMut};
 use oxc_data_structures::stack::NonEmptyStack;
@@ -358,6 +361,10 @@ impl<'a> LegacyDecorator<'a> {
 
             // Transfer decorators to the getter so legacy decorator transform can process them.
             let decorators = std::mem::replace(&mut accessor.decorators, ctx.ast.vec());
+            // Transfer the type annotation to the getter's return type so that
+            // `emitDecoratorMetadata` can derive `design:type` from it. Without this,
+            // the lowered getter is untyped and `design:type` falls through to `Object`.
+            let type_annotation = accessor.type_annotation.take();
 
             // For computed keys, duplicate the key expression so getter and setter
             // each get their own reference:
@@ -369,20 +376,26 @@ impl<'a> LegacyDecorator<'a> {
                 let key_expr = accessor.key.into_expression();
                 let (assignment, reference) = duplicate_expression(key_expr, true, ctx);
 
+                // Use raw identifier name when possible to avoid collisions from
+                // `get_var_name_from_node` stripping leading underscores.
+                let key_name: Cow<'_, str> = match &reference {
+                    Expression::Identifier(ident) => Cow::Borrowed(ident.name.as_str()),
+                    _ => Cow::Owned(get_var_name_from_node(&reference)),
+                };
                 let getter_key = PropertyKey::from(assignment);
                 let setter_key = PropertyKey::from(reference);
-                let storage_name = ctx.ast.str_from_strs_array([
-                    "_",
-                    &get_var_name_from_node(&setter_key),
-                    "_computed_accessor_storage",
-                ]);
+                let storage_name =
+                    ctx.ast.str_from_strs_array(["_", &key_name, "_computed_accessor_storage"]);
                 (storage_name, getter_key, setter_key)
             } else {
-                let storage_name = ctx.ast.str_from_strs_array([
-                    "_",
-                    &get_var_name_from_node(&accessor.key),
-                    "_accessor_storage",
-                ]);
+                // Use `name()` to get the raw property name, avoiding `get_var_name_from_node`
+                // which strips leading underscores (e.g. `prop` and `_prop` both become "prop").
+                let key_name = accessor
+                    .key
+                    .name()
+                    .unwrap_or_else(|| Cow::Owned(get_var_name_from_node(&accessor.key)));
+                let storage_name =
+                    ctx.ast.str_from_strs_array(["_", &key_name, "_accessor_storage"]);
                 let getter_key = accessor.key.clone_in(ctx.ast.allocator);
                 let setter_key = accessor.key.clone_in(ctx.ast.allocator);
                 (storage_name, getter_key, setter_key)
@@ -419,6 +432,7 @@ impl<'a> LegacyDecorator<'a> {
                 storage_name,
                 object_binding,
                 class_scope_id,
+                type_annotation,
                 ctx,
             ));
 
@@ -432,6 +446,7 @@ impl<'a> LegacyDecorator<'a> {
                 storage_name,
                 object_binding,
                 class_scope_id,
+                None,
                 ctx,
             ));
         }
@@ -460,6 +475,7 @@ impl<'a> LegacyDecorator<'a> {
         storage_name: Str<'a>,
         object_binding: Option<&BoundIdentifier<'a>>,
         class_scope_id: ScopeId,
+        return_type: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
         ctx: &mut TraverseCtx<'a>,
     ) -> ClassElement<'a> {
         let is_getter = kind == MethodDefinitionKind::Get;
@@ -537,6 +553,7 @@ impl<'a> LegacyDecorator<'a> {
             key,
             kind,
             params,
+            return_type,
             ctx.ast.vec1(body_stmt),
             computed,
             is_static,
@@ -1092,7 +1109,7 @@ impl<'a> LegacyDecorator<'a> {
             Argument::from(decorations),
             Argument::from(class_binding.create_read_expression(ctx)),
         ]);
-        let helper = helper_call_expr(Helper::Decorate, SPAN, arguments, ctx);
+        let helper = helper_call_expr(Helper::Decorate, arguments, ctx);
         let operator = AssignmentOperator::Assign;
         let left = class_binding.create_write_target(ctx);
         let right = Self::get_class_initializer(helper, class_alias_binding, ctx);
@@ -1161,7 +1178,6 @@ impl<'a> LegacyDecorator<'a> {
                 // _decorateParam(index, decorator)
                 ArrayExpressionElement::from(helper_call_expr(
                     Helper::DecorateParam,
-                    decorator.span,
                     arguments,
                     ctx,
                 ))
@@ -1388,7 +1404,7 @@ impl<'a> LegacyDecorator<'a> {
             Argument::from(name),
             Argument::from(descriptor),
         ]);
-        let helper = helper_call_expr(Helper::Decorate, SPAN, arguments, ctx);
+        let helper = helper_call_expr(Helper::Decorate, arguments, ctx);
         ctx.ast.statement_expression(SPAN, helper)
     }
 

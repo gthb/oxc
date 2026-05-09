@@ -3,7 +3,8 @@ use std::iter;
 use oxc_allocator::{Box as ArenaBox, Vec as ArenaVec};
 use oxc_ast::{NONE, ast::*};
 use oxc_semantic::{ReferenceFlags, ScopeFlags, ScopeId, SymbolFlags};
-use oxc_span::{GetSpan, Ident, SPAN};
+use oxc_span::{GetSpan, SPAN};
+use oxc_str::Ident;
 use oxc_traverse::BoundIdentifier;
 
 use crate::context::TraverseCtx;
@@ -202,6 +203,7 @@ pub fn create_class_constructor_with_params<'a>(
         ),
         MethodDefinitionKind::Constructor,
         params,
+        None,
         stmts,
         false,
         false,
@@ -216,6 +218,7 @@ pub fn create_class_method<'a>(
     key: PropertyKey<'a>,
     kind: MethodDefinitionKind,
     params: ArenaBox<'a, FormalParameters<'a>>,
+    return_type: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
     stmts: ArenaVec<'a, Statement<'a>>,
     computed: bool,
     is_static: bool,
@@ -237,7 +240,7 @@ pub fn create_class_method<'a>(
             NONE,
             NONE,
             params,
-            NONE,
+            return_type,
             Some(ctx.ast.alloc_function_body(SPAN, ctx.ast.vec(), stmts)),
             scope_id,
         ),

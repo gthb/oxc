@@ -130,9 +130,9 @@
       "markdownDescription": "Enforce single attribute per line in HTML, Vue, and JSX.\n\n- Default: `false`"
     },
     "singleQuote": {
-      "description": "Use single quotes instead of double quotes.\n\nFor JSX, you can set the `jsxSingleQuote` option.\n\n- Default: `false`",
+      "description": "Use single quotes instead of double quotes.\n\nFor JSX, you can set the `jsxSingleQuote` option.\n\n- Default: `false`\n- Overrides `.editorconfig.quote_type`",
       "type": "boolean",
-      "markdownDescription": "Use single quotes instead of double quotes.\n\nFor JSX, you can set the `jsxSingleQuote` option.\n\n- Default: `false`"
+      "markdownDescription": "Use single quotes instead of double quotes.\n\nFor JSX, you can set the `jsxSingleQuote` option.\n\n- Default: `false`\n- Overrides `.editorconfig.quote_type`"
     },
     "sortImports": {
       "description": "Sort import statements.\n\nUsing the similar algorithm as [eslint-plugin-perfectionist/sort-imports](https://perfectionist.dev/rules/sort-imports).\nFor details, see each field's documentation.\n\nPass `true` or an object to enable with defaults, or omit/set `false` to disable.\n\n- Default: Disabled",
@@ -359,9 +359,9 @@
           "markdownDescription": "Enforce single attribute per line in HTML, Vue, and JSX.\n\n- Default: `false`"
         },
         "singleQuote": {
-          "description": "Use single quotes instead of double quotes.\n\nFor JSX, you can set the `jsxSingleQuote` option.\n\n- Default: `false`",
+          "description": "Use single quotes instead of double quotes.\n\nFor JSX, you can set the `jsxSingleQuote` option.\n\n- Default: `false`\n- Overrides `.editorconfig.quote_type`",
           "type": "boolean",
-          "markdownDescription": "Use single quotes instead of double quotes.\n\nFor JSX, you can set the `jsxSingleQuote` option.\n\n- Default: `false`"
+          "markdownDescription": "Use single quotes instead of double quotes.\n\nFor JSX, you can set the `jsxSingleQuote` option.\n\n- Default: `false`\n- Overrides `.editorconfig.quote_type`"
         },
         "sortImports": {
           "description": "Sort import statements.\n\nUsing the similar algorithm as [eslint-plugin-perfectionist/sort-imports](https://perfectionist.dev/rules/sort-imports).\nFor details, see each field's documentation.\n\nPass `true` or an object to enable with defaults, or omit/set `false` to disable.\n\n- Default: Disabled",
@@ -417,6 +417,14 @@
           "markdownDescription": "Whether or not to indent the code inside `<script>` and `<style>` tags in Vue files.\n\n- Default: `false`"
         }
       }
+    },
+    "GlobSet": {
+      "description": "A set of glob patterns.\nPatterns are matched against paths relative to the configuration file's directory.",
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "markdownDescription": "A set of glob patterns.\nPatterns are matched against paths relative to the configuration file's directory."
     },
     "HtmlWhitespaceSensitivityConfig": {
       "type": "string",
@@ -524,19 +532,21 @@
       "properties": {
         "excludeFiles": {
           "description": "Glob patterns to exclude from this override.",
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
+          "allOf": [
+            {
+              "$ref": "#/definitions/GlobSet"
+            }
+          ],
           "markdownDescription": "Glob patterns to exclude from this override."
         },
         "files": {
-          "description": "Glob patterns to match files for this override.\nAll patterns are relative to the Oxfmt configuration file.",
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "markdownDescription": "Glob patterns to match files for this override.\nAll patterns are relative to the Oxfmt configuration file."
+          "description": "Glob patterns to match files for this override.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/GlobSet"
+            }
+          ],
+          "markdownDescription": "Glob patterns to match files for this override."
         },
         "options": {
           "description": "Format options to apply for matched files.",

@@ -29,10 +29,13 @@ use oxc_language_server::{
 };
 
 use crate::{
-    config_loader::{ConfigLoader, build_nested_configs, discover_configs_in_tree},
+    config_loader::{
+        ConfigLoader, build_nested_configs, config_file_names, discover_configs_in_tree,
+    },
     lsp::{
         code_actions::{
-            CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC, apply_all_fix_code_action, apply_fix_code_actions,
+            CODE_ACTION_KIND_SOURCE_FIX_ALL_DANGEROUS_OXC, CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC,
+            apply_all_fix_code_action, apply_dangerous_fix_code_action, apply_fix_code_actions,
             fix_all_text_edit,
         },
         commands::{FIX_ALL_COMMAND_ID, FixAllCommandArgs},
@@ -41,7 +44,9 @@ use crate::{
             generate_inverted_diagnostics, message_to_lsp_diagnostic,
         },
         lsp_file_system::LspFileSystem,
-        options::{LintOptions as LSPLintOptions, Run, UnusedDisableDirectives},
+        options::{
+            LintOptions as LSPLintOptions, RulesCustomization, Run, UnusedDisableDirectives,
+        },
         utils::{normalize_path, range_overlaps},
     },
 };
@@ -227,7 +232,9 @@ impl ServerLinterBuilder {
             Self::create_ignore_glob(&root_path),
             extended_paths,
             runner,
+            fix_kind,
             lint_options.report_unused_directive,
+            options.rules_customization,
         )
     }
 }
@@ -243,6 +250,7 @@ impl ToolBuilder for ServerLinterBuilder {
                 code_action_kinds: Some(vec![
                     CodeActionKind::QUICKFIX,
                     CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC,
+                    CODE_ACTION_KIND_SOURCE_FIX_ALL_DANGEROUS_OXC,
                     CodeActionKind::SOURCE_FIX_ALL,
                 ]),
                 work_done_progress_options: WorkDoneProgressOptions::default(),
@@ -339,6 +347,10 @@ impl ServerLinterBuilder {
             .ignore(true)
             .hidden(false)
             .git_global(false)
+            .filter_entry(|entry| {
+                !(entry.file_name() == ".git"
+                    && entry.file_type().is_some_and(|file_type| file_type.is_dir()))
+            })
             .build()
             .flatten();
 
@@ -376,14 +388,12 @@ pub struct ServerLinter {
     extended_paths: FxHashSet<PathBuf>,
     code_actions: Arc<ConcurrentHashMap<Uri, Option<Vec<LinterCodeAction>>>>,
     runner: LintRunner,
+    fix_kind: FixKind,
     unused_directives_severity: Option<AllowWarnDeny>,
+    rules_customization: Option<RulesCustomization>,
 }
 
 impl Tool for ServerLinter {
-    fn name(&self) -> &'static str {
-        "linter"
-    }
-
     /// # Panics
     /// Panics if the root URI cannot be converted to a file path.
     fn handle_configuration_change(
@@ -447,22 +457,14 @@ impl Tool for ServerLinter {
         };
         let mut watchers = match options.config_path.as_deref() {
             Some("") | None => {
-                // Watch both JSON/JSONC and TS config files
-                vec![
-                    "**/.oxlintrc.json".to_string(),
-                    "**/.oxlintrc.jsonc".to_string(),
-                    "**/oxlint.config.ts".to_string(),
-                    "**/vite.config.ts".to_string(),
-                ]
+                config_file_names().into_iter().map(|name| format!("**/{name}")).collect()
             }
             Some(v) => vec![v.to_string()],
         };
 
         for path in &self.extended_paths {
-            // ignore .oxlintrc.json and oxlint.config.ts files when using nested configs
-            if (path.ends_with(".oxlintrc.json")
-                || path.ends_with(".oxlintrc.jsonc")
-                || path.ends_with("oxlint.config.ts"))
+            // Ignore known config files when nested config discovery handles them.
+            if config_file_names().iter().any(|name| path.ends_with(name))
                 && options.use_nested_configs()
             {
                 continue;
@@ -599,7 +601,26 @@ impl Tool for ServerLinter {
         for kind in applying_kinds {
             // `CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC` was filtered out by `applying_kinds`, so we don't need to check it here.
             if kind == CodeActionKind::SOURCE_FIX_ALL {
-                let Some(fix_all) = apply_all_fix_code_action(actions.clone(), uri.clone()) else {
+                let Some(fix_all) = apply_all_fix_code_action(
+                    actions.clone(),
+                    uri.clone(),
+                    self.rules_customization.as_ref(),
+                ) else {
+                    continue;
+                };
+                code_actions_vec.push(CodeActionOrCommand::CodeAction(fix_all));
+            } else if kind == CODE_ACTION_KIND_SOURCE_FIX_ALL_DANGEROUS_OXC {
+                if !self.fix_kind.is_dangerous() {
+                    warn!(
+                        "Linter is not configured to provide dangerous fixes. Please set `fixKind` to `dangerous_fix` or `dangerous_fix_or_suggestion` in the server configuration to enable it."
+                    );
+                    continue;
+                }
+                let Some(fix_all) = apply_dangerous_fix_code_action(
+                    actions.clone(),
+                    uri.clone(),
+                    self.rules_customization.as_ref(),
+                ) else {
                     continue;
                 };
                 code_actions_vec.push(CodeActionOrCommand::CodeAction(fix_all));
@@ -656,7 +677,9 @@ impl ServerLinter {
         gitignore_glob: Vec<Gitignore>,
         extended_paths: FxHashSet<PathBuf>,
         runner: LintRunner,
+        fix_kind: FixKind,
         unused_directives_severity: Option<AllowWarnDeny>,
+        rules_customization: Option<RulesCustomization>,
     ) -> Self {
         Self {
             run,
@@ -666,7 +689,9 @@ impl ServerLinter {
             extended_paths,
             code_actions: Arc::new(ConcurrentHashMap::default()),
             runner,
+            fix_kind,
             unused_directives_severity,
+            rules_customization,
         }
     }
 
@@ -776,7 +801,15 @@ impl ServerLinter {
             match self.runner.run_source(&[Arc::from(path.as_os_str())], &fs) {
                 Ok(results) => results
                     .into_iter()
-                    .map(|message| message_to_lsp_diagnostic(message, uri, source_text, rope))
+                    .filter_map(|message| {
+                        message_to_lsp_diagnostic(
+                            message,
+                            uri,
+                            source_text,
+                            rope,
+                            self.rules_customization.as_ref(),
+                        )
+                    })
                     .collect(),
                 Err(e) => {
                     // clear disable directives on error to prevent stale directives
@@ -837,7 +870,10 @@ mod tests_builder {
     use oxc_language_server::{Capabilities, DiagnosticMode, ToolBuilder};
 
     use crate::lsp::{
-        code_actions::CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC, commands::FIX_ALL_COMMAND_ID,
+        code_actions::{
+            CODE_ACTION_KIND_SOURCE_FIX_ALL_DANGEROUS_OXC, CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC,
+        },
+        commands::FIX_ALL_COMMAND_ID,
         server_linter::ServerLinterBuilder,
     };
 
@@ -854,8 +890,9 @@ mod tests_builder {
                 let code_action_kinds = options.code_action_kinds.as_ref().unwrap();
                 assert!(code_action_kinds.contains(&CodeActionKind::QUICKFIX));
                 assert!(code_action_kinds.contains(&CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC));
+                assert!(code_action_kinds.contains(&CODE_ACTION_KIND_SOURCE_FIX_ALL_DANGEROUS_OXC));
                 assert!(code_action_kinds.contains(&CodeActionKind::SOURCE_FIX_ALL));
-                assert_eq!(code_action_kinds.len(), 3);
+                assert_eq!(code_action_kinds.len(), 4);
             }
             _ => panic!("Expected code action provider options"),
         }
@@ -918,11 +955,10 @@ mod test_watchers {
             let patterns =
                 Tester::new("fixtures/lsp/watchers/default", json!({})).get_watcher_patterns();
 
-            assert_eq!(patterns.len(), 4);
+            assert_eq!(patterns.len(), 3);
             assert_eq!(patterns[0], "**/.oxlintrc.json".to_string());
             assert_eq!(patterns[1], "**/.oxlintrc.jsonc".to_string());
             assert_eq!(patterns[2], "**/oxlint.config.ts".to_string());
-            assert_eq!(patterns[3], "**/vite.config.ts".to_string());
         }
 
         #[test]
@@ -935,11 +971,10 @@ mod test_watchers {
             )
             .get_watcher_patterns();
 
-            assert_eq!(patterns.len(), 4);
+            assert_eq!(patterns.len(), 3);
             assert_eq!(patterns[0], "**/.oxlintrc.json".to_string());
             assert_eq!(patterns[1], "**/.oxlintrc.jsonc".to_string());
             assert_eq!(patterns[2], "**/oxlint.config.ts".to_string());
-            assert_eq!(patterns[3], "**/vite.config.ts".to_string());
         }
 
         #[test]
@@ -961,13 +996,12 @@ mod test_watchers {
             let patterns = Tester::new("fixtures/lsp/watchers/linter_extends", json!({}))
                 .get_watcher_patterns();
 
-            // The `.oxlintrc.json` extends `./lint.json` -> 5 watchers (json, jsonc, ts, vite, lint.json)
-            assert_eq!(patterns.len(), 5);
+            // The `.oxlintrc.json` extends `./lint.json` -> 4 watchers (json, jsonc, ts, lint.json)
+            assert_eq!(patterns.len(), 4);
             assert_eq!(patterns[0], "**/.oxlintrc.json".to_string());
             assert_eq!(patterns[1], "**/.oxlintrc.jsonc".to_string());
             assert_eq!(patterns[2], "**/oxlint.config.ts".to_string());
-            assert_eq!(patterns[3], "**/vite.config.ts".to_string());
-            assert_eq!(patterns[4], "lint.json".to_string());
+            assert_eq!(patterns[3], "lint.json".to_string());
         }
 
         #[test]
@@ -995,12 +1029,11 @@ mod test_watchers {
             )
             .get_watcher_patterns();
 
-            assert_eq!(patterns.len(), 5);
+            assert_eq!(patterns.len(), 4);
             assert_eq!(patterns[0], "**/.oxlintrc.json".to_string());
             assert_eq!(patterns[1], "**/.oxlintrc.jsonc".to_string());
             assert_eq!(patterns[2], "**/oxlint.config.ts".to_string());
-            assert_eq!(patterns[3], "**/vite.config.ts".to_string());
-            assert_eq!(patterns[4], "**/tsconfig*.json".to_string());
+            assert_eq!(patterns[3], "**/tsconfig*.json".to_string());
         }
     }
 
@@ -1051,19 +1084,18 @@ mod test_watchers {
                         "typeAware": true
                     }));
             assert!(watch_patterns.is_some());
-            assert_eq!(watch_patterns.as_ref().unwrap().len(), 5);
+            assert_eq!(watch_patterns.as_ref().unwrap().len(), 4);
             assert_eq!(watch_patterns.as_ref().unwrap()[0], "**/.oxlintrc.json".to_string());
             assert_eq!(watch_patterns.as_ref().unwrap()[1], "**/.oxlintrc.jsonc".to_string());
             assert_eq!(watch_patterns.as_ref().unwrap()[2], "**/oxlint.config.ts".to_string());
-            assert_eq!(watch_patterns.as_ref().unwrap()[3], "**/vite.config.ts".to_string());
-            assert_eq!(watch_patterns.as_ref().unwrap()[4], "**/tsconfig*.json".to_string());
+            assert_eq!(watch_patterns.as_ref().unwrap()[3], "**/tsconfig*.json".to_string());
         }
     }
 }
 
 #[cfg(test)]
 mod test {
-    use std::path::PathBuf;
+    use std::{fs, path::PathBuf};
 
     use oxc_language_server::Tool;
     use oxc_linter::ExternalPluginStore;
@@ -1074,7 +1106,9 @@ mod test {
     };
 
     use crate::lsp::{
-        code_actions::CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC,
+        code_actions::{
+            CODE_ACTION_KIND_SOURCE_FIX_ALL_DANGEROUS_OXC, CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC,
+        },
         server_linter::ServerLinterBuilder,
         tester::{Tester, get_file_path},
     };
@@ -1101,6 +1135,58 @@ mod test {
         assert_eq!(configs_dirs.len(), 2);
         assert!(configs_dirs[1].ends_with("deep2"));
         assert!(configs_dirs[0].ends_with("deep1"));
+    }
+
+    #[test]
+    fn test_create_ignore_glob_skips_git_dir() {
+        let root_dir = tempfile::tempdir().unwrap();
+        let app_dir = root_dir.path().join("apps").join("foo");
+        fs::create_dir_all(&app_dir).unwrap();
+        fs::write(app_dir.join(".gitignore"), "dist/\n").unwrap();
+
+        let git_dir = root_dir.path().join(".git").join("info");
+        fs::create_dir_all(&git_dir).unwrap();
+        fs::write(git_dir.join(".gitignore"), "refs/\n").unwrap();
+
+        let ignore_globs = ServerLinterBuilder::create_ignore_glob(root_dir.path());
+
+        assert_eq!(ignore_globs.len(), 1);
+        assert!(ignore_globs[0].path().starts_with(&app_dir));
+    }
+
+    #[test]
+    fn test_fix_all_dangerous_returns_dangerous_fix_action() {
+        let tester =
+            Tester::new("fixtures/lsp/dangerous_fix", json!({ "fixKind": "dangerous_fix" }));
+        let linter = tester.create_linter();
+        let range = Range::new(Position::new(0, 0), Position::new(u32::MAX, u32::MAX));
+        let uri = tester.get_file_uri("unused_var.js");
+        let _ = linter.run_file(&uri, Some("let a = 1;")).unwrap();
+
+        // source.fixAll should only return safe fixes, not dangerous ones
+        let safe_actions = linter.get_code_actions_or_commands(
+            &uri,
+            &range,
+            &CodeActionContext {
+                only: Some(vec![CodeActionKind::SOURCE_FIX_ALL]),
+                ..Default::default()
+            },
+        );
+        assert!(safe_actions.is_empty(), "source.fixAll should not apply dangerous fixes");
+
+        // source.fixAllDangerous.oxc should return dangerous fix actions when fix_kind is dangerous
+        let dangerous_actions = linter.get_code_actions_or_commands(
+            &uri,
+            &range,
+            &CodeActionContext {
+                only: Some(vec![CODE_ACTION_KIND_SOURCE_FIX_ALL_DANGEROUS_OXC]),
+                ..Default::default()
+            },
+        );
+        assert!(
+            !dangerous_actions.is_empty(),
+            "source.fixAllDangerous.oxc should return dangerous fix action when fix_kind is dangerous"
+        );
     }
 
     #[test]
@@ -1385,5 +1471,38 @@ mod test {
             }),
         );
         tester.test_and_snapshot_single_file("foo-bar.astro");
+    }
+
+    #[test]
+    fn test_rules_customization_severity() {
+        let tester = Tester::new(
+            "fixtures/lsp/rules_customization/severity",
+            json!({
+                "rulesCustomization": {
+                    "no-debugger": {
+                        "severity": "warn"
+                    },
+                    "no-console": {
+                        "severity": "off"
+                    }
+                }
+            }),
+        );
+        tester.test_and_snapshot_single_file("test.ts");
+    }
+
+    #[test]
+    fn test_rules_customization_autofix() {
+        let tester = Tester::new(
+            "fixtures/lsp/rules_customization/autofix",
+            json!({
+                "rulesCustomization": {
+                    "no-debugger": {
+                        "autofix": false
+                    }
+                }
+            }),
+        );
+        tester.test_and_snapshot_single_file("test.ts");
     }
 }
